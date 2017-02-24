@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">Check In</string>
+    <string name="description">Necessary Utilities In One</string>
+    <string name="有新版本啦">爸爸，有新版本啦~</string>
+    <string name="我要升级">爹要升级</string>
+    <string name="不更新">爹不想升级</string>
+    <string name="title_activity_home">HomeActivity</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_login">Sign in</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_name">Phone or job number</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="error_invalid_number">Phone or job number is invalid</string>
+    <string name="error_invalid_password">This password is too short</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="permission_rationale">"需要有权限访问内置存储，才能正常下载更新。"
+    </string>
+    <string name="remember_password">Remember Password</string>
+    <string name="auto_login">Auto Login</string>
+    <string name="your_work_witness">掌上签到系统，您的工作证明人</string>
+    <string name="cancel_updating">更新已取消，下载可以断点更新</string>
+    <string name="you_are_using_an_Alpha_Test_application">你安装的是内测版本，添加新功能，但是可能包含不稳定性，请悉知</string>
+    <string name="you_are_using_data_now">爸爸，你现在正在使用的是流量！！！</string>
+    <string name="update_after_WiFied">那等爸爸下次连上wifi再升级吧</string>
+    <string name="I_am_broken">爹没钱</string>
+    <string name="I_am_rich">爹有钱</string>
+    <string name="cannot_access_external_storage">对不起，不能访问存储器，请检查内存卡或内置存储</string>
+    <string name="newer_version_detected">检测到新版本</string>
+    <string name="size">大小：</string>
+    <string name="newer_version_description">\n\n更新描述：</string>
+    <string name="Are_you_sure">你确定吗？</string>
+    <string name="downloading">下载中ing</string>
+    <string name="download_begins">下载开始</string>
+    <string name="please_wait_a_second">"请稍候     "</string>
+    <string name="error_in_downloading">下载出错啦~~</string>
+    <string name="download_canceled">下载已取消，已下载的部分不会删除，以便下次断点续传</string>
+</resources>

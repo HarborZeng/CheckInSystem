@@ -1,0 +1,361 @@
+package cn.tellyouwhat.checkinsystem.activities;
+
+import android.annotation.TargetApi;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.SystemClock;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.xutils.common.Callback;
+import org.xutils.http.RequestParams;
+import org.xutils.x;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.RoundingMode;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.listener.OnJSONGetSuccessListener;
+import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
+import cn.tellyouwhat.checkinsystem.utils.StreamUtil;
+
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
+public class SplashActivity extends AppCompatActivity implements OnJSONGetSuccessListener {
+
+	private static final String TAG = "SplashActivity";
+	private PackageInfo packageInfo;
+	private long startTime;
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			Window window = getWindow();
+			window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
+					| WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+			window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+					| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+					| View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+			window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+			window.setStatusBarColor(Color.TRANSPARENT);
+			window.setNavigationBarColor(Color.TRANSPARENT);
+		}
+		setContentView(R.layout.activity_splash);
+		x.view().inject(this);
+
+		checkUpdate();
+	}
+
+	/**
+	 * check if there is a upgrade exiting
+	 */
+	private void checkUpdate() {
+		ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+		NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+		if (networkInfo != null && networkInfo.isAvailable()) {
+//			Log.d(TAG, "checkUpdate: 网络正常");
+			startTime = SystemClock.elapsedRealtime();
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						URL url = new URL("http://tellyouwhat.cn/update/update.json");
+						HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+						if (connection.getResponseCode() == 200) {
+							InputStream inputStream = connection.getInputStream();
+							String json = StreamUtil.stream2String(inputStream);
+							JSONObject jsonObject = new JSONObject(json);
+							onJSONGetSuccess(jsonObject);
+						}
+						connection.setConnectTimeout(2000);
+						connection.setReadTimeout(4000);
+					} catch (IOException | JSONException e) {
+						Log.w(TAG, "run: JSON parser may occurred error or it's an IOException", e);
+						enterLogin();
+						e.printStackTrace();
+					}
+				}
+
+			}).start();
+		} else {
+//			Log.d(TAG, "checkUpdate: 网络未连接");
+			enterLogin();
+		}
+	}
+
+	private int getLocalVersionCode() {
+		PackageManager packageManager = getPackageManager();
+		try {
+			packageInfo = packageManager.getPackageInfo(getPackageName(), 0);
+		} catch (PackageManager.NameNotFoundException e) {
+			e.printStackTrace();
+			return 0;
+		}
+		return packageInfo.versionCode;
+	}
+
+	/**
+	 * Get json file in server successfully, these actions will be done.
+	 *
+	 * @param object JSONObject object, like a {@link java.util.Map}
+	 */
+	@Override
+	public void onJSONGetSuccess(JSONObject object) {
+		if (object != null) {
+			try {
+				String versionName = object.getString("versionName");
+				String versionDesc = object.getString("versionDesc");
+				String versionCode = object.getString("versionCode");
+				String downloadURL = object.getString("downloadURL");
+				String size = object.getString("size");
+				long endTime = SystemClock.elapsedRealtime();
+				long duration = 900 - (endTime - startTime);
+				if (duration > 0) {
+					SystemClock.sleep(duration);
+				}
+				if (getLocalVersionCode() < Integer.parseInt(versionCode)) {
+//					Log.d(TAG, "onUpdateAvailable: 有更新版本：" + versionName);
+					mayRequestExternalStorage();
+					askToUpgrade(versionName, versionDesc, versionCode, downloadURL, size);
+				} else if(getLocalVersionCode() == Integer.parseInt(versionCode)){
+//					Log.d(TAG, "onUpdateAvailable: 没有更新版本");
+					enterLogin();
+				}else{
+					Toast.makeText(SplashActivity.this, R.string.you_are_using_an_Alpha_Test_application, Toast.LENGTH_LONG).show();
+					enterLogin();
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+				enterLogin();
+			}
+		}
+	}
+
+	private void askToUpgrade(final String versionName, final String versionDesc, String versionCode, final String downloadURL, final String size) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				final AlertDialog.Builder builder = new AlertDialog.Builder(SplashActivity.this);
+				final AlertDialog.Builder innerBuilder = new AlertDialog.Builder(SplashActivity.this);
+				builder.setIcon(R.mipmap.warning)
+						.setTitle(R.string.有新版本啦)
+						.setCancelable(true)
+						.setOnCancelListener(new DialogInterface.OnCancelListener() {
+							@Override
+							public void onCancel(DialogInterface dialog) {
+								enterLogin();
+							}
+						})
+						.setMessage(getString(R.string.newer_version_detected) + versionName +"\n"+getString(R.string.size)+size+ getString(R.string.newer_version_description) + "\n\n" + versionDesc)
+						.setPositiveButton(getString(R.string.我要升级), new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								if(!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)){
+									Toast.makeText(SplashActivity.this, R.string.cannot_access_external_storage, Toast.LENGTH_SHORT).show();
+								}else {
+									ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+									NetworkInfo WifiStatus = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+									if (WifiStatus.isConnected()) {
+										download(downloadURL);
+									} else {
+										innerBuilder.setIcon(R.mipmap.warning);
+										innerBuilder.setCancelable(false)
+												.setMessage(R.string.you_are_using_data_now)
+												.setTitle(R.string.Are_you_sure)
+												.setNegativeButton(R.string.I_am_broken, new DialogInterface.OnClickListener() {
+													@Override
+													public void onClick(DialogInterface dialog, int which) {
+														Toast.makeText(SplashActivity.this, R.string.update_after_WiFied, Toast.LENGTH_SHORT).show();
+														dialog.dismiss();
+														enterLogin();
+													}
+												})
+												.setPositiveButton(R.string.I_am_rich, new DialogInterface.OnClickListener() {
+													@Override
+													public void onClick(DialogInterface dialog, int which) {
+														dialog.dismiss();
+														download(downloadURL);
+
+													}
+												}).show();
+									}
+								}
+							}
+						}).setNegativeButton(R.string.不更新, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						enterLogin();
+					}
+				}).setCancelable(true).show();
+			}
+		});
+	}
+
+	private void download(String downloadURL) {
+		RequestParams params = new RequestParams(downloadURL);
+//		Log.d(TAG, "download link: " + downloadURL);
+		params.setAutoRename(true);
+		params.setCacheSize(1024 * 1024 * 8);
+		params.setConnectTimeout(3000);
+		params.setCancelFast(true);
+
+		params.setCacheDirName(Environment.getDownloadCacheDirectory().getPath());
+		String newVersionFileName = downloadURL.substring(downloadURL.lastIndexOf("/") + 1, downloadURL.length());
+		params.setSaveFilePath(Environment.getExternalStorageDirectory().getPath() + "/" + Environment.DIRECTORY_DOWNLOADS + "/" + newVersionFileName);
+//		Log.d("TAG", "download: " + Environment.getExternalStorageDirectory().getPath() + "/" + Environment.DIRECTORY_DOWNLOADS + "/" + newVersionFileName);
+//			progressBar.setProgress(0);
+		final ProgressDialog builder = new ProgressDialog(SplashActivity.this, ProgressDialog.STYLE_SPINNER);
+//		Log.d(TAG, "download: params：" + params);
+
+		final Callback.Cancelable cancelable = x.http().get(params, new Callback.ProgressCallback<File>() {
+
+			@Override
+			public void onWaiting() {
+//				Toast.makeText(SplashActivity.this, "正在等待下载开始", Toast.LENGTH_SHORT).show();
+//				Log.d(TAG, "onWaiting: 正在等待下载开始");
+			}
+
+			@Override
+			public void onStarted() {
+				Toast.makeText(SplashActivity.this, R.string.download_begins, Toast.LENGTH_SHORT).show();
+//				Log.d(TAG, "onStarted: 下载开始");
+				builder.setIcon(R.mipmap.downloading);
+				builder.setTitle(getString(R.string.downloading));
+				builder.setCancelable(true);
+				builder.setCanceledOnTouchOutside(false);
+				builder.show();
+			}
+
+			@Override
+			public void onLoading(long total, long current, boolean isDownloading) {
+
+				builder.setMessage(getString(R.string.please_wait_a_second) + DoubleUtil.formatDouble2(((double) current) / 1024 / 1024, RoundingMode.DOWN, 2) + "/" + DoubleUtil.formatDouble2(((double) total) / 1024 / 1024, RoundingMode.DOWN, 2) + "M");
+
+
+//					progressBar.setMax((int) total);
+//					progressBar.setProgress((int) current);
+//                Toast.makeText(SplashActivity.this, "下载中。。。", Toast.LENGTH_SHORT).show();
+//				Log.d(TAG, "onLoading: 下载中");
+			}
+
+			@Override
+			public void onSuccess(File result) {
+				builder.dismiss();
+//				Toast.makeText(x.app(), "下载成功", Toast.LENGTH_SHORT).show();
+//				Log.d(TAG, "onSuccess: The File is: "+result);
+				installAPK(result);
+				finish();
+//				Log.d(TAG, "onSuccess: 下载成功");
+			}
+
+
+			@Override
+			public void onError(Throwable ex, boolean isOnCallback) {
+//				ex.printStackTrace();
+				Toast.makeText(SplashActivity.this, R.string.error_in_downloading, Toast.LENGTH_SHORT).show();
+//				enterHome();
+				enterLogin();
+//				Log.d(TAG, "onError: 下载出错啦");
+			}
+
+			@Override
+			public void onCancelled(CancelledException cex) {
+//				Log.d(TAG, "onCancelled: 下载已取消");
+//				Toast.makeText(x.app(), "cancelled", Toast.LENGTH_SHORT).show();
+				enterLogin();
+				builder.dismiss();
+			}
+
+			@Override
+			public void onFinished() {
+//				Toast.makeText(x.app(), "下载完成", Toast.LENGTH_SHORT).show();
+//				Log.d(TAG, "onFinished: 下载完成");
+				builder.dismiss();
+
+			}
+		});
+
+		builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				Snackbar.make(findViewById(R.id.first_screen_image), getString(R.string.cancel_updating), Snackbar.LENGTH_SHORT).show();
+				dialog.dismiss();
+				builder.dismiss();
+				cancelable.cancel();
+				Toast.makeText(SplashActivity.this, R.string.download_canceled, Toast.LENGTH_LONG).show();
+			}
+		});
+	}
+
+	private void installAPK(File result) {
+//		Log.i(TAG, "installAPK: 刚刚进入安装apk的方法");
+		Intent intent = new Intent(Intent.ACTION_VIEW);
+		intent.addCategory("android.intent.category.DEFAULT");
+		intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+		intent.setDataAndType(Uri.fromFile(result), "application/vnd.android.package-archive");
+//		Log.i(TAG, "installAPK: 准备好了数据，马上开启下一个activity");
+		SplashActivity.this.startActivity(intent);
+	}
+
+//	@Override
+//	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//		enterLogin();
+//		super.onActivityResult(requestCode, resultCode, data);
+//	}
+
+	/**
+	 * After checking, there is no newer version exits, enter the {@link HomeActivity} directly.
+	 */
+	private void enterLogin() {
+		Intent intent = new Intent(this, LoginActivity.class);
+		startActivity(intent);
+		finish();
+	}
+
+	private boolean mayRequestExternalStorage() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+			return true;
+		}
+		if (checkSelfPermission(WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+			return true;
+		}
+		if (shouldShowRequestPermissionRationale(WRITE_EXTERNAL_STORAGE)) {
+			Snackbar.make(findViewById(R.id.first_screen_image), R.string.permission_rationale, Snackbar.LENGTH_INDEFINITE)
+					.setAction(android.R.string.ok, new View.OnClickListener() {
+						@Override
+						@TargetApi(Build.VERSION_CODES.M)
+						public void onClick(View v) {
+							requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE}, 0);
+						}
+					});
+		} else {
+			requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE}, 0);
+		}
+		return false;
+	}
+}
