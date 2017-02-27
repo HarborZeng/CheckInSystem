@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
-import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -26,28 +25,34 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.xutils.common.Callback;
+import org.xutils.common.util.MD5;
+import org.xutils.http.RequestParams;
+import org.xutils.x;
+
 import cn.tellyouwhat.checkinsystem.R;
 
 /**
  * A login screen that offers login via number/password.
  */
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends BaseActivity {
 
 	private final String TAG = "LoginActivity";
 
 	/**
 	 * Keep track of the login task to ensure we can cancel it if requested.
 	 */
-	private UserLoginTask mAuthTask = null;
 
 	// UI references.
 	private EditText mNumberView;
 	private EditText mPasswordView;
 	private View mProgressView;
 	private View mLoginFormView;
-	private SharedPreferences sp;
-	private CheckBox checkBox_rememberPassword;
-	private CheckBox checkbox_auto_login;
+	private SharedPreferences mSharedPreferences;
+	private CheckBox mCheckBox_rememberPassword;
+	private CheckBox mCheckbox_auto_login;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -57,22 +62,22 @@ public class LoginActivity extends AppCompatActivity {
 		mNumberView = (EditText) findViewById(R.id.number);
 		mPasswordView = (EditText) findViewById(R.id.password);
 		Button mNumberSignInButton = (Button) findViewById(R.id.number_sign_in_button);
-		checkBox_rememberPassword = (CheckBox) findViewById(R.id.checkbox_remember_password);
-		checkbox_auto_login = (CheckBox) findViewById(R.id.checkbox_auto_login);
+		mCheckBox_rememberPassword = (CheckBox) findViewById(R.id.checkbox_remember_password);
+		mCheckbox_auto_login = (CheckBox) findViewById(R.id.checkbox_auto_login);
 
-		checkbox_auto_login.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+		mCheckbox_auto_login.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			@Override
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				if (isChecked) {
-					checkBox_rememberPassword.setChecked(true);
+					mCheckBox_rememberPassword.setChecked(true);
 				}
 			}
 		});
-		checkBox_rememberPassword.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+		mCheckBox_rememberPassword.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			@Override
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				if(!isChecked){
-					checkbox_auto_login.setChecked(false);
+				if (!isChecked) {
+					mCheckbox_auto_login.setChecked(false);
 				}
 			}
 		});
@@ -85,15 +90,15 @@ public class LoginActivity extends AppCompatActivity {
 			}
 		});
 		//获得sp实例对象
-		sp = this.getSharedPreferences("userInfo", Context.MODE_PRIVATE);
+		mSharedPreferences = this.getSharedPreferences("userInfo", Context.MODE_PRIVATE);
 		//如果登陆过，直接登录
-		mNumberView.setText(sp.getString("USER_NAME", ""));
-		if (sp.getBoolean("REMEMBER_CHECKBOX_STATUS", false)) {
-			checkBox_rememberPassword.setChecked(true);
-			mPasswordView.setText(new String(Base64.decode(sp.getString("PASSWORD", "").getBytes(), Base64.DEFAULT)));
-			if (sp.getBoolean("AUTO_LOGIN", false)) {
-				checkbox_auto_login.setChecked(true);
-				Log.d(TAG, "onCreate: before attemptLogin");
+		mNumberView.setText(mSharedPreferences.getString("USER_NAME", ""));
+		if (mSharedPreferences.getBoolean("REMEMBER_CHECKBOX_STATUS", false)) {
+			mCheckBox_rememberPassword.setChecked(true);
+			mPasswordView.setText(new String(Base64.decode(mSharedPreferences.getString("PASSWORD", "").getBytes(), Base64.DEFAULT)));
+			if (mSharedPreferences.getBoolean("AUTO_LOGIN", false)) {
+				mCheckbox_auto_login.setChecked(true);
+//				Log.d(TAG, "onCreate: before attemptLogin");
 				attemptLogin();
 			} else {
 				Log.d(TAG, "onCreate: AUTO_LOGIN 失败");
@@ -121,11 +126,7 @@ public class LoginActivity extends AppCompatActivity {
 	 */
 
 	private void attemptLogin() {
-		if (mAuthTask != null) {
-			return;
-		}
 
-		// Reset errors.
 		mNumberView.setError(null);
 		mPasswordView.setError(null);
 
@@ -135,11 +136,11 @@ public class LoginActivity extends AppCompatActivity {
 
 		boolean cancel = false;
 		View focusView = null;
-		if(TextUtils.isEmpty(password)){
+		if (TextUtils.isEmpty(password)) {
 			mPasswordView.setError(getString(R.string.error_field_required));
 			focusView = mPasswordView;
 			cancel = true;
-		}else {
+		} else {
 			// Check for a valid password, if the user entered one.
 			if (!isPasswordValid(password)) {
 				mPasswordView.setError(getString(R.string.error_invalid_password));
@@ -166,8 +167,7 @@ public class LoginActivity extends AppCompatActivity {
 			// Show a progress spinner, and kick off a background task to
 			// perform the user login attempt.
 			showProgress(true);
-			mAuthTask = new UserLoginTask(number, password);
-			mAuthTask.execute((Void) null);
+			login(number, password);
 		}
 	}
 
@@ -210,93 +210,92 @@ public class LoginActivity extends AppCompatActivity {
 	}
 
 
-	/**
-	 * Represents an asynchronous login/registration task used to authenticate
-	 * the user.
-	 */
-	public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
+	private void login(final String number, final String password) {
+		final SharedPreferences.Editor editor = mSharedPreferences.edit();
 
-		private final String mNumber;
-		private final String mPassword;
-		SharedPreferences.Editor editor = sp.edit();
+		String encryptedPassword = MD5.md5(password);
+		Log.i(TAG, "doInBackground: password is encrypted: " + encryptedPassword);
 
-		UserLoginTask(String number, String password) {
-			mNumber = number;
-			mPassword = password;
+		JSONObject jsonObject = new JSONObject();
+		try {
+			jsonObject.put("Username", number);
+			jsonObject.put("Password", encryptedPassword);
+		} catch (JSONException e) {
+			e.printStackTrace();
 		}
 
-		@Override
-		protected Boolean doInBackground(Void... params) {
-			// TODO: attempt authentication against a network service.
+		Log.d(TAG, "validate: " + jsonObject);
 
-			SystemClock.sleep(1500);
-			if ("2015111123".equals(mNumber) && "w499759".equals(mPassword)) {
-				return true;
-			} else {
-				Log.d(TAG, "login: Failed");
-				runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						mPasswordView.setText("");
-					}
-				});
-				editor.putBoolean("REMEMBER_CHECKBOX_STATUS", false);
-				editor.putString("PASSWORD", "");
-				editor.apply();
-				return false;
-			}
-			// TODO: register the new account here.
-		}
+		RequestParams params = new RequestParams("http://tellyouwhat.cn/Login_validate/login");
+//		RequestParams params = new RequestParams("http://127.0.0.1:8080/Login_validate/login");
+		params.setAsJsonContent(true);
+		params.setBodyContent(jsonObject.toString());
 
-		@Override
-		protected void onPostExecute(final Boolean success) {
-			mAuthTask = null;
-			showProgress(false);
 
-			if (success) {
-				Log.d(TAG, "onPostExecute: 登录成功");
-				Message msg = Message.obtain();
-				uiHandler.sendMessage(msg);
-				finish();
-
-			} else {
-
-				mPasswordView.setError(getString(R.string.error_incorrect_password));
-				mPasswordView.requestFocus();
-			}
-		}
-
-		private Handler uiHandler = new Handler() {
+		x.http().post(params, new Callback.CommonCallback<String>() {
 			@Override
-			public void handleMessage(Message msg) {
-				editor.putString("USER_NAME", mNumber);
-				if (checkbox_auto_login.isChecked()) {
-					editor.putBoolean("AUTO_LOGIN", true);
-				} else {
-					editor.putBoolean("AUTO_LOGIN", false);
-				}
-				//记住用户名、密码、
-				if (checkBox_rememberPassword.isChecked()) {
-					String encryptPassword = Base64.encodeToString(mPassword.getBytes(), Base64.DEFAULT);
-					editor.putString("PASSWORD", encryptPassword);
-					editor.putBoolean("REMEMBER_CHECKBOX_STATUS", true);
-				} else {
-					editor.putString("PASSWORD", "");
+			public void onSuccess(String result) {
+				Log.i(TAG, "onSuccess: " + result);
+				if ("success".equals(result)) {
+					showProgress(false);
+					Log.d(TAG, "login: Failed");
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							mPasswordView.setText("");
+						}
+					});
+					mPasswordView.setError(getString(R.string.error_incorrect_password));
+					mPasswordView.requestFocus();
 					editor.putBoolean("REMEMBER_CHECKBOX_STATUS", false);
+					editor.putString("PASSWORD", "");
+					editor.apply();
+				} else {
+					Log.d(TAG, "onPostExecute: 登录成功");
+
+					editor.putString("USER_NAME", number);
+					if (mCheckbox_auto_login.isChecked()) {
+						editor.putBoolean("AUTO_LOGIN", true);
+					} else {
+						editor.putBoolean("AUTO_LOGIN", false);
+					}
+					//记住用户名、密码、
+					if (mCheckBox_rememberPassword.isChecked()) {
+						String encryptPassword = Base64.encodeToString(password.getBytes(), Base64.DEFAULT);
+						editor.putString("PASSWORD", encryptPassword);
+						editor.putBoolean("REMEMBER_CHECKBOX_STATUS", true);
+					} else {
+						editor.putString("PASSWORD", "");
+						editor.putBoolean("REMEMBER_CHECKBOX_STATUS", false);
+					}
+					editor.apply();
+
+					// Activity跳转
+					Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+					intent.putExtra("job_number", number);
+					startActivity(intent);
+					finish();
 				}
-				editor.apply();
 
-				// Activity跳转
-				Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-				startActivity(intent);
 			}
-		};
 
-		@Override
-		protected void onCancelled() {
-			mAuthTask = null;
-			showProgress(false);
-		}
+			@Override
+			public void onError(Throwable ex, boolean isOnCallback) {
+				Log.w(TAG, "onError: " + ex);
+				showProgress(false);
+			}
+
+			@Override
+			public void onCancelled(CancelledException cex) {
+				Log.w(TAG, "onCancelled: cex");
+				showProgress(false);
+			}
+
+			@Override
+			public void onFinished() {
+				Log.w(TAG, "onFinished: ");
+			}
+		});
 	}
 }
 

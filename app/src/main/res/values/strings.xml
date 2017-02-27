@@ -41,4 +41,7 @@
     <string name="please_wait_a_second">"请稍候     "</string>
     <string name="error_in_downloading">下载出错啦~~</string>
     <string name="download_canceled">下载已取消，已下载的部分不会删除，以便下次断点续传</string>
+    <string name="shortcut_created">已创建快捷方式</string>
+    <string name="getting_location">正在获取您当前位置</string>
+    <string name="check_in">签到</string>
 </resources>

@@ -1,18 +1,29 @@
 apply plugin: 'com.android.application'
 
 android {
+	signingConfigs {
+		config {
+		}
+	}
 	compileSdkVersion 25
 	buildToolsVersion "25.0.2"
 	defaultConfig {
+		multiDexEnabled true
 		applicationId "cn.tellyouwhat.checkinsystem"
 		minSdkVersion 14
 		targetSdkVersion 25
-		versionCode 5
-		versionName "0.1.6 Alpha"
+		versionCode 7
+		versionName "0.1.7 Alpha"
 		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+
 	}
 	buildTypes {
 		release {
+//			//是否优化zip
+//			zipAlignEnabled true
+//			// 移除无用的resource文件
+//			shrinkResources true
 			minifyEnabled true
 			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 		}
@@ -27,5 +38,4 @@ dependencies {
 	compile 'com.android.support:appcompat-v7:25.1.1'
 	compile 'org.xutils:xutils:3.3.40'
 	compile 'com.android.support:design:25.1.1'
-	testCompile 'junit:junit:4.12'
 }

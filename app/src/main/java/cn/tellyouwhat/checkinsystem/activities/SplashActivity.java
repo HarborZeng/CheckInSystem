@@ -2,8 +2,10 @@ package cn.tellyouwhat.checkinsystem.activities;
 
 import android.annotation.TargetApi;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -16,7 +18,6 @@ import android.os.Environment;
 import android.os.SystemClock;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -30,21 +31,16 @@ import org.xutils.http.RequestParams;
 import org.xutils.x;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.RoundingMode;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 import cn.tellyouwhat.checkinsystem.R;
-import cn.tellyouwhat.checkinsystem.listener.OnJSONGetSuccessListener;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
-import cn.tellyouwhat.checkinsystem.utils.StreamUtil;
+import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
-public class SplashActivity extends AppCompatActivity implements OnJSONGetSuccessListener {
+public class SplashActivity extends BaseActivity {
 
 	private static final String TAG = "SplashActivity";
 	private PackageInfo packageInfo;
@@ -69,6 +65,35 @@ public class SplashActivity extends AppCompatActivity implements OnJSONGetSucces
 		x.view().inject(this);
 
 		checkUpdate();
+		initShortCut();
+	}
+
+	private void initShortCut() {
+		SharedPreferences setting = getSharedPreferences("silent.preferences", 0);
+// 判断是否第一次启动应用程序（默认为true）
+		boolean firstStart = setting.getBoolean("FIRST_START", true);
+// 第一次启动时创建桌面快捷方式
+		if (firstStart) {
+			Intent shortcut = new Intent("com.android.launcher.action.INSTALL_SHORTCUT");
+// 快捷方式的名称
+			shortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME, getString(R.string.app_name));
+// 不允许重复创建
+			shortcut.putExtra("duplicate", false);
+// 指定快捷方式的启动对象
+			ComponentName comp = new ComponentName(this.getPackageName(), "." + this.getLocalClassName());
+			shortcut.putExtra(Intent.EXTRA_SHORTCUT_INTENT, new Intent(Intent.ACTION_MAIN).setComponent(comp));
+// 快捷方式的图标
+			Intent.ShortcutIconResource iconRes = Intent.ShortcutIconResource.fromContext(this, R.mipmap.ic_launcher);
+			shortcut.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, iconRes);
+// 发出广播
+			sendBroadcast(shortcut);
+// 将第一次启动的标识设置为false
+			SharedPreferences.Editor editor = setting.edit();
+			editor.putBoolean("FIRST_START", false);
+// 提交设置
+			editor.apply();
+			Toast.makeText(this, R.string.shortcut_created, Toast.LENGTH_SHORT).show();
+		}
 	}
 
 	/**
@@ -80,28 +105,58 @@ public class SplashActivity extends AppCompatActivity implements OnJSONGetSucces
 		if (networkInfo != null && networkInfo.isAvailable()) {
 //			Log.d(TAG, "checkUpdate: 网络正常");
 			startTime = SystemClock.elapsedRealtime();
-			new Thread(new Runnable() {
+
+			RequestParams params = new RequestParams("http://tellyouwhat.cn/update/update.json");
+			params.setAsJsonContent(true);
+			x.http().get(params, new Callback.CommonCallback<JSONObject>() {
 				@Override
-				public void run() {
+				public void onSuccess(JSONObject object) {
 					try {
-						URL url = new URL("http://tellyouwhat.cn/update/update.json");
-						HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-						if (connection.getResponseCode() == 200) {
-							InputStream inputStream = connection.getInputStream();
-							String json = StreamUtil.stream2String(inputStream);
-							JSONObject jsonObject = new JSONObject(json);
-							onJSONGetSuccess(jsonObject);
+						String versionName = object.getString("versionName");
+						String versionDesc = object.getString("versionDesc");
+						String versionCode = object.getString("versionCode");
+						String downloadURL = object.getString("downloadURL");
+						String size = object.getString("size");
+						long endTime = SystemClock.elapsedRealtime();
+						long duration = 900 - (endTime - startTime);
+						if (duration > 0) {
+							SystemClock.sleep(duration);
 						}
-						connection.setConnectTimeout(2000);
-						connection.setReadTimeout(4000);
-					} catch (IOException | JSONException e) {
-						Log.w(TAG, "run: JSON parser may occurred error or it's an IOException", e);
-						enterLogin();
+						if (getLocalVersionCode() < Integer.parseInt(versionCode)) {
+//					Log.d(TAG, "onUpdateAvailable: 有更新版本：" + versionName);
+							if (mayRequestExternalStorage()) {
+								askToUpgrade(versionName, versionDesc, versionCode, downloadURL, size);
+							}
+						} else if (getLocalVersionCode() == Integer.parseInt(versionCode)) {
+//					Log.d(TAG, "onUpdateAvailable: 没有更新版本");
+							enterLogin();
+						} else {
+							Toast.makeText(SplashActivity.this, R.string.you_are_using_an_Alpha_Test_application, Toast.LENGTH_LONG).show();
+							enterLogin();
+						}
+					} catch (JSONException e) {
 						e.printStackTrace();
+						enterLogin();
 					}
+//					Log.w(TAG, "onSuccess: "+ s);
 				}
 
-			}).start();
+				@Override
+				public void onError(Throwable ex, boolean isOnCallback) {
+					Log.w(TAG, "run: JSON parser may occurred error or it's an IOException", ex);
+					enterLogin();
+				}
+
+				@Override
+				public void onCancelled(CancelledException cex) {
+
+				}
+
+				@Override
+				public void onFinished() {
+
+				}
+			});
 		} else {
 //			Log.d(TAG, "checkUpdate: 网络未连接");
 			enterLogin();
@@ -119,42 +174,6 @@ public class SplashActivity extends AppCompatActivity implements OnJSONGetSucces
 		return packageInfo.versionCode;
 	}
 
-	/**
-	 * Get json file in server successfully, these actions will be done.
-	 *
-	 * @param object JSONObject object, like a {@link java.util.Map}
-	 */
-	@Override
-	public void onJSONGetSuccess(JSONObject object) {
-		if (object != null) {
-			try {
-				String versionName = object.getString("versionName");
-				String versionDesc = object.getString("versionDesc");
-				String versionCode = object.getString("versionCode");
-				String downloadURL = object.getString("downloadURL");
-				String size = object.getString("size");
-				long endTime = SystemClock.elapsedRealtime();
-				long duration = 900 - (endTime - startTime);
-				if (duration > 0) {
-					SystemClock.sleep(duration);
-				}
-				if (getLocalVersionCode() < Integer.parseInt(versionCode)) {
-//					Log.d(TAG, "onUpdateAvailable: 有更新版本：" + versionName);
-					mayRequestExternalStorage();
-					askToUpgrade(versionName, versionDesc, versionCode, downloadURL, size);
-				} else if(getLocalVersionCode() == Integer.parseInt(versionCode)){
-//					Log.d(TAG, "onUpdateAvailable: 没有更新版本");
-					enterLogin();
-				}else{
-					Toast.makeText(SplashActivity.this, R.string.you_are_using_an_Alpha_Test_application, Toast.LENGTH_LONG).show();
-					enterLogin();
-				}
-			} catch (JSONException e) {
-				e.printStackTrace();
-				enterLogin();
-			}
-		}
-	}
 
 	private void askToUpgrade(final String versionName, final String versionDesc, String versionCode, final String downloadURL, final String size) {
 		runOnUiThread(new Runnable() {
@@ -171,16 +190,16 @@ public class SplashActivity extends AppCompatActivity implements OnJSONGetSucces
 								enterLogin();
 							}
 						})
-						.setMessage(getString(R.string.newer_version_detected) + versionName +"\n"+getString(R.string.size)+size+ getString(R.string.newer_version_description) + "\n\n" + versionDesc)
+						.setMessage(getString(R.string.newer_version_detected) + versionName + "\n" + getString(R.string.size) + size + getString(R.string.newer_version_description) + "\n\n" + versionDesc)
 						.setPositiveButton(getString(R.string.我要升级), new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
-								if(!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)){
+								if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
 									Toast.makeText(SplashActivity.this, R.string.cannot_access_external_storage, Toast.LENGTH_SHORT).show();
-								}else {
-									ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-									NetworkInfo WifiStatus = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-									if (WifiStatus.isConnected()) {
+								} else {
+
+									if (NetTypeUtils.isWifiActive(SplashActivity.this)) {
+										Log.d(TAG, "onClick: 连的是wifi");
 										download(downloadURL);
 									} else {
 										innerBuilder.setIcon(R.mipmap.warning);
