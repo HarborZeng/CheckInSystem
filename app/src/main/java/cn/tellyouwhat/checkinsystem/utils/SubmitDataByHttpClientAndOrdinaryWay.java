@@ -4,14 +4,10 @@ package cn.tellyouwhat.checkinsystem.utils;
  * Created by Harbor-Laptop on 2017/2/24.
  */
 
-import org.xutils.http.annotation.HttpResponse;
-
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
-
-import static cn.tellyouwhat.checkinsystem.R.string.size;
 
 /**
  * @author Dylan 本类封装了Android中向web服务器提交数据的两种方式四种方法

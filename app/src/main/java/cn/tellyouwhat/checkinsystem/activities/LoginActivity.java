@@ -6,14 +6,11 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.os.SystemClock;
+import android.support.design.widget.Snackbar;
 import android.text.TextUtils;
-import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -28,11 +25,11 @@ import android.widget.TextView;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xutils.common.Callback;
-import org.xutils.common.util.MD5;
 import org.xutils.http.RequestParams;
 import org.xutils.x;
 
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
 
 /**
  * A login screen that offers login via number/password.
@@ -41,11 +38,6 @@ public class LoginActivity extends BaseActivity {
 
 	private final String TAG = "LoginActivity";
 
-	/**
-	 * Keep track of the login task to ensure we can cancel it if requested.
-	 */
-
-	// UI references.
 	private EditText mNumberView;
 	private EditText mPasswordView;
 	private View mProgressView;
@@ -54,6 +46,20 @@ public class LoginActivity extends BaseActivity {
 	private CheckBox mCheckBox_rememberPassword;
 	private CheckBox mCheckbox_auto_login;
 
+	/**
+	 * 此方法为对登陆界面的“忘记密码”点击事件的响应，即携带面板上已输入手机号（仅限），前往{@link ResetPasswordActivity}重置密码
+	 *
+	 * @param view 按钮所在的父view
+	 */
+	public void forgetPassword(View view) {
+		Intent intent = new Intent(this, ResetPasswordActivity.class);
+		String phoneNumberTOBE = mNumberView.getText().toString();
+		if (!TextUtils.isEmpty(phoneNumberTOBE) && phoneNumberTOBE.length() == 11)
+			intent.putExtra("PhoneNumber", phoneNumberTOBE);
+		Log.i(TAG, "forgetPassword: " + phoneNumberTOBE);
+		startActivity(intent);
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -61,6 +67,7 @@ public class LoginActivity extends BaseActivity {
 		// Set up the login form.
 		mNumberView = (EditText) findViewById(R.id.number);
 		mPasswordView = (EditText) findViewById(R.id.password);
+
 		Button mNumberSignInButton = (Button) findViewById(R.id.number_sign_in_button);
 		mCheckBox_rememberPassword = (CheckBox) findViewById(R.id.checkbox_remember_password);
 		mCheckbox_auto_login = (CheckBox) findViewById(R.id.checkbox_auto_login);
@@ -95,7 +102,7 @@ public class LoginActivity extends BaseActivity {
 		mNumberView.setText(mSharedPreferences.getString("USER_NAME", ""));
 		if (mSharedPreferences.getBoolean("REMEMBER_CHECKBOX_STATUS", false)) {
 			mCheckBox_rememberPassword.setChecked(true);
-			mPasswordView.setText(new String(Base64.decode(mSharedPreferences.getString("PASSWORD", "").getBytes(), Base64.DEFAULT)));
+			mPasswordView.setText(EncryptUtil.decryptBase64withSalt(mSharedPreferences.getString("PASSWORD", ""), "saltforcheckinsystemstorepasswordininnerstorage"));
 			if (mSharedPreferences.getBoolean("AUTO_LOGIN", false)) {
 				mCheckbox_auto_login.setChecked(true);
 //				Log.d(TAG, "onCreate: before attemptLogin");
@@ -131,8 +138,8 @@ public class LoginActivity extends BaseActivity {
 		mPasswordView.setError(null);
 
 		// Store values at the time of the login attempt.
-		String number = mNumberView.getText().toString();
-		String password = mPasswordView.getText().toString();
+		final String number = mNumberView.getText().toString();
+		final String password = mPasswordView.getText().toString();
 
 		boolean cancel = false;
 		View focusView = null;
@@ -167,7 +174,14 @@ public class LoginActivity extends BaseActivity {
 			// Show a progress spinner, and kick off a background task to
 			// perform the user login attempt.
 			showProgress(true);
-			login(number, password);
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					SystemClock.sleep(1000);
+					login(number, password);
+				}
+			}).start();
+
 		}
 	}
 
@@ -209,47 +223,79 @@ public class LoginActivity extends BaseActivity {
 
 	}
 
-
+	/**
+	 * 通过servlet小程序与服务器数据库进行验证操作，并进行后续处理工作
+	 *
+	 * @param number   用户输入的手机号或工号
+	 * @param password 用户输入的密码
+	 */
 	private void login(final String number, final String password) {
 		final SharedPreferences.Editor editor = mSharedPreferences.edit();
 
-		String encryptedPassword = MD5.md5(password);
-		Log.i(TAG, "doInBackground: password is encrypted: " + encryptedPassword);
+		//服务端通过检测phoneNumber和jobNumber是否为0来判断用户传的是手机号还是工号
+		String phoneNumber = "0";
+		String jobNumber = "0";
+		if (number.length() == 11) {
+			phoneNumber = number;
+		} else if (number.length() == 10) {
+			jobNumber = number;
+		}
 
+		//通过加盐的MD5算法加密密码，以确保传输过程的安全性
+		String encryptedPassword = EncryptUtil.md5WithSalt(password, "saltforcheckinsystemstorepasswordinserverdatabase");
+
+		//将用户名密码封装成json对象，发送出去
 		JSONObject jsonObject = new JSONObject();
 		try {
-			jsonObject.put("Username", number);
+			jsonObject.put("PhoneNumber", phoneNumber);
+			jsonObject.put("JobNumber", jobNumber);
 			jsonObject.put("Password", encryptedPassword);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 
-		Log.d(TAG, "validate: " + jsonObject);
+		Log.w(TAG, "validate: " + jsonObject);
 
+		//开始准备数据
 		RequestParams params = new RequestParams("http://tellyouwhat.cn/Login_validate/login");
 //		RequestParams params = new RequestParams("http://127.0.0.1:8080/Login_validate/login");
 		params.setAsJsonContent(true);
 		params.setBodyContent(jsonObject.toString());
 
-
+		//利用xUtils3post提交
 		x.http().post(params, new Callback.CommonCallback<String>() {
 			@Override
 			public void onSuccess(String result) {
+
+				//获取update.json成功的回调
 				Log.i(TAG, "onSuccess: " + result);
-				if ("success".equals(result)) {
-					showProgress(false);
-					Log.d(TAG, "login: Failed");
-					runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
-							mPasswordView.setText("");
-						}
-					});
-					mPasswordView.setError(getString(R.string.error_incorrect_password));
-					mPasswordView.requestFocus();
-					editor.putBoolean("REMEMBER_CHECKBOX_STATUS", false);
-					editor.putString("PASSWORD", "");
-					editor.apply();
+				if (!"success".equals(result)) {
+					if ("no match".equals(result)) {
+						showProgress(false);
+						Log.d(TAG, "login: Failed");
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								mPasswordView.setText("");
+							}
+						});
+						mPasswordView.setError(getString(R.string.error_incorrect_password));
+						mPasswordView.requestFocus();
+						editor.putBoolean("REMEMBER_CHECKBOX_STATUS", false);
+						editor.putString("PASSWORD", "");
+						editor.apply();
+					} else if ("Database Connect failed".equals(result)) {
+						Snackbar.make(findViewById(R.id.login_form), "服务器正忙，请稍候重试", Snackbar.LENGTH_LONG).show();
+					} else if ("Illegal number".equals(result)) {
+						showProgress(false);
+						Log.d(TAG, "login: Failed, wrong user name");
+						mNumberView.setError("手机号或工号错误");
+						mNumberView.requestFocus();
+						editor.putBoolean("REMEMBER_CHECKBOX_STATUS", false);
+						editor.putString("USER_NAME", "");
+						editor.apply();
+					}
+
 				} else {
 					Log.d(TAG, "onPostExecute: 登录成功");
 
@@ -259,10 +305,10 @@ public class LoginActivity extends BaseActivity {
 					} else {
 						editor.putBoolean("AUTO_LOGIN", false);
 					}
-					//记住用户名、密码、
+					//记住用户名、密码
 					if (mCheckBox_rememberPassword.isChecked()) {
-						String encryptPassword = Base64.encodeToString(password.getBytes(), Base64.DEFAULT);
-						editor.putString("PASSWORD", encryptPassword);
+						String localEncryptPassword = EncryptUtil.encryptBase64withSalt(password, "saltforcheckinsystemstorepasswordininnerstorage");
+						editor.putString("PASSWORD", localEncryptPassword);
 						editor.putBoolean("REMEMBER_CHECKBOX_STATUS", true);
 					} else {
 						editor.putString("PASSWORD", "");
@@ -272,7 +318,7 @@ public class LoginActivity extends BaseActivity {
 
 					// Activity跳转
 					Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-					intent.putExtra("job_number", number);
+					intent.putExtra("USER_NAME", number);
 					startActivity(intent);
 					finish();
 				}
@@ -283,12 +329,14 @@ public class LoginActivity extends BaseActivity {
 			public void onError(Throwable ex, boolean isOnCallback) {
 				Log.w(TAG, "onError: " + ex);
 				showProgress(false);
+				Snackbar.make(findViewById(R.id.login_form), "服务器正忙，请检查网络连接是否可用", Snackbar.LENGTH_LONG).show();
 			}
 
 			@Override
 			public void onCancelled(CancelledException cex) {
 				Log.w(TAG, "onCancelled: cex");
 				showProgress(false);
+				Snackbar.make(findViewById(R.id.login_form), "服务器正忙，请稍候重试", Snackbar.LENGTH_LONG).show();
 			}
 
 			@Override

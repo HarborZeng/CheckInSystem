@@ -7,9 +7,9 @@
             android:icon="@drawable/ic_menu_camera"
             android:title="@string/check_in"/>
         <item
-            android:id="@+id/nav_gallery"
+            android:id="@+id/nav_history"
             android:icon="@drawable/ic_menu_gallery"
-            android:title="Gallery"/>
+            android:title="历史签到"/>
         <item
             android:id="@+id/nav_slideshow"
             android:icon="@drawable/ic_menu_slideshow"

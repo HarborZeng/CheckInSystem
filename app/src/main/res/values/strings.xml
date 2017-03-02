@@ -44,4 +44,9 @@
     <string name="shortcut_created">已创建快捷方式</string>
     <string name="getting_location">正在获取您当前位置</string>
     <string name="check_in">签到</string>
+    <string name="dont_rush">不要着急，不要猛戳</string>
+    <string name="input_phone_number">请输入手机号码</string>
+    <string name="send_verification_code">发送验证码</string>
+    <string name="verification_code">验证码</string>
+    <string name="find_psw">找回密码</string>
 </resources>

@@ -12,13 +12,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
-import cn.tellyouwhat.checkinsystem.database.AccountDao;
-import cn.tellyouwhat.checkinsystem.domain.Account;
-
 public class BaseApplication extends Application {
 	List<Activity> activities = new LinkedList<>();
 	List<Service> services = new LinkedList<>();
-	private Account account;
 
 	@Override
 	public void onCreate() {
@@ -67,15 +63,6 @@ public class BaseApplication extends Application {
 				stopService(new Intent(this, service.getClass()));
 			}
 		}
-	}
-
-	public Account getCurrentAccount() {
-		if (account == null) {
-			//TODO 添加GREENDAO代码
-			AccountDao dao = new AccountDao(this);
-			account = dao.getCurrentAccount();
-		}
-		return account;
 	}
 
 }
