@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_check_in"
+        android:icon="@drawable/locate"
+        android:title="@string/check_in"/>
+
+    <item
+        android:id="@+id/navigation_history_record"
+        android:icon="@drawable/history_record"
+        android:title="@string/historical_record"/>
+
+    <item
+        android:id="@+id/navigation_me"
+        android:icon="@drawable/me"
+        android:title="@string/Me"/>
+
+</menu>

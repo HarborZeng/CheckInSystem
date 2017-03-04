@@ -12,22 +12,33 @@ android {
 		applicationId "cn.tellyouwhat.checkinsystem"
 		minSdkVersion 14
 		targetSdkVersion 25
-		versionCode 8
-		versionName "0.1.8 Alpha"
+		versionCode 11
+		versionName "0.2.1Alpha"
 		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
 
+
+
+
+
+		vectorDrawables.useSupportLibrary = true
+	}
+	sourceSets {
+		main {
+			jniLibs.srcDirs = ['libs']
+		}
 	}
 	buildTypes {
 		release {
-//			//是否优化zip
-//			zipAlignEnabled true
-//			// 移除无用的resource文件
-//			shrinkResources true
+			//是否优化zip
+			zipAlignEnabled true
+			// 移除无用的resource文件
+			shrinkResources true
 			minifyEnabled true
 			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 		}
 	}
+
 }
 
 dependencies {
@@ -35,7 +46,10 @@ dependencies {
 	androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
 		exclude group: 'com.android.support', module: 'support-annotations'
 	})
+	compile files('libs/BaiduLBS_Android.jar')
 	compile 'com.android.support:appcompat-v7:25.1.1'
 	compile 'org.xutils:xutils:3.3.40'
 	compile 'com.android.support:design:25.1.1'
+	compile 'com.android.support:support-vector-drawable:25.1.1'
+	compile 'com.getbase:floatingactionbutton:1.10.1'
 }

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -35,43 +36,45 @@
 
         <Button
             android:id="@+id/button_send_verification_code"
+            style="@style/Widget.AppCompat.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignEnd="@+id/textInputLayoutName"
+            android:layout_alignRight="@+id/textInputLayoutName"
+            android:layout_below="@+id/textInputLayoutName"
+            android:layout_gravity="end"
             android:layout_marginTop="30dp"
             android:background="@android:color/holo_green_dark"
+            android:onClick="sendVerificationCode"
             android:text="@string/send_verification_code"
             android:textColor="#ffffff"
-            android:textSize="14sp"
-            android:layout_gravity="end"
-            android:layout_below="@+id/textInputLayoutName"
-            android:layout_alignRight="@+id/textInputLayoutName"
-            android:layout_alignEnd="@+id/textInputLayoutName"
-            android:onClick="sendVerificationCode"/>
+            android:textSize="14sp"/>
 
         <android.support.design.widget.TextInputLayout
             android:id="@+id/textInputLayoutPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingLeft="20dp"
             android:orientation="horizontal"
-            android:layout_alignTop="@+id/button_send_verification_code"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true">
+            android:layout_above="@+id/button_findPSW"
+            android:layout_alignLeft="@+id/textInputLayoutName"
+            android:layout_alignStart="@+id/textInputLayoutName"
+            android:layout_alignRight="@+id/button_send_verification_code"
+            android:layout_alignEnd="@+id/button_send_verification_code">
 
 
             <EditText
                 android:id="@+id/editText_verification_code"
                 android:layout_width="141dp"
                 android:layout_height="wrap_content"
-                android:hint="@string/verification_code"
-                android:inputType="number"
-                android:textColorHint="@color/colorGray"
                 android:layout_alignBaseline="@+id/button_send_verification_code"
                 android:layout_alignBottom="@+id/button_send_verification_code"
                 android:layout_alignLeft="@+id/textInputLayoutName"
                 android:layout_alignStart="@+id/textInputLayoutName"
+                android:layout_toLeftOf="@+id/button_send_verification_code"
                 android:layout_toStartOf="@+id/button_send_verification_code"
-                android:layout_toLeftOf="@+id/button_send_verification_code"/>
+                android:hint="@string/verification_code"
+                android:inputType="number"
+                android:textColorHint="@color/colorGray"/>
 
 
         </android.support.design.widget.TextInputLayout>
@@ -92,4 +95,4 @@
 
     </RelativeLayout>
 
-</RelativeLayout>
+</FrameLayout>

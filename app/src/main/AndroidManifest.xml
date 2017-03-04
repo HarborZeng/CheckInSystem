@@ -13,20 +13,20 @@
         tools:ignore="ProtectedPermissions"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
-    <!--****************一般权限，6.0以上系统不需要额外申请******************-->
-    <!-- 这个权限用于获取wifi的获取权限，wifi信息会用来进行网络定位-->
+    <!-- ****************一般权限，6.0以上系统不需要额外申请****************** -->
+    <!-- 这个权限用于获取wifi的获取权限，wifi信息会用来进行网络定位 -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
 
-    <!--********************特殊权限，6.0以上系统需要动态申请*******************-->
-    <!-- 这个权限用于进行网络定位-->
+    <!-- ********************特殊权限，6.0以上系统需要动态申请******************* -->
+    <!-- 这个权限用于进行网络定位 -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <!-- 这个权限用于访问GPS定位-->
+    <!-- 这个权限用于访问GPS定位 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <!-- 用于读取手机当前的状态-->
-    <!--<uses-permission android:name="android.permission.READ_PHONE_STATE"/>-->
+    <!-- 用于读取手机当前的状态 -->
+    <!-- <uses-permission android:name="android.permission.READ_PHONE_STATE"/> -->
 
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
-    <!--地图所需权限-->
+    <!-- 地图所需权限 -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <application
@@ -38,37 +38,27 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning">
-
-        <!--        <meta-data
-                    android:name="com.baidu.lbsapi.API_KEY"
-                    android:value="BZSG7v2zaH2KNNVakl5P1LjCkDfi4mMb" />       //key:开发者申请的Key-->
+        <meta-data
+            android:name="com.baidu.lbsapi.API_KEY"
+            android:value="nIT6orX82KFVr8fKyWgkvCWGIpGFaS0r"/>
 
         <activity
             android:name=".activities.SplashActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
+
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
-        <activity
-            android:name=".activities.HomeActivity"
-
-            android:label="@string/check_in"
-            android:theme="@style/AppTheme.NoActionBar">
-
         </activity>
         <activity
             android:name=".activities.LoginActivity"
             android:label="@string/title_activity_login">
         </activity>
-
         <activity
             android:name=".activities.ResetPasswordActivity"
             android:label="找回密码">
-
         </activity>
-
 
         <provider
             android:name="android.support.v4.content.FileProvider"
@@ -80,9 +70,19 @@
                 android:resource="@xml/provider_paths"/>
         </provider>
 
-        <!--        <service android:name="com.baidu.location.f" android:enabled="true" android:process=":remote">
-                </service>-->
+        <service
+            android:name="com.baidu.location.f"
+            android:enabled="true"
+            android:process=":remote">
+        </service>
 
+        <activity
+            android:name=".activities.MainActivity"
+            android:label="@string/check_in">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="cn.tellyouwhat.checkinsystem.activities.BaseActivity"/>
+        </activity>
     </application>
 
 </manifest>

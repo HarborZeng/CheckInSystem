@@ -263,6 +263,8 @@ public class LoginActivity extends BaseActivity {
 		params.setBodyContent(jsonObject.toString());
 
 		//利用xUtils3post提交
+		final String finalJobNumber = jobNumber;
+		final String finalPhoneNumber = phoneNumber;
 		x.http().post(params, new Callback.CommonCallback<String>() {
 			@Override
 			public void onSuccess(String result) {
@@ -285,11 +287,11 @@ public class LoginActivity extends BaseActivity {
 						editor.putString("PASSWORD", "");
 						editor.apply();
 					} else if ("Database Connect failed".equals(result)) {
-						Snackbar.make(findViewById(R.id.login_form), "服务器正忙，请稍候重试", Snackbar.LENGTH_LONG).show();
+						Snackbar.make(findViewById(R.id.login_form), R.string.server_busy, Snackbar.LENGTH_LONG).show();
 					} else if ("Illegal number".equals(result)) {
 						showProgress(false);
 						Log.d(TAG, "login: Failed, wrong user name");
-						mNumberView.setError("手机号或工号错误");
+						mNumberView.setError(getString(R.string.Invalide_phone_jobnumber));
 						mNumberView.requestFocus();
 						editor.putBoolean("REMEMBER_CHECKBOX_STATUS", false);
 						editor.putString("USER_NAME", "");
@@ -316,9 +318,14 @@ public class LoginActivity extends BaseActivity {
 					}
 					editor.apply();
 
-					// Activity跳转
-					Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-					intent.putExtra("USER_NAME", number);
+//					 Activity跳转提交数据
+					Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+					if (!"0".equals(finalJobNumber)) {
+						intent.putExtra("JOB_NUMBER", finalJobNumber);
+					}
+					if (!"0".equals(finalPhoneNumber)) {
+						intent.putExtra("PHONE_NUMBER", finalPhoneNumber);
+					}
 					startActivity(intent);
 					finish();
 				}
@@ -329,7 +336,7 @@ public class LoginActivity extends BaseActivity {
 			public void onError(Throwable ex, boolean isOnCallback) {
 				Log.w(TAG, "onError: " + ex);
 				showProgress(false);
-				Snackbar.make(findViewById(R.id.login_form), "服务器正忙，请检查网络连接是否可用", Snackbar.LENGTH_LONG).show();
+				Snackbar.make(findViewById(R.id.login_form), "网络开小差了~~", Snackbar.LENGTH_LONG).show();
 			}
 
 			@Override

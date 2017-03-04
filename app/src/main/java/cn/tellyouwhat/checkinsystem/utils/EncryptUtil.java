@@ -46,7 +46,7 @@ public final class EncryptUtil {
 	 * @param string 要加密的内容
 	 * @return “加密”后的字符串
 	 */
-	public static String encryptBase64withSalt(String string) {
+	public static String encryptBase64(String string) {
 		return Base64.encodeToString(string.getBytes(), Base64.DEFAULT);
 	}
 
@@ -56,7 +56,7 @@ public final class EncryptUtil {
 	 * @param string 要解密的内容
 	 * @return “解密”后的字符串
 	 */
-	public static String decryptBase64withSalt(String string) {
+	public static String decryptBase64(String string) {
 		return new String(Base64.decode(string, Base64.DEFAULT));
 	}
 

@@ -49,4 +49,17 @@
     <string name="send_verification_code">发送验证码</string>
     <string name="verification_code">验证码</string>
     <string name="find_psw">找回密码</string>
+    <string name="server_error">服务器异常</string>
+    <string name="server_busy">服务器正忙，请稍候重试</string>
+    <string name="Invalide_phone_jobnumber">手机号或工号错误</string>
+    <string name="input_phonenumber">Please input your phone number</string>
+    <string name="login">LOGIN</string>
+    <string name="forget_password">忘记密码？</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="historical_record">历史记录</string>
+    <string name="Me">我</string>
+    <string name="check_out">签出</string>
 </resources>

@@ -1,6 +1,6 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
-import android.annotation.TargetApi;
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
@@ -17,6 +17,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
@@ -37,7 +39,6 @@ import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
 import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
 
-import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 public class SplashActivity extends BaseActivity {
@@ -124,9 +125,7 @@ public class SplashActivity extends BaseActivity {
 						}
 						if (getLocalVersionCode() < Integer.parseInt(versionCode)) {
 //					Log.d(TAG, "onUpdateAvailable: 有更新版本：" + versionName);
-							if (mayRequestExternalStorage()) {
-								askToUpgrade(versionName, versionDesc, versionCode, downloadURL, size);
-							}
+							askToUpgrade(versionName, versionDesc, versionCode, downloadURL, size);
 						} else if (getLocalVersionCode() == Integer.parseInt(versionCode)) {
 //					Log.d(TAG, "onUpdateAvailable: 没有更新版本");
 							enterLogin();
@@ -144,6 +143,7 @@ public class SplashActivity extends BaseActivity {
 				@Override
 				public void onError(Throwable ex, boolean isOnCallback) {
 					Log.w(TAG, "run: JSON parser may occurred error or it's an IOException", ex);
+					Toast.makeText(SplashActivity.this, R.string.server_error, Toast.LENGTH_SHORT).show();
 					enterLogin();
 				}
 
@@ -183,7 +183,6 @@ public class SplashActivity extends BaseActivity {
 				final AlertDialog.Builder innerBuilder = new AlertDialog.Builder(SplashActivity.this);
 				builder.setIcon(R.mipmap.warning)
 						.setTitle(R.string.有新版本啦)
-						.setCancelable(true)
 						.setOnCancelListener(new DialogInterface.OnCancelListener() {
 							@Override
 							public void onCancel(DialogInterface dialog) {
@@ -194,8 +193,13 @@ public class SplashActivity extends BaseActivity {
 						.setPositiveButton(getString(R.string.我要升级), new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
+								if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(SplashActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+									String[] perms = {"android.permission.WRITE_EXTERNAL_STORAGE"};
+									ActivityCompat.requestPermissions(SplashActivity.this, perms, 1);
+								}
+
 								if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-									Toast.makeText(SplashActivity.this, R.string.cannot_access_external_storage, Toast.LENGTH_SHORT).show();
+									Toast.makeText(SplashActivity.this, R.string.cannot_access_external_storage, Toast.LENGTH_LONG).show();
 								} else {
 
 									if (NetTypeUtils.isWifiActive(SplashActivity.this)) {
@@ -209,7 +213,7 @@ public class SplashActivity extends BaseActivity {
 												.setNegativeButton(R.string.I_am_broken, new DialogInterface.OnClickListener() {
 													@Override
 													public void onClick(DialogInterface dialog, int which) {
-														Toast.makeText(SplashActivity.this, R.string.update_after_WiFied, Toast.LENGTH_SHORT).show();
+														Toast.makeText(SplashActivity.this, R.string.update_after_WiFied, Toast.LENGTH_LONG).show();
 														dialog.dismiss();
 														enterLogin();
 													}
@@ -222,6 +226,7 @@ public class SplashActivity extends BaseActivity {
 
 													}
 												}).show();
+
 									}
 								}
 							}
@@ -230,7 +235,7 @@ public class SplashActivity extends BaseActivity {
 					public void onClick(DialogInterface dialog, int which) {
 						enterLogin();
 					}
-				}).setCancelable(true).show();
+				}).setCancelable(false).show();
 			}
 		});
 	}
@@ -356,25 +361,4 @@ public class SplashActivity extends BaseActivity {
 		finish();
 	}
 
-	private boolean mayRequestExternalStorage() {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-			return true;
-		}
-		if (checkSelfPermission(WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-			return true;
-		}
-		if (shouldShowRequestPermissionRationale(WRITE_EXTERNAL_STORAGE)) {
-			Snackbar.make(findViewById(R.id.first_screen_image), R.string.permission_rationale, Snackbar.LENGTH_INDEFINITE)
-					.setAction(android.R.string.ok, new View.OnClickListener() {
-						@Override
-						@TargetApi(Build.VERSION_CODES.M)
-						public void onClick(View v) {
-							requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE}, 0);
-						}
-					});
-		} else {
-			requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE}, 0);
-		}
-		return false;
-	}
 }
