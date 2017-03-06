@@ -117,6 +117,7 @@ public class SplashActivity extends BaseActivity {
 						String versionDesc = object.getString("versionDesc");
 						String versionCode = object.getString("versionCode");
 						String downloadURL = object.getString("downloadURL");
+						boolean forceUpgrade = object.getBoolean("forceUpgrade");
 						String size = object.getString("size");
 						long endTime = SystemClock.elapsedRealtime();
 						long duration = 900 - (endTime - startTime);
@@ -125,7 +126,7 @@ public class SplashActivity extends BaseActivity {
 						}
 						if (getLocalVersionCode() < Integer.parseInt(versionCode)) {
 //					Log.d(TAG, "onUpdateAvailable: 有更新版本：" + versionName);
-							askToUpgrade(versionName, versionDesc, versionCode, downloadURL, size);
+							askToUpgrade(versionName, versionDesc, versionCode, downloadURL, size, forceUpgrade);
 						} else if (getLocalVersionCode() == Integer.parseInt(versionCode)) {
 //					Log.d(TAG, "onUpdateAvailable: 没有更新版本");
 							enterLogin();
@@ -160,6 +161,7 @@ public class SplashActivity extends BaseActivity {
 		} else {
 //			Log.d(TAG, "checkUpdate: 网络未连接");
 			enterLogin();
+			Toast.makeText(SplashActivity.this, "您的设备未连接至网络", Toast.LENGTH_LONG).show();
 		}
 	}
 
@@ -175,29 +177,34 @@ public class SplashActivity extends BaseActivity {
 	}
 
 
-	private void askToUpgrade(final String versionName, final String versionDesc, String versionCode, final String downloadURL, final String size) {
+	private void askToUpgrade(final String versionName, final String versionDesc, String versionCode, final String downloadURL, final String size, final boolean forceUpgrade) {
+		if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(SplashActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+			String[] perms = {"android.permission.WRITE_EXTERNAL_STORAGE"};
+			ActivityCompat.requestPermissions(SplashActivity.this, perms, 1);
+		}
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				final AlertDialog.Builder builder = new AlertDialog.Builder(SplashActivity.this);
 				final AlertDialog.Builder innerBuilder = new AlertDialog.Builder(SplashActivity.this);
-				builder.setIcon(R.mipmap.warning)
-						.setTitle(R.string.有新版本啦)
-						.setOnCancelListener(new DialogInterface.OnCancelListener() {
-							@Override
-							public void onCancel(DialogInterface dialog) {
-								enterLogin();
-							}
-						})
-						.setMessage(getString(R.string.newer_version_detected) + versionName + "\n" + getString(R.string.size) + size + getString(R.string.newer_version_description) + "\n\n" + versionDesc)
+
+				builder.setIcon(R.mipmap.warning);
+				if (forceUpgrade) {
+					builder.setTitle("爸爸，此版本包含重大更新，必须要升级！").setCancelable(false);
+				} else {
+					builder.setTitle(R.string.有新版本啦).setCancelable(true);
+
+					builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+						@Override
+						public void onCancel(DialogInterface dialog) {
+							enterLogin();
+						}
+					});
+				}
+				builder.setMessage(getString(R.string.newer_version_detected) + versionName + "\n" + getString(R.string.size) + size + getString(R.string.newer_version_description) + "\n\n" + versionDesc)
 						.setPositiveButton(getString(R.string.我要升级), new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
-								if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(SplashActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-									String[] perms = {"android.permission.WRITE_EXTERNAL_STORAGE"};
-									ActivityCompat.requestPermissions(SplashActivity.this, perms, 1);
-								}
-
 								if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
 									Toast.makeText(SplashActivity.this, R.string.cannot_access_external_storage, Toast.LENGTH_LONG).show();
 								} else {
@@ -215,7 +222,7 @@ public class SplashActivity extends BaseActivity {
 													public void onClick(DialogInterface dialog, int which) {
 														Toast.makeText(SplashActivity.this, R.string.update_after_WiFied, Toast.LENGTH_LONG).show();
 														dialog.dismiss();
-														enterLogin();
+														SplashActivity.this.finish();
 													}
 												})
 												.setPositiveButton(R.string.I_am_rich, new DialogInterface.OnClickListener() {
@@ -230,12 +237,17 @@ public class SplashActivity extends BaseActivity {
 									}
 								}
 							}
-						}).setNegativeButton(R.string.不更新, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						enterLogin();
-					}
-				}).setCancelable(false).show();
+						});
+				if (!forceUpgrade) {
+					builder.setNegativeButton(R.string.不更新, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							enterLogin();
+						}
+					}).show();
+				} else {
+					builder.show();
+				}
 			}
 		});
 	}
@@ -303,7 +315,7 @@ public class SplashActivity extends BaseActivity {
 //				ex.printStackTrace();
 				Toast.makeText(SplashActivity.this, R.string.error_in_downloading, Toast.LENGTH_SHORT).show();
 //				enterHome();
-				enterLogin();
+//				enterLogin();
 //				Log.d(TAG, "onError: 下载出错啦");
 			}
 
@@ -311,7 +323,7 @@ public class SplashActivity extends BaseActivity {
 			public void onCancelled(CancelledException cex) {
 //				Log.d(TAG, "onCancelled: 下载已取消");
 //				Toast.makeText(x.app(), "cancelled", Toast.LENGTH_SHORT).show();
-				enterLogin();
+//				enterLogin();
 				builder.dismiss();
 			}
 
@@ -353,7 +365,7 @@ public class SplashActivity extends BaseActivity {
 //	}
 
 	/**
-	 * After checking, there is no newer version exits, enter the {@link HomeActivity} directly.
+	 * After checking, if there is no newer version exiting, enter the {@link MainActivity} directly.
 	 */
 	private void enterLogin() {
 		Intent intent = new Intent(this, LoginActivity.class);

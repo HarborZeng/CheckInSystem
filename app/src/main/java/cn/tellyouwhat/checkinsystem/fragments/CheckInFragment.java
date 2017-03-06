@@ -3,17 +3,23 @@ package cn.tellyouwhat.checkinsystem.fragments;
 import android.Manifest;
 import android.app.Fragment;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.Toolbar;
+import android.transition.Scene;
+import android.transition.TransitionInflater;
+import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
@@ -43,12 +49,30 @@ import cn.tellyouwhat.checkinsystem.R;
 public class CheckInFragment extends Fragment {
 	public LocationClient mLocationClient = null;
 	public BDLocationListener myListener = new MyLocationListener();
+	private ImageView imageView2_cover_in50;
+	private ImageView imageView2_cover_out50;
+	AlphaAnimation alphaAnimation = new AlphaAnimation(0f, 1f);
+
+
+	//	private LinearLayout groupPollingAddress;
 
 
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_check_in, container, false);
+		imageView2_cover_in50 = (ImageView) view.findViewById(R.id.imageView2_cover_in50);
+		imageView2_cover_out50 = (ImageView) view.findViewById(R.id.imageView2_cover_out50);
+
+//		LayoutInflater inflater2 = (LayoutInflater)getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+//		groupPollingAddress = (LinearLayout)inflater2.inflate(R.layout.three_state, null);
+
+		final ViewGroup sceneRoot = (ViewGroup) view.findViewById(R.id.scene_root);
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			TransitionManager.go(Scene.getSceneForLayout(sceneRoot, R.layout.three_state, getActivity()), TransitionInflater.from(getActivity()).inflateTransition(R.transition.slide_and_changebounds_sequential_with_interpolators));
+
+		}
 
 		final FloatingActionsMenu menuMultipleActions = (FloatingActionsMenu) view.findViewById(R.id.multiple_actions);
 
@@ -68,22 +92,36 @@ public class CheckInFragment extends Fragment {
 		actionA.setIcon(R.drawable.locate);
 		actionA.setOnClickListener(new OnClickListener() {
 			@Override
-			public void onClick(View view) {
+			public void onClick(final View view) {
 				if (PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
 //开始定位
 					mLocationClient.start();
 					menuMultipleActions.collapse();
+
+
 					Snackbar.make(view, R.string.getting_location, Snackbar.LENGTH_INDEFINITE)
-							.setAction("取消", new View.OnClickListener() {
+							.setAction("取消", new OnClickListener() {
 								@Override
 								public void onClick(View v) {
 									mLocationClient.stop();
+									getActivity().findViewById(R.id.imageView_cover_out_company).setVisibility(View.INVISIBLE);
+									getActivity().findViewById(R.id.imageView_cover_in_company).setVisibility(View.INVISIBLE);
+									getActivity().findViewById(R.id.succeed).setVisibility(View.INVISIBLE);
+									getActivity().findViewById(R.id.imageView_cover_finally_success).setVisibility(View.INVISIBLE);
+									getActivity().findViewById(R.id.out_of_range).setVisibility(View.INVISIBLE);
+									getActivity().findViewById(R.id.in_range).setVisibility(View.INVISIBLE);
+									imageView2_cover_in50.setVisibility(View.INVISIBLE);
+									imageView2_cover_out50.setVisibility(View.INVISIBLE);
+									getActivity().findViewById(R.id.enable_wifi_GPS_textView).setVisibility(View.INVISIBLE);
+									getActivity().findViewById(R.id.enough_accuracy_text_view).setVisibility(View.INVISIBLE);
+
+
 									//取消定位请求
 								}
 							}).show();
 				} else {
 					Snackbar.make(view, "必须要授权位置访问才能正常工作", Snackbar.LENGTH_INDEFINITE)
-							.setAction("授权", new View.OnClickListener() {
+							.setAction("授权", new OnClickListener() {
 								@Override
 								public void onClick(View v) {
 									String[] perms = {"android.permission.ACCESS_FINE_LOCATION"};
@@ -119,7 +157,7 @@ public class CheckInFragment extends Fragment {
 		option.setCoorType("bd09ll");
 		//可选，默认gcj02，设置返回的定位结果坐标系
 
-		int span = 1000;
+		int span = 2100;
 		option.setScanSpan(span);
 		//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
 
@@ -129,13 +167,13 @@ public class CheckInFragment extends Fragment {
 		option.setOpenGps(true);
 		//可选，默认false,设置是否使用gps
 
-		option.setLocationNotify(true);
+		option.setLocationNotify(false);
 		//可选，默认false，设置是否当GPS有效时按照1S/1次频率输出GPS结果
 
 		option.setIsNeedLocationDescribe(true);
 		//可选，默认false，设置是否需要位置语义化结果，可以在BDLocation.getLocationDescribe里得到，结果类似于“在北京天安门附近”
 
-		option.setIsNeedLocationPoiList(true);
+		option.setIsNeedLocationPoiList(false);
 		//可选，默认false，设置是否需要POI结果，可以在BDLocation.getPoiList里得到
 
 		option.setIgnoreKillProcess(false);
@@ -150,22 +188,29 @@ public class CheckInFragment extends Fragment {
 	}
 
 	private class MyLocationListener implements BDLocationListener {
+
+
 		JSONObject jsonCreator = new JSONObject();
+		private int times = 0;
 
 		@Override
-		public void onReceiveLocation(BDLocation location) {
+		public void onReceiveLocation(final BDLocation location) {
+			alphaAnimation.setDuration(800);
+			float radius = location.getRadius();
 
-			//获取定位结果
-			final StringBuffer sb = new StringBuffer(256);
 			try {
 				jsonCreator.put("TIME", location.getTime());
 				jsonCreator.put("LATITUDE", location.getLatitude());
 				jsonCreator.put("LONGITUDE", location.getLongitude());
-				jsonCreator.put("RADIUS", location.getRadius());
+				jsonCreator.put("RADIUS", radius);
 			} catch (JSONException e) {
 				e.printStackTrace();
 				Toast.makeText(getActivity(), "cannot create json of general info successfully, please feedback", Toast.LENGTH_LONG).show();
 			}
+
+
+			//获取定位结果
+			final StringBuffer sb = new StringBuffer(256);
 			sb.append("time : ");
 			sb.append(location.getTime());    //获取定位时间
 
@@ -175,11 +220,11 @@ public class CheckInFragment extends Fragment {
 			sb.append("\nlatitude : ");
 			sb.append(location.getLatitude());    //获取纬度信息
 
-			sb.append("\nlontitude : ");
+			sb.append("\nlongitude : ");
 			sb.append(location.getLongitude());    //获取经度信息
 
 			sb.append("\nradius : ");
-			sb.append(location.getRadius());    //获取定位精准度
+			sb.append(radius);    //获取定位精准度
 
 			if (location.getLocType() == BDLocation.TypeGpsLocation) {
 				// GPS定位结果
@@ -237,7 +282,7 @@ public class CheckInFragment extends Fragment {
 			}
 
 			sb.append("\nlocationdescribe : ");
-			sb.append(location.getLocationDescribe());    //位置语义化信息
+			sb.append(location.getLocationDescribe() == null || "null".equals(location.getLocationDescribe()) ? "离线定位，位置未知" : location.getLocationDescribe());    //位置语义化信息
 
 			List<Poi> list = location.getPoiList();    // POI数据
 			if (list != null) {
@@ -251,7 +296,42 @@ public class CheckInFragment extends Fragment {
 
 			Log.i("BaiduLocationApiDem", sb.toString());
 
-			uploadLocationInfo(jsonCreator);
+			if (radius < 50 && radius != 0) {
+				getActivity().runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						times = 0;
+						TextView enough_accuracy_text_view = (TextView) getActivity().findViewById(R.id.enough_accuracy_text_view);
+						enough_accuracy_text_view.setText("精度合格\n");
+						enough_accuracy_text_view.setVisibility(View.VISIBLE);
+						enough_accuracy_text_view.startAnimation(alphaAnimation);
+						enough_accuracy_text_view.append(location.getLocationDescribe());
+						imageView2_cover_in50.setVisibility(View.VISIBLE);
+						imageView2_cover_out50.setVisibility(View.INVISIBLE);
+						imageView2_cover_in50.startAnimation(alphaAnimation);
+
+					}
+				});
+
+				uploadLocationInfo(jsonCreator);
+			} else {
+				getActivity().runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						if (times > 2) {
+							TextView enable_wifi_GPS_textView = (TextView) getActivity().findViewById(R.id.enable_wifi_GPS_textView);
+							enable_wifi_GPS_textView.setVisibility(View.VISIBLE);
+							enable_wifi_GPS_textView.startAnimation(alphaAnimation);
+						}
+						times++;
+						imageView2_cover_in50.setVisibility(View.INVISIBLE);
+						imageView2_cover_out50.setVisibility(View.VISIBLE);
+						imageView2_cover_in50.startAnimation(alphaAnimation);
+						imageView2_cover_out50.startAnimation(alphaAnimation);
+
+					}
+				});
+			}
 
 		}
 
@@ -266,22 +346,58 @@ public class CheckInFragment extends Fragment {
 	 *
 	 * @param jsonCreator 包含地理位置信息的
 	 */
-	private void uploadLocationInfo(JSONObject jsonCreator) {
+	private void uploadLocationInfo(final JSONObject jsonCreator) {
+		alphaAnimation.setDuration(800);
 
-		RequestParams entity = new RequestParams("http://tellyouwhat.cn/varify_location");
+		final ImageView imageView_cover_out_company = (ImageView) getActivity().findViewById(R.id.imageView_cover_out_company);
+		final TextView out_of_range = (TextView) getActivity().findViewById(R.id.out_of_range);
+
+		RequestParams entity = new RequestParams("http://tellyouwhat.cn/location_verify/location_verify");
 		entity.setAsJsonContent(true);
 		entity.setBodyContent(jsonCreator.toString());
 
-		x.http().post(entity, new Callback.CommonCallback<Integer>() {
+		Log.i("发送过去的数据", "uploadLocationInfo: " + jsonCreator.toString());
+
+		x.http().post(entity, new Callback.CommonCallback<String>() {
 			@Override
-			public void onSuccess(Integer result) {
+			public void onSuccess(String result) {
+
 				switch (result) {
-					case 0:
+					case "out":
 						//不在办公区域范围内
+						Log.i("uploadLocationInfo", "onSuccess: 不在办公区域范围内");
+						imageView_cover_out_company.setVisibility(View.VISIBLE);
+						imageView_cover_out_company.startAnimation(alphaAnimation);
+						out_of_range.startAnimation(alphaAnimation);
+						out_of_range.setVisibility(View.VISIBLE);
 						break;
-					case 1:
+					case "in":
 						//在办公区域范围内
+						Log.i("uploadLocationInfo", "onSuccess: 在办公区域范围内");
+						mLocationClient.stop();
+						imageView_cover_out_company.setVisibility(View.INVISIBLE);
+						out_of_range.setVisibility(View.INVISIBLE);
+
+						ImageView imageView_cover_in_company = (ImageView) getActivity().findViewById(R.id.imageView_cover_in_company);
+						imageView_cover_in_company.setVisibility(View.VISIBLE);
+						imageView_cover_in_company.setAnimation(alphaAnimation);
+						TextView in_range = (TextView) getActivity().findViewById(R.id.in_range);
+						in_range.startAnimation(alphaAnimation);
+						in_range.setVisibility(View.VISIBLE);
+
+						//时间格式大概是这样的：2017-03-06 09:39:59
+						try {
+							beginCheckingIn(jsonCreator.getString("TIME"));
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}
+
 						break;
+					case "Database Connect failed":
+						//打开数据库失败
+						Log.d("uploadLocationInfo", "Database Connect failed");
+						Toast.makeText(getActivity(), "服务器正忙，请稍候重试", Toast.LENGTH_SHORT).show();
+
 					default:
 						Log.w("Result code", "onSuccess: Wrong result code" + result);
 				}
@@ -289,19 +405,23 @@ public class CheckInFragment extends Fragment {
 
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
-
+				Log.w("发送完坐标数据的返回", "onError: " + ex);
 			}
 
 			@Override
 			public void onCancelled(CancelledException cex) {
-
+				Log.w("发送完坐标数据的返回", "onCanceled: " + cex);
 			}
 
 			@Override
 			public void onFinished() {
-
+				Log.w("发送完坐标数据的返回", "onFinished");
 			}
 		});
+
+	}
+
+	private void beginCheckingIn(String time) {
 
 	}
 

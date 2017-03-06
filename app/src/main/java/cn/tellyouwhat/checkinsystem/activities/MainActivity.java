@@ -1,10 +1,11 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
-import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -23,31 +24,48 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-			switch (item.getItemId()) {
+			FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
 
+			Fragment history = getFragmentManager().findFragmentByTag("History");
+			Fragment me = getFragmentManager().findFragmentByTag("Me");
+			Fragment checkIn = getFragmentManager().findFragmentByTag("CheckIn");
+
+			switch (item.getItemId()) {
 				case R.id.navigation_check_in:
 					setTitle(item.getTitle());
-//					Toolbar toolbar_check_in= (Toolbar) findViewById(R.id.toolbar_check_in);
-//					setSupportActionBar(toolbar_check_in);
-//					getSupportActionBar().setTitle("aaa");
-					getFragmentManager()
-							.beginTransaction()
-							.replace(R.id.content, CheckInFragment.newInstance())
-							.commit();
+					if (checkIn != null)
+						fragmentTransaction.show(checkIn);
+					if (history != null)
+						fragmentTransaction.hide(history);
+					if (me != null)
+						fragmentTransaction.hide(me);
+					fragmentTransaction.commit();
 					return true;
 				case R.id.navigation_history_record:
 					setTitle(item.getTitle());
-					getFragmentManager()
-							.beginTransaction()
-							.replace(R.id.content, HistoryFragment.newInstance())
-							.commit();
+					if (checkIn != null)
+						fragmentTransaction.hide(checkIn);
+					if (history != null)
+						fragmentTransaction.show(history);
+					else
+						fragmentTransaction.add(R.id.content, HistoryFragment.newInstance(), "History");
+					if (me != null)
+						fragmentTransaction.hide(me);
+					fragmentTransaction.commit();
 					return true;
 				case R.id.navigation_me:
 					setTitle(item.getTitle());
-					getFragmentManager()
-							.beginTransaction()
-							.replace(R.id.content, MeFragment.newInstance())
-							.commit();
+					if (checkIn != null)
+						fragmentTransaction.hide(checkIn);
+					if (history != null)
+						fragmentTransaction.hide(history);
+
+					if (me != null)
+						fragmentTransaction.show(me);
+					else
+						fragmentTransaction.add(R.id.content, MeFragment.newInstance(), "Me");
+
+					fragmentTransaction.commit();
 					return true;
 			}
 			return false;
@@ -62,9 +80,13 @@ public class MainActivity extends BaseActivity {
 		getSupportActionBar().setDisplayHomeAsUpEnabled(false);
 		getFragmentManager()
 				.beginTransaction()
-				.replace(R.id.content, new CheckInFragment())
+				.add(R.id.content, CheckInFragment.newInstance(), "CheckIn")
 				.commit();
 
+//		getFragmentManager().beginTransaction()
+//				.remove(getFragmentManager().findFragmentByTag("History"))
+//				.remove(getFragmentManager().findFragmentByTag("Me"))
+//				.commit();
 		BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
 		navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 	}
