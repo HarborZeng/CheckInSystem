@@ -3,6 +3,7 @@ package cn.tellyouwhat.checkinsystem.activities;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -83,12 +84,13 @@ public class MainActivity extends BaseActivity {
 				.add(R.id.content, CheckInFragment.newInstance(), "CheckIn")
 				.commit();
 
-//		getFragmentManager().beginTransaction()
-//				.remove(getFragmentManager().findFragmentByTag("History"))
-//				.remove(getFragmentManager().findFragmentByTag("Me"))
-//				.commit();
 		BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
 		navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+	}
+
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
 	}
 
 	/**

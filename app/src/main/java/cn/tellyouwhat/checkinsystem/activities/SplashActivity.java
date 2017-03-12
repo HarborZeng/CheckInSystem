@@ -63,7 +63,10 @@ public class SplashActivity extends BaseActivity {
 			window.setNavigationBarColor(Color.TRANSPARENT);
 		}
 		setContentView(R.layout.activity_splash);
-		x.view().inject(this);
+
+		//把这一句话注释掉之后，API21一下就不会报错
+//		x.view().inject(this);
+
 
 		checkUpdate();
 		initShortCut();

@@ -43,6 +43,7 @@
             android:value="nIT6orX82KFVr8fKyWgkvCWGIpGFaS0r"/>
 
         <activity
+            android:screenOrientation="portrait"
             android:name=".activities.SplashActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
@@ -52,10 +53,12 @@
             </intent-filter>
         </activity>
         <activity
+            android:screenOrientation="portrait"
             android:name=".activities.LoginActivity"
             android:label="@string/log_in">
         </activity>
         <activity
+            android:screenOrientation="portrait"
             android:name=".activities.ResetPasswordActivity"
             android:label="找回密码">
         </activity>
@@ -77,6 +80,7 @@
         </service>
 
         <activity
+            android:screenOrientation="portrait"
             android:name=".activities.MainActivity"
             android:label="@string/check_in">
             <meta-data

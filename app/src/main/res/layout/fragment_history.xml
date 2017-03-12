@@ -6,9 +6,19 @@
               android:layout_height="match_parent">
 
     <CalendarView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="76dp"
-        android:id="@+id/calendarView"/>
+        android:id="@+id/calendarView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="center"
+        android:layout_weight="5"
+        android:layout_marginTop="30dp"/>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerView_check_in_detail"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2">
+
+    </android.support.v7.widget.RecyclerView>
 
 </LinearLayout>

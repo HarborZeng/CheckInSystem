@@ -12,8 +12,8 @@ android {
 		applicationId "cn.tellyouwhat.checkinsystem"
 		minSdkVersion 14
 		targetSdkVersion 25
-		versionCode 11
-		versionName "0.2.1Alpha"
+		versionCode 13
+		versionName "0.2.3Alpha"
 		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
 

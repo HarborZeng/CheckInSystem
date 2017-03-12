@@ -26,7 +26,6 @@ import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
-import com.baidu.location.Poi;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
 
@@ -35,8 +34,6 @@ import org.json.JSONObject;
 import org.xutils.common.Callback;
 import org.xutils.http.RequestParams;
 import org.xutils.x;
-
-import java.util.List;
 
 import cn.tellyouwhat.checkinsystem.R;
 
@@ -54,7 +51,6 @@ public class CheckInFragment extends Fragment {
 	AlphaAnimation alphaAnimation = new AlphaAnimation(0f, 1f);
 
 
-	//	private LinearLayout groupPollingAddress;
 
 
 	@Nullable
@@ -209,8 +205,13 @@ public class CheckInFragment extends Fragment {
 			}
 
 
+
+
+			/*
+			  以下内容属于测试代码
+			 */
 			//获取定位结果
-			final StringBuffer sb = new StringBuffer(256);
+/*			final StringBuffer sb = new StringBuffer(256);
 			sb.append("time : ");
 			sb.append(location.getTime());    //获取定位时间
 
@@ -294,7 +295,7 @@ public class CheckInFragment extends Fragment {
 				}
 			}
 
-			Log.i("BaiduLocationApiDem", sb.toString());
+			Log.i("BaiduLocationApiDem", sb.toString());*/
 
 			if (radius < 50 && radius != 0) {
 				getActivity().runOnUiThread(new Runnable() {
@@ -302,10 +303,11 @@ public class CheckInFragment extends Fragment {
 					public void run() {
 						times = 0;
 						TextView enough_accuracy_text_view = (TextView) getActivity().findViewById(R.id.enough_accuracy_text_view);
+						getActivity().findViewById(R.id.enable_wifi_GPS_textView).setVisibility(View.INVISIBLE);
 						enough_accuracy_text_view.setText("精度合格\n");
+						enough_accuracy_text_view.append(location.getLocationDescribe() == null ? "离线定位" : location.getLocationDescribe());
 						enough_accuracy_text_view.setVisibility(View.VISIBLE);
 						enough_accuracy_text_view.startAnimation(alphaAnimation);
-						enough_accuracy_text_view.append(location.getLocationDescribe());
 						imageView2_cover_in50.setVisibility(View.VISIBLE);
 						imageView2_cover_out50.setVisibility(View.INVISIBLE);
 						imageView2_cover_in50.startAnimation(alphaAnimation);
@@ -325,8 +327,8 @@ public class CheckInFragment extends Fragment {
 						}
 						times++;
 						imageView2_cover_in50.setVisibility(View.INVISIBLE);
+						getActivity().findViewById(R.id.enough_accuracy_text_view).setVisibility(View.INVISIBLE);
 						imageView2_cover_out50.setVisibility(View.VISIBLE);
-						imageView2_cover_in50.startAnimation(alphaAnimation);
 						imageView2_cover_out50.startAnimation(alphaAnimation);
 
 					}
@@ -342,9 +344,9 @@ public class CheckInFragment extends Fragment {
 	}
 
 	/**
-	 * 向服务器穿送地理位置坐标信息的json文件的一个方法
+	 * 向服务器传送地理位置坐标信息的json文件的一个方法
 	 *
-	 * @param jsonCreator 包含地理位置信息的
+	 * @param jsonCreator 包含地理位置信息的json对象
 	 */
 	private void uploadLocationInfo(final JSONObject jsonCreator) {
 		alphaAnimation.setDuration(800);
@@ -356,7 +358,7 @@ public class CheckInFragment extends Fragment {
 		entity.setAsJsonContent(true);
 		entity.setBodyContent(jsonCreator.toString());
 
-		Log.i("发送过去的数据", "uploadLocationInfo: " + jsonCreator.toString());
+//		Log.i("发送过去的数据", "uploadLocationInfo: " + jsonCreator.toString());
 
 		x.http().post(entity, new Callback.CommonCallback<String>() {
 			@Override
@@ -365,7 +367,7 @@ public class CheckInFragment extends Fragment {
 				switch (result) {
 					case "out":
 						//不在办公区域范围内
-						Log.i("uploadLocationInfo", "onSuccess: 不在办公区域范围内");
+//						Log.i("uploadLocationInfo", "onSuccess: 不在办公区域范围内");
 						imageView_cover_out_company.setVisibility(View.VISIBLE);
 						imageView_cover_out_company.startAnimation(alphaAnimation);
 						out_of_range.startAnimation(alphaAnimation);
@@ -373,7 +375,7 @@ public class CheckInFragment extends Fragment {
 						break;
 					case "in":
 						//在办公区域范围内
-						Log.i("uploadLocationInfo", "onSuccess: 在办公区域范围内");
+//						Log.i("uploadLocationInfo", "onSuccess: 在办公区域范围内");
 						mLocationClient.stop();
 						imageView_cover_out_company.setVisibility(View.INVISIBLE);
 						out_of_range.setVisibility(View.INVISIBLE);
@@ -396,10 +398,10 @@ public class CheckInFragment extends Fragment {
 					case "Database Connect failed":
 						//打开数据库失败
 						Log.d("uploadLocationInfo", "Database Connect failed");
-						Toast.makeText(getActivity(), "服务器正忙，请稍候重试", Toast.LENGTH_SHORT).show();
+						Toast.makeText(getActivity(), R.string.server_busy, Toast.LENGTH_SHORT).show();
 
 					default:
-						Log.w("Result code", "onSuccess: Wrong result code" + result);
+						Log.w("Result code", "onSuccess: Wrong result code: " + result);
 				}
 			}
 
@@ -415,7 +417,7 @@ public class CheckInFragment extends Fragment {
 
 			@Override
 			public void onFinished() {
-				Log.w("发送完坐标数据的返回", "onFinished");
+//				Log.w("发送完坐标数据的返回", "onFinished");
 			}
 		});
 

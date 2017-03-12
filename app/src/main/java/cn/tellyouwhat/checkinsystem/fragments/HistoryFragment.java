@@ -2,7 +2,9 @@ package cn.tellyouwhat.checkinsystem.fragments;
 
 import android.app.Fragment;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,11 +29,12 @@ public class HistoryFragment extends Fragment {
 
 		calendar_checkin_history = (CalendarView) view.findViewById(R.id.calendarView);
 
-		//点击查看当天签到信息
-		calendar_checkin_history.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
 
+		//点击查看当天签到信息
+		calendar_checkin_history.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
+			@Override
+			public void onSelectedDayChange(@NonNull CalendarView view, int year, int month, int dayOfMonth) {
+				Log.i("calendar", "onSelectedDayChange: year-month-dayOfMonth: " + year + "-" + month + "-" + dayOfMonth + "-");
 			}
 		});
 
