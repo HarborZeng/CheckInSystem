@@ -2,9 +2,21 @@
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
-             android:background="@mipmap/bg_login"
              android:gravity="center_horizontal"
+
              tools:context="cn.tellyouwhat.checkinsystem.activities.LoginActivity">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@mipmap/bg_login"
+            android:contentDescription="background image of login"
+            tools:ignore="HardcodedText"/>
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

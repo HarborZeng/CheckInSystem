@@ -5,7 +5,6 @@ import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -16,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -36,8 +36,10 @@ import java.io.File;
 import java.math.RoundingMode;
 
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
 import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
+import cn.tellyouwhat.checkinsystem.utils.SPUtil;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -46,6 +48,7 @@ public class SplashActivity extends BaseActivity {
 	private static final String TAG = "SplashActivity";
 	private PackageInfo packageInfo;
 	private long startTime;
+	private boolean needToShowTabbedActivity;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,13 +61,19 @@ public class SplashActivity extends BaseActivity {
 			window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
 					| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
 					| View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+
 			window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
 			window.setStatusBarColor(Color.TRANSPARENT);
 			window.setNavigationBarColor(Color.TRANSPARENT);
 		}
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			// 设置状态栏透明
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+
+		}
 		setContentView(R.layout.activity_splash);
 
-		//把这一句话注释掉之后，API21一下就不会报错
+		//把这一句话注释掉之后，API21以下就不会报错
 //		x.view().inject(this);
 
 
@@ -72,10 +81,11 @@ public class SplashActivity extends BaseActivity {
 		initShortCut();
 	}
 
+
 	private void initShortCut() {
-		SharedPreferences setting = getSharedPreferences("silent.preferences", 0);
+		SPUtil spUtil = new SPUtil(this);
 // 判断是否第一次启动应用程序（默认为true）
-		boolean firstStart = setting.getBoolean("FIRST_START", true);
+		boolean firstStart = spUtil.getBoolean(ConstantValues.FIRST_TIME_RUN, true);
 // 第一次启动时创建桌面快捷方式
 		if (firstStart) {
 			Intent shortcut = new Intent("com.android.launcher.action.INSTALL_SHORTCUT");
@@ -92,10 +102,8 @@ public class SplashActivity extends BaseActivity {
 // 发出广播
 			sendBroadcast(shortcut);
 // 将第一次启动的标识设置为false
-			SharedPreferences.Editor editor = setting.edit();
-			editor.putBoolean("FIRST_START", false);
+			spUtil.putBoolean(ConstantValues.FIRST_TIME_RUN, false);
 // 提交设置
-			editor.apply();
 			Toast.makeText(this, R.string.shortcut_created, Toast.LENGTH_SHORT).show();
 		}
 	}
@@ -122,6 +130,8 @@ public class SplashActivity extends BaseActivity {
 						String downloadURL = object.getString("downloadURL");
 						boolean forceUpgrade = object.getBoolean("forceUpgrade");
 						String size = object.getString("size");
+						needToShowTabbedActivity = object.getBoolean("needToShowTabbedActivity");
+
 						long endTime = SystemClock.elapsedRealtime();
 						long duration = 900 - (endTime - startTime);
 						if (duration > 0) {
@@ -179,6 +189,24 @@ public class SplashActivity extends BaseActivity {
 		return packageInfo.versionCode;
 	}
 
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull final String[] permissions, @NonNull int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+		for (int r : grantResults) {
+			if (r == PackageManager.PERMISSION_DENIED) {
+				Snackbar.make(findViewById(R.id.activity_splash), "必须要授予写入的权限", Snackbar.LENGTH_LONG)
+						.setAction("授权", new View.OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								ActivityCompat.requestPermissions(SplashActivity.this, permissions, 1);
+							}
+						});
+			}
+		}
+
+	}
 
 	private void askToUpgrade(final String versionName, final String versionDesc, String versionCode, final String downloadURL, final String size, final boolean forceUpgrade) {
 		if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(SplashActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
@@ -318,7 +346,7 @@ public class SplashActivity extends BaseActivity {
 //				ex.printStackTrace();
 				Toast.makeText(SplashActivity.this, R.string.error_in_downloading, Toast.LENGTH_SHORT).show();
 //				enterHome();
-//				enterLogin();
+				enterLogin();
 //				Log.d(TAG, "onError: 下载出错啦");
 			}
 
@@ -372,6 +400,7 @@ public class SplashActivity extends BaseActivity {
 	 */
 	private void enterLogin() {
 		Intent intent = new Intent(this, LoginActivity.class);
+		intent.putExtra(ConstantValues.FIRST_TIME_AFTER_UPGRADE, needToShowTabbedActivity);
 		startActivity(intent);
 		finish();
 	}

@@ -43,8 +43,8 @@
             android:value="nIT6orX82KFVr8fKyWgkvCWGIpGFaS0r"/>
 
         <activity
-            android:screenOrientation="portrait"
             android:name=".activities.SplashActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -53,14 +53,15 @@
             </intent-filter>
         </activity>
         <activity
-            android:screenOrientation="portrait"
             android:name=".activities.LoginActivity"
-            android:label="@string/log_in">
+            android:label="@string/log_in"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:screenOrientation="portrait">
         </activity>
         <activity
-            android:screenOrientation="portrait"
             android:name=".activities.ResetPasswordActivity"
-            android:label="找回密码">
+            android:label="找回密码"
+            android:screenOrientation="portrait">
         </activity>
 
         <provider
@@ -80,12 +81,22 @@
         </service>
 
         <activity
-            android:screenOrientation="portrait"
             android:name=".activities.MainActivity"
-            android:label="@string/check_in">
+            android:label="@string/check_in"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="cn.tellyouwhat.checkinsystem.activities.BaseActivity"/>
+        </activity>
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity
+            android:name=".activities.TabbedActivity"
+            android:label="@string/title_activity_tabbed"
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
     </application>
 

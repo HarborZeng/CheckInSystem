@@ -12,8 +12,8 @@ android {
 		applicationId "cn.tellyouwhat.checkinsystem"
 		minSdkVersion 14
 		targetSdkVersion 25
-		versionCode 13
-		versionName "0.2.3Alpha"
+		versionCode 20170318
+		versionName "0.3.0Alpha"
 		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
 
@@ -22,6 +22,8 @@ android {
 
 
 		vectorDrawables.useSupportLibrary = true
+
+
 	}
 	sourceSets {
 		main {
@@ -39,6 +41,7 @@ android {
 		}
 	}
 
+
 }
 
 dependencies {
@@ -52,4 +55,5 @@ dependencies {
 	compile 'com.android.support:design:25.1.1'
 	compile 'com.android.support:support-vector-drawable:25.1.1'
 	compile 'com.getbase:floatingactionbutton:1.10.1'
+	compile 'com.android.support:support-v4:25.1.1'
 }

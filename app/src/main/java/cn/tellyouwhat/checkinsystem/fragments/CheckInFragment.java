@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -71,6 +72,7 @@ public class CheckInFragment extends Fragment {
 		}
 
 		final FloatingActionsMenu menuMultipleActions = (FloatingActionsMenu) view.findViewById(R.id.multiple_actions);
+		menuMultipleActions.expand();
 
 		final FloatingActionButton actionB = (FloatingActionButton) view.findViewById(R.id.action_b);
 		actionB.setIcon(R.drawable.check_out);
@@ -83,36 +85,45 @@ public class CheckInFragment extends Fragment {
 			}
 		});
 
-
 		final FloatingActionButton actionA = (FloatingActionButton) view.findViewById(R.id.action_a);
 		actionA.setIcon(R.drawable.locate);
 		actionA.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View view) {
 				if (PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
-//开始定位
+					//开始定位
 					mLocationClient.start();
 					menuMultipleActions.collapse();
-
 
 					Snackbar.make(view, R.string.getting_location, Snackbar.LENGTH_INDEFINITE)
 							.setAction("取消", new OnClickListener() {
 								@Override
 								public void onClick(View v) {
 									mLocationClient.stop();
-									getActivity().findViewById(R.id.imageView_cover_out_company).setVisibility(View.INVISIBLE);
-									getActivity().findViewById(R.id.imageView_cover_in_company).setVisibility(View.INVISIBLE);
-									getActivity().findViewById(R.id.succeed).setVisibility(View.INVISIBLE);
-									getActivity().findViewById(R.id.imageView_cover_finally_success).setVisibility(View.INVISIBLE);
-									getActivity().findViewById(R.id.out_of_range).setVisibility(View.INVISIBLE);
-									getActivity().findViewById(R.id.in_range).setVisibility(View.INVISIBLE);
-									imageView2_cover_in50.setVisibility(View.INVISIBLE);
-									imageView2_cover_out50.setVisibility(View.INVISIBLE);
-									getActivity().findViewById(R.id.enable_wifi_GPS_textView).setVisibility(View.INVISIBLE);
-									getActivity().findViewById(R.id.enough_accuracy_text_view).setVisibility(View.INVISIBLE);
-
-
-									//取消定位请求
+									new Thread(new Runnable() {
+										@Override
+										public void run() {
+											//睡100毫秒是为了防止当执行setVisibility INVISIBLE时不至于 服务器对于是否在设定区域内的结果还未返回
+											//就已经执行了findViewById(R.id.out_of_range).setVisibility(View.INVISIBLE);
+											//类似的代码从而导致取消定位之后有残留的图片
+											SystemClock.sleep(100);
+											getActivity().runOnUiThread(new Runnable() {
+												@Override
+												public void run() {
+													getActivity().findViewById(R.id.imageView_cover_out_company).setVisibility(View.INVISIBLE);
+													getActivity().findViewById(R.id.imageView_cover_in_company).setVisibility(View.INVISIBLE);
+													getActivity().findViewById(R.id.succeed).setVisibility(View.INVISIBLE);
+													getActivity().findViewById(R.id.imageView_cover_finally_success).setVisibility(View.INVISIBLE);
+													getActivity().findViewById(R.id.out_of_range).setVisibility(View.INVISIBLE);
+													getActivity().findViewById(R.id.in_range).setVisibility(View.INVISIBLE);
+													imageView2_cover_in50.setVisibility(View.INVISIBLE);
+													imageView2_cover_out50.setVisibility(View.INVISIBLE);
+													getActivity().findViewById(R.id.enable_wifi_GPS_textView).setVisibility(View.INVISIBLE);
+													getActivity().findViewById(R.id.enough_accuracy_text_view).setVisibility(View.INVISIBLE);
+												}
+											});
+										}
+									}).start();
 								}
 							}).show();
 				} else {
@@ -330,7 +341,6 @@ public class CheckInFragment extends Fragment {
 						getActivity().findViewById(R.id.enough_accuracy_text_view).setVisibility(View.INVISIBLE);
 						imageView2_cover_out50.setVisibility(View.VISIBLE);
 						imageView2_cover_out50.startAnimation(alphaAnimation);
-
 					}
 				});
 			}

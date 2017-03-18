@@ -3,6 +3,7 @@ package cn.tellyouwhat.checkinsystem.activities;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,6 +16,8 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -29,7 +32,9 @@ import org.xutils.http.RequestParams;
 import org.xutils.x;
 
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
+import cn.tellyouwhat.checkinsystem.utils.SPUtil;
 
 /**
  * A login screen that offers login via number/password.
@@ -45,6 +50,7 @@ public class LoginActivity extends BaseActivity {
 	private SharedPreferences mSharedPreferences;
 	private CheckBox mCheckBox_rememberPassword;
 	private CheckBox mCheckbox_auto_login;
+	private boolean needToShowTabbedActivity;
 
 	/**
 	 * 此方法为对登陆界面的“忘记密码”点击事件的响应，即携带面板上已输入手机号（仅限），前往{@link ResetPasswordActivity}重置密码
@@ -64,6 +70,10 @@ public class LoginActivity extends BaseActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
+
+		setTranslucent(this);
+
+		needToShowTabbedActivity = getIntent().getBooleanExtra(ConstantValues.FIRST_TIME_AFTER_UPGRADE, true);
 		// Set up the login form.
 		mNumberView = (EditText) findViewById(R.id.number);
 		mPasswordView = (EditText) findViewById(R.id.password);
@@ -203,14 +213,14 @@ public class LoginActivity extends BaseActivity {
 		// the progress spinner.
 		int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-		mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-		mLoginFormView.animate().setDuration(shortAnimTime).alpha(
-				show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-			@Override
-			public void onAnimationEnd(Animator animation) {
-				mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-			}
-		});
+//		mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+//		mLoginFormView.animate().setDuration(shortAnimTime).alpha(
+//				show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
+//			@Override
+//			public void onAnimationEnd(Animator animation) {
+//				mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+//			}
+//		});
 
 		mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
 		mProgressView.animate().setDuration(shortAnimTime).alpha(
@@ -317,16 +327,10 @@ public class LoginActivity extends BaseActivity {
 						editor.putBoolean("REMEMBER_CHECKBOX_STATUS", false);
 					}
 					editor.apply();
-
+//TODO 继续写逻辑
+					initGuidancePages();
 //					 Activity跳转提交数据
-					Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-					if (!"0".equals(finalJobNumber)) {
-						intent.putExtra("JOB_NUMBER", finalJobNumber);
-					}
-					if (!"0".equals(finalPhoneNumber)) {
-						intent.putExtra("PHONE_NUMBER", finalPhoneNumber);
-					}
-					startActivity(intent);
+					gotoMain(finalJobNumber, finalPhoneNumber);
 					finish();
 				}
 
@@ -336,6 +340,10 @@ public class LoginActivity extends BaseActivity {
 			public void onError(Throwable ex, boolean isOnCallback) {
 				Log.w(TAG, "onError: " + ex);
 				showProgress(false);
+
+				//TODO 服务器搭好之后注释掉下面这句
+				gotoMain("0", "0");
+
 				Snackbar.make(findViewById(R.id.login_form), "网络开小差了~~", Snackbar.LENGTH_LONG).show();
 			}
 
@@ -351,6 +359,38 @@ public class LoginActivity extends BaseActivity {
 				Log.w(TAG, "onFinished: ");
 			}
 		});
+	}
+
+	private void gotoMain(String finalJobNumber, String finalPhoneNumber) {
+		Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+		if (!"0".equals(finalJobNumber)) {
+			intent.putExtra("JOB_NUMBER", finalJobNumber);
+		}
+		if (!"0".equals(finalPhoneNumber)) {
+			intent.putExtra("PHONE_NUMBER", finalPhoneNumber);
+		}
+		startActivity(intent);
+	}
+
+	private void initGuidancePages() {
+		SPUtil spUtil = new SPUtil(this);
+		boolean isFirstTimeAfterUpgrade = spUtil.getBoolean(ConstantValues.FIRST_TIME_AFTER_UPGRADE, true);
+		if (isFirstTimeAfterUpgrade && needToShowTabbedActivity) {
+			Intent intent = new Intent(this, TabbedActivity.class);
+			startActivity(intent);
+			finish();
+		}
+	}
+
+	/**
+	 * 使状态栏透明 * <p> * 适用于图片作为背景的界面,此时需要图片填充到状态栏 * * @param activity 需要设置的activity
+	 */
+	public static void setTranslucent(Activity activity) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			// 设置状态栏透明
+			activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+
+		}
 	}
 }
 
