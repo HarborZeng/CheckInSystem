@@ -5,22 +5,21 @@
     <string name="不更新">爹不想升级</string>
     <string name="title_activity_home">HomeActivity</string>
 
-    <string name="action_settings">Settings</string>
+    <string name="action_settings">设置</string>
     <string name="title_activity_login">Sign in</string>
 
     <!-- Strings related to login -->
-    <string name="prompt_name">Phone or job number</string>
-    <string name="prompt_password">Password</string>
+    <string name="prompt_name">手机号或工号</string>
+    <string name="prompt_password">密码</string>
     <string name="action_sign_in">Sign in</string>
-    <string name="error_invalid_number">Phone or job number is invalid</string>
-    <string name="error_invalid_password">This password is too short</string>
-    <string name="error_incorrect_password">This password is incorrect</string>
-    <string name="error_field_required">This field is required</string>
+    <string name="error_invalid_number">手机号或工号不正确</string>
+    <string name="error_invalid_password">密码太短</string>
+    <string name="error_incorrect_password">密码不正确</string>
+    <string name="error_field_required">此项必填</string>
     <string name="permission_rationale">"需要有权限访问内置存储，才能正常下载更新。"
     </string>
-    <string name="remember_password">Remember Password</string>
-    <string name="auto_login">Auto Login</string>
-    <string name="your_work_witness">掌上签到系统，您的工作证明人</string>
+    <string name="remember_password">记住密码</string>
+    <string name="auto_login">自动登录</string>
     <string name="cancel_updating">更新已取消，下载可以断点更新</string>
     <string name="you_are_using_an_Alpha_Test_application">你安装的是内测版本，添加新功能，但是可能包含不稳定性，请悉知</string>
     <string name="you_are_using_data_now">爸爸，你现在正在使用的是流量！！！</string>
@@ -48,8 +47,8 @@
     <string name="server_error">服务器异常</string>
     <string name="server_busy">服务器正忙，请稍候重试</string>
     <string name="Invalide_phone_jobnumber">手机号或工号错误</string>
-    <string name="input_phonenumber">Please input your phone number</string>
-    <string name="login">LOGIN</string>
+    <string name="input_phonenumber">请输入手机号</string>
+    <string name="login">登录</string>
     <string name="forget_password">忘记密码？</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="title_home">Home</string>
@@ -59,7 +58,7 @@
     <string name="Me">我</string>
     <string name="check_out">签出</string>
     <string name="log_in">登录</string>
-    <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_settings">设置</string>
 
     <!-- Strings related to Settings -->
 

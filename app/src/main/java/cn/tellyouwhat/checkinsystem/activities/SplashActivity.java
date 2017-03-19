@@ -26,6 +26,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.jaeger.library.StatusBarUtil;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xutils.common.Callback;
@@ -66,11 +68,7 @@ public class SplashActivity extends BaseActivity {
 			window.setStatusBarColor(Color.TRANSPARENT);
 			window.setNavigationBarColor(Color.TRANSPARENT);
 		}
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			// 设置状态栏透明
-			getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-
-		}
+		StatusBarUtil.setTransparent(this);
 		setContentView(R.layout.activity_splash);
 
 		//把这一句话注释掉之后，API21以下就不会报错

@@ -1,152 +1,196 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
              android:background="@mipmap/bg_login"
-             android:gravity="center_horizontal"
+
              tools:context="cn.tellyouwhat.checkinsystem.activities.LoginActivity">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingBottom="@dimen/activity_vertical_margin"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingTop="46dp">
-
+        tools:ignore="UselessParent">
 
         <LinearLayout
-            android:id="@+id/login_form"
+            android:id="@+id/parent_of_imageView_bg_logo"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="false"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="40dp"
+            android:gravity="center">
+
+            <ImageView
+                android:translationZ="20dp"
+                android:elevation="20dp"
+                android:id="@+id/imageView_bg_logo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@mipmap/check_in_logo"
+                />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="260dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:gravity="bottom"
             android:orientation="vertical"
-            tools:ignore="UselessParent">
+            android:paddingBottom="60dp">
 
-
-            <LinearLayout
-                android:id="@+id/number_login_form"
+            <android.support.v7.widget.CardView
                 android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:paddingBottom="25dp"
-                    android:text="@string/your_work_witness"
-                    android:textAppearance="@style/TextAppearance.AppCompat"
-                    android:textSize="14sp"/>
-
-                <android.support.design.widget.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <EditText
-                        android:id="@+id/number"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/prompt_name"
-                        android:inputType="number"
-                        android:maxLines="1"/>
-
-                </android.support.design.widget.TextInputLayout>
-
-                <android.support.design.widget.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <EditText
-                        android:id="@+id/password"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/prompt_password"
-                        android:imeActionId="@+id/login"
-                        android:imeActionLabel="@string/action_sign_in"
-                        android:imeOptions="actionUnspecified"
-                        android:inputType="textPassword"
-                        android:maxLines="1"/>
-
-                </android.support.design.widget.TextInputLayout>
+                android:layout_height="wrap_content"
+                android:alpha="0.5"
+                android:background="#000"
+                android:elevation="20dp"
+                android:fadingEdge="horizontal|vertical"
+                app:cardCornerRadius="5dp"
+                app:contentPadding="6dp"
+                tools:ignore="UnusedAttribute">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="94dp">
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
 
-                    <CheckBox
-                        android:id="@+id/checkbox_remember_password"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="32dp"
-                        android:layout_weight="0.13"
-                        android:text="@string/remember_password"
-                        android:textSize="14sp"/>
+                    <ImageView
+                        android:id="@+id/imageView_username"
+                        android:layout_width="41dp"
+                        android:layout_height="36dp"
+                        android:src="@mipmap/username_image"/>
 
-                    <CheckBox
-                        android:id="@+id/checkbox_auto_login"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="32dp"
-                        android:layout_weight="0.04"
-                        android:text="@string/auto_login"/>
+                    <android.support.design.widget.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
+                        <EditText
+                            android:id="@+id/number"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="5dp"
+                            android:background="@null"
+                            android:hint="@string/prompt_name"
+                            android:inputType="number"
+                            android:maxLines="1"/>
+
+                    </android.support.design.widget.TextInputLayout>
                 </LinearLayout>
 
-                <Button
-                    android:id="@+id/number_sign_in_button"
+
+            </android.support.v7.widget.CardView>
+
+            <android.support.v7.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:alpha="0.5"
+                android:background="#ffffff"
+                android:elevation="20dp"
+                android:fadingEdge="horizontal|vertical"
+                app:cardCornerRadius="5dp"
+                app:contentPadding="6dp">
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:layout_marginRight="20dp"
-                    android:layout_marginTop="10dp"
-                    android:background="@color/colorPrimary"
-                    android:text="@string/login"
-                    android:textColor="#ffffff"
-                    android:textSize="18sp"
-                    android:textStyle="bold"/>
+                    android:orientation="horizontal">
 
-            </LinearLayout>
+                    <ImageView
+                        android:id="@+id/imageView_password"
+                        android:layout_width="40dp"
+                        android:layout_height="36dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@mipmap/password_image"/>
 
-            <FrameLayout
-                android:id="@+id/Frame_login_progress"
+                    <android.support.design.widget.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="5dp">
+
+                        <EditText
+                            android:id="@+id/password"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="end"
+                            android:background="@null"
+                            android:hint="@string/prompt_password"
+                            android:imeActionId="@+id/login"
+                            android:imeActionLabel="@string/action_sign_in"
+                            android:imeOptions="actionUnspecified"
+                            android:inputType="textPassword"
+                            android:maxLines="1"/>
+
+                    </android.support.design.widget.TextInputLayout>
+                </LinearLayout>
+
+
+            </android.support.v7.widget.CardView>
+
+            <Button
+                android:id="@+id/number_sign_in_button"
                 android:layout_width="match_parent"
-                android:layout_height="100dp">
-
-                <ProgressBar
-                    android:id="@+id/login_progress"
-                    style="?android:attr/progressBarStyleLarge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|center_horizontal"
-                    android:visibility="invisible"
-                    />
-            </FrameLayout>
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:layout_marginTop="10dp"
+                android:background="#254978"
+                android:text="@string/login"
+                android:textColor="#ffffff"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:gravity="bottom"
                 android:orientation="vertical">
-
-                <Button
-                    android:id="@+id/button_forgetPassword"
-                    style="@style/Widget.AppCompat.Button.Borderless.Colored"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:gravity="bottom|center"
-                    android:onClick="forgetPassword"
-                    android:paddingBottom="18dp"
-                    android:text="@string/forget_password"/>
 
             </LinearLayout>
 
 
         </LinearLayout>
-        <!-- Login progress -->
 
-    </LinearLayout>
+        <FrameLayout
+            android:id="@+id/Frame_login_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentStart="false"
+            android:layout_below="@+id/parent_of_imageView_bg_logo"
+            android:layout_centerHorizontal="false"
+            android:layout_centerInParent="true"
+            android:layout_centerVertical="false"
+            >
+
+            <ProgressBar
+                android:id="@+id/login_progress"
+                style="?android:attr/progressBarStyleLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|center_horizontal"
+                android:visibility="invisible"
+                />
+        </FrameLayout>
+
+        <Button
+            android:id="@+id/button_forgetPassword"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_gravity="end"
+            android:onClick="forgetPassword"
+            android:text="@string/forget_password"
+            android:textColor="#ffffff"/>
+    </RelativeLayout>
+
 </FrameLayout>

@@ -25,6 +25,8 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.jaeger.library.StatusBarUtil;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xutils.common.Callback;
@@ -46,10 +48,10 @@ public class LoginActivity extends BaseActivity {
 	private EditText mNumberView;
 	private EditText mPasswordView;
 	private View mProgressView;
-	private View mLoginFormView;
+	//	private View mLoginFormView;
 	private SharedPreferences mSharedPreferences;
-	private CheckBox mCheckBox_rememberPassword;
-	private CheckBox mCheckbox_auto_login;
+	//	private CheckBox mCheckBox_rememberPassword;
+//	private CheckBox mCheckbox_auto_login;
 	private boolean needToShowTabbedActivity;
 
 	/**
@@ -71,15 +73,16 @@ public class LoginActivity extends BaseActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
 
-		setTranslucent(this);
+		StatusBarUtil.setTransparent(this);
 
 		needToShowTabbedActivity = getIntent().getBooleanExtra(ConstantValues.FIRST_TIME_AFTER_UPGRADE, true);
 		// Set up the login form.
 		mNumberView = (EditText) findViewById(R.id.number);
 		mPasswordView = (EditText) findViewById(R.id.password);
 
+
 		Button mNumberSignInButton = (Button) findViewById(R.id.number_sign_in_button);
-		mCheckBox_rememberPassword = (CheckBox) findViewById(R.id.checkbox_remember_password);
+/*		mCheckBox_rememberPassword = (CheckBox) findViewById(R.id.checkbox_remember_password);
 		mCheckbox_auto_login = (CheckBox) findViewById(R.id.checkbox_auto_login);
 
 		mCheckbox_auto_login.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -98,7 +101,7 @@ public class LoginActivity extends BaseActivity {
 				}
 			}
 		});
-		mLoginFormView = findViewById(R.id.login_form);
+		mLoginFormView = findViewById(R.id.login_form);*/
 		mProgressView = findViewById(R.id.login_progress);
 		mNumberSignInButton.setOnClickListener(new OnClickListener() {
 			@Override
@@ -110,7 +113,7 @@ public class LoginActivity extends BaseActivity {
 		mSharedPreferences = this.getSharedPreferences("userInfo", Context.MODE_PRIVATE);
 		//如果登陆过，直接登录
 		mNumberView.setText(mSharedPreferences.getString("USER_NAME", ""));
-		if (mSharedPreferences.getBoolean("REMEMBER_CHECKBOX_STATUS", false)) {
+/*		if (mSharedPreferences.getBoolean("REMEMBER_CHECKBOX_STATUS", false)) {
 			mCheckBox_rememberPassword.setChecked(true);
 			mPasswordView.setText(EncryptUtil.decryptBase64withSalt(mSharedPreferences.getString("PASSWORD", ""), "saltforcheckinsystemstorepasswordininnerstorage"));
 			if (mSharedPreferences.getBoolean("AUTO_LOGIN", false)) {
@@ -121,7 +124,7 @@ public class LoginActivity extends BaseActivity {
 				Log.d(TAG, "onCreate: AUTO_LOGIN 失败");
 			}
 
-		}
+		}*/
 
 		mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 			@Override
@@ -293,9 +296,6 @@ public class LoginActivity extends BaseActivity {
 						});
 						mPasswordView.setError(getString(R.string.error_incorrect_password));
 						mPasswordView.requestFocus();
-						editor.putBoolean("REMEMBER_CHECKBOX_STATUS", false);
-						editor.putString("PASSWORD", "");
-						editor.apply();
 					} else if ("Database Connect failed".equals(result)) {
 						Snackbar.make(findViewById(R.id.login_form), R.string.server_busy, Snackbar.LENGTH_LONG).show();
 					} else if ("Illegal number".equals(result)) {
@@ -303,7 +303,6 @@ public class LoginActivity extends BaseActivity {
 						Log.d(TAG, "login: Failed, wrong user name");
 						mNumberView.setError(getString(R.string.Invalide_phone_jobnumber));
 						mNumberView.requestFocus();
-						editor.putBoolean("REMEMBER_CHECKBOX_STATUS", false);
 						editor.putString("USER_NAME", "");
 						editor.apply();
 					}
@@ -312,20 +311,6 @@ public class LoginActivity extends BaseActivity {
 					Log.d(TAG, "onPostExecute: 登录成功");
 
 					editor.putString("USER_NAME", number);
-					if (mCheckbox_auto_login.isChecked()) {
-						editor.putBoolean("AUTO_LOGIN", true);
-					} else {
-						editor.putBoolean("AUTO_LOGIN", false);
-					}
-					//记住用户名、密码
-					if (mCheckBox_rememberPassword.isChecked()) {
-						String localEncryptPassword = EncryptUtil.encryptBase64withSalt(password, "saltforcheckinsystemstorepasswordininnerstorage");
-						editor.putString("PASSWORD", localEncryptPassword);
-						editor.putBoolean("REMEMBER_CHECKBOX_STATUS", true);
-					} else {
-						editor.putString("PASSWORD", "");
-						editor.putBoolean("REMEMBER_CHECKBOX_STATUS", false);
-					}
 					editor.apply();
 //TODO 继续写逻辑
 					initGuidancePages();
@@ -340,7 +325,7 @@ public class LoginActivity extends BaseActivity {
 			public void onError(Throwable ex, boolean isOnCallback) {
 				Log.w(TAG, "onError: " + ex);
 				showProgress(false);
-
+				initGuidancePages();
 				//TODO 服务器搭好之后注释掉下面这句
 				gotoMain("0", "0");
 
@@ -382,15 +367,5 @@ public class LoginActivity extends BaseActivity {
 		}
 	}
 
-	/**
-	 * 使状态栏透明 * <p> * 适用于图片作为背景的界面,此时需要图片填充到状态栏 * * @param activity 需要设置的activity
-	 */
-	public static void setTranslucent(Activity activity) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			// 设置状态栏透明
-			activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-
-		}
-	}
 }
 
