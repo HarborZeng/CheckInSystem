@@ -88,6 +88,7 @@ public class MainActivity extends BaseActivity {
 		navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 	}
 
+
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);

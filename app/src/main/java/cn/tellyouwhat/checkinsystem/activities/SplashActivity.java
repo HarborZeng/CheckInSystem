@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -20,6 +21,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -50,7 +52,8 @@ public class SplashActivity extends BaseActivity {
 	private static final String TAG = "SplashActivity";
 	private PackageInfo packageInfo;
 	private long startTime;
-	private boolean needToShowTabbedActivity;
+	private boolean showGuideRequestFromServer;
+	private String versionCode;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -71,12 +74,22 @@ public class SplashActivity extends BaseActivity {
 		StatusBarUtil.setTransparent(this);
 		setContentView(R.layout.activity_splash);
 
-		//把这一句话注释掉之后，API21以下就不会报错
+		//把这一句话注释掉之后，API 21以下就不会报错
 //		x.view().inject(this);
 
 
 		checkUpdate();
 		initShortCut();
+
+		/*
+		  以下逻辑用于判断是否曾经成功登录过app
+		  以实现热启动效果
+		 */
+		SharedPreferences sharedPreferences = getSharedPreferences("user_info", MODE_PRIVATE);
+		String token = sharedPreferences.getString(ConstantValues.TOKEN, "");
+		if (TextUtils.isEmpty(token)) {
+			enterLogin();
+		}
 	}
 
 
@@ -116,7 +129,7 @@ public class SplashActivity extends BaseActivity {
 //			Log.d(TAG, "checkUpdate: 网络正常");
 			startTime = SystemClock.elapsedRealtime();
 
-			RequestParams params = new RequestParams("http://tellyouwhat.cn/update/update.json");
+			RequestParams params = new RequestParams("http://update.checkin.tellyouwhat.cn/update.json");
 			params.setAsJsonContent(true);
 			x.http().get(params, new Callback.CommonCallback<JSONObject>() {
 				@Override
@@ -124,14 +137,14 @@ public class SplashActivity extends BaseActivity {
 					try {
 						String versionName = object.getString("versionName");
 						String versionDesc = object.getString("versionDesc");
-						String versionCode = object.getString("versionCode");
+						versionCode = object.getString("versionCode");
 						String downloadURL = object.getString("downloadURL");
 						boolean forceUpgrade = object.getBoolean("forceUpgrade");
 						String size = object.getString("size");
-						needToShowTabbedActivity = object.getBoolean("needToShowTabbedActivity");
+						showGuideRequestFromServer = object.getBoolean("showGuide");
 
 						long endTime = SystemClock.elapsedRealtime();
-						long duration = 900 - (endTime - startTime);
+						long duration = 1500 - (endTime - startTime);
 						if (duration > 0) {
 							SystemClock.sleep(duration);
 						}
@@ -398,7 +411,8 @@ public class SplashActivity extends BaseActivity {
 	 */
 	private void enterLogin() {
 		Intent intent = new Intent(this, LoginActivity.class);
-		intent.putExtra(ConstantValues.FIRST_TIME_AFTER_UPGRADE, needToShowTabbedActivity);
+		intent.putExtra("VERSION_CODE", versionCode);
+		intent.putExtra(ConstantValues.INSTRUCTION_SHOW_GUIDE, showGuideRequestFromServer);
 		startActivity(intent);
 		finish();
 	}

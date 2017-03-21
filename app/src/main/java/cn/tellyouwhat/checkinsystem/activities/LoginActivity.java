@@ -53,6 +53,7 @@ public class LoginActivity extends BaseActivity {
 	//	private CheckBox mCheckBox_rememberPassword;
 //	private CheckBox mCheckbox_auto_login;
 	private boolean needToShowTabbedActivity;
+	private boolean showGuideInstruction;
 
 	/**
 	 * 此方法为对登陆界面的“忘记密码”点击事件的响应，即携带面板上已输入手机号（仅限），前往{@link ResetPasswordActivity}重置密码
@@ -75,33 +76,17 @@ public class LoginActivity extends BaseActivity {
 
 		StatusBarUtil.setTransparent(this);
 
-		needToShowTabbedActivity = getIntent().getBooleanExtra(ConstantValues.FIRST_TIME_AFTER_UPGRADE, true);
+		Intent intent = getIntent();
+		needToShowTabbedActivity = intent.getBooleanExtra(ConstantValues.FIRST_TIME_AFTER_UPGRADE, true);
+		showGuideInstruction = intent.getBooleanExtra(ConstantValues.INSTRUCTION_SHOW_GUIDE, true);
+
 		// Set up the login form.
 		mNumberView = (EditText) findViewById(R.id.number);
 		mPasswordView = (EditText) findViewById(R.id.password);
 
 
 		Button mNumberSignInButton = (Button) findViewById(R.id.number_sign_in_button);
-/*		mCheckBox_rememberPassword = (CheckBox) findViewById(R.id.checkbox_remember_password);
-		mCheckbox_auto_login = (CheckBox) findViewById(R.id.checkbox_auto_login);
 
-		mCheckbox_auto_login.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				if (isChecked) {
-					mCheckBox_rememberPassword.setChecked(true);
-				}
-			}
-		});
-		mCheckBox_rememberPassword.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				if (!isChecked) {
-					mCheckbox_auto_login.setChecked(false);
-				}
-			}
-		});
-		mLoginFormView = findViewById(R.id.login_form);*/
 		mProgressView = findViewById(R.id.login_progress);
 		mNumberSignInButton.setOnClickListener(new OnClickListener() {
 			@Override
@@ -111,20 +96,8 @@ public class LoginActivity extends BaseActivity {
 		});
 		//获得sp实例对象
 		mSharedPreferences = this.getSharedPreferences("userInfo", Context.MODE_PRIVATE);
-		//如果登陆过，直接登录
 		mNumberView.setText(mSharedPreferences.getString("USER_NAME", ""));
-/*		if (mSharedPreferences.getBoolean("REMEMBER_CHECKBOX_STATUS", false)) {
-			mCheckBox_rememberPassword.setChecked(true);
-			mPasswordView.setText(EncryptUtil.decryptBase64withSalt(mSharedPreferences.getString("PASSWORD", ""), "saltforcheckinsystemstorepasswordininnerstorage"));
-			if (mSharedPreferences.getBoolean("AUTO_LOGIN", false)) {
-				mCheckbox_auto_login.setChecked(true);
-//				Log.d(TAG, "onCreate: before attemptLogin");
-				attemptLogin();
-			} else {
-				Log.d(TAG, "onCreate: AUTO_LOGIN 失败");
-			}
 
-		}*/
 
 		mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 			@Override
@@ -271,7 +244,6 @@ public class LoginActivity extends BaseActivity {
 
 		//开始准备数据
 		RequestParams params = new RequestParams("http://tellyouwhat.cn/Login_validate/login");
-//		RequestParams params = new RequestParams("http://127.0.0.1:8080/Login_validate/login");
 		params.setAsJsonContent(true);
 		params.setBodyContent(jsonObject.toString());
 
@@ -281,7 +253,6 @@ public class LoginActivity extends BaseActivity {
 		x.http().post(params, new Callback.CommonCallback<String>() {
 			@Override
 			public void onSuccess(String result) {
-
 				//获取update.json成功的回调
 				Log.i(TAG, "onSuccess: " + result);
 				if (!"success".equals(result)) {
@@ -359,7 +330,8 @@ public class LoginActivity extends BaseActivity {
 
 	private void initGuidancePages() {
 		SPUtil spUtil = new SPUtil(this);
-		boolean isFirstTimeAfterUpgrade = spUtil.getBoolean(ConstantValues.FIRST_TIME_AFTER_UPGRADE, true);
+		String versionCode = getIntent().getStringExtra("VERSION_CODE");
+		boolean isFirstTimeAfterUpgrade = spUtil.getBoolean(ConstantValues.FIRST_TIME_AFTER_UPGRADE + versionCode, true);
 		if (isFirstTimeAfterUpgrade && needToShowTabbedActivity) {
 			Intent intent = new Intent(this, TabbedActivity.class);
 			startActivity(intent);

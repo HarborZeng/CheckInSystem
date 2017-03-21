@@ -4,7 +4,6 @@
              android:layout_width="match_parent"
              android:layout_height="match_parent"
              android:background="@mipmap/bg_login"
-
              tools:context="cn.tellyouwhat.checkinsystem.activities.LoginActivity">
 
     <RelativeLayout
@@ -20,7 +19,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="false"
             android:layout_alignParentTop="true"
-            android:layout_marginTop="40dp"
+            android:layout_marginTop="60dp"
             android:gravity="center">
 
             <ImageView
@@ -47,7 +46,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:alpha="0.5"
-                android:background="#000"
+                android:background="#fff"
                 android:elevation="20dp"
                 android:fadingEdge="horizontal|vertical"
                 app:cardCornerRadius="5dp"
@@ -145,14 +144,6 @@
                 android:textColor="#ffffff"
                 android:textSize="18sp"
                 android:textStyle="bold"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="bottom"
-                android:orientation="vertical">
-
-            </LinearLayout>
 
 
         </LinearLayout>
