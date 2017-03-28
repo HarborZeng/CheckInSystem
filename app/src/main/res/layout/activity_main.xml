@@ -19,6 +19,7 @@
     </FrameLayout>
 
     <android.support.design.widget.BottomNavigationView
+        app:itemBackground="@color/theme_pink_bg"
         android:id="@+id/navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -132,5 +132,7 @@
 
     <string name="pref_title_vibrate">Vibrate</string>
     <string name="title_activity_tabbed">TabbedActivity</string>
-    <string name="section_format">Hello World from section: %1$d</string>
+    <string name="not_connected_to_server">您的设备未连接至网络</string>
+    <string name="must_upgrade">爸爸，此版本包含重大更新，必须要升级！</string>
+    <string name="press_one_more_time">再按一次返回桌面</string>
 </resources>

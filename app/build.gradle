@@ -12,8 +12,8 @@ android {
 		applicationId "cn.tellyouwhat.checkinsystem"
 		minSdkVersion 14
 		targetSdkVersion 25
-		versionCode 20170320
-		versionName "0.3.0Alpha"
+		versionCode 20170326
+		versionName "0.3.2Alpha"
 		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 		vectorDrawables.useSupportLibrary = true
 	}
@@ -32,8 +32,6 @@ android {
 			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 		}
 	}
-
-
 }
 
 dependencies {
@@ -43,7 +41,7 @@ dependencies {
 	})
 	compile files('libs/BaiduLBS_Android.jar')
 	compile 'com.android.support:appcompat-v7:25.1.1'
-	compile 'org.xutils:xutils:3.3.40'
+	compile 'org.xutils:xutils:3.4.0'
 	compile 'com.android.support:design:25.1.1'
 	compile 'com.android.support:support-vector-drawable:25.1.1'
 	compile 'com.getbase:floatingactionbutton:1.10.1'

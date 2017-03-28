@@ -22,12 +22,12 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <!-- 这个权限用于访问GPS定位 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <!-- 用于读取手机当前的状态 -->
-    <!-- <uses-permission android:name="android.permission.READ_PHONE_STATE"/> -->
 
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
     <!-- 地图所需权限 -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
     <application
         android:name=".bases.BaseApplication"
@@ -82,6 +82,7 @@
 
         <activity
             android:name=".activities.MainActivity"
+            android:launchMode="singleTask"
             android:label="@string/check_in"
             android:screenOrientation="portrait">
             <meta-data
@@ -98,6 +99,18 @@
             android:label="@string/title_activity_tabbed"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
+
+        <receiver android:name=".receivers.BootReceiver">
+            <intent-filter android:priority="2147483647"><!--优先级加最高-->
+                <!-- 系统启动完成后会调用 -->
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <!-- 解锁完成后会调用 -->
+                <action android:name="android.intent.action.USER_PRESENT"/>
+                <!-- 监听情景切换 -->
+                <action android:name="android.media.RINGER_MODE_CHANGED"/>
+            </intent-filter>
+        </receiver>
+        <service android:name=".services.LocationGettingService"/>
     </application>
 
 </manifest>

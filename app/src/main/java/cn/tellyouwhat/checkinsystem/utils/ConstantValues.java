@@ -11,4 +11,7 @@ public class ConstantValues {
 	public static final String INSTRUCTION_SHOW_GUIDE = "show_guide_instruction";
 	//TOKEN用来存储用户唯一标识
 	public static final String TOKEN = "already_login_token";
+	public static final int GPS_LOCATION = 1;
+	public static final int NETWORK_LOCATION = 2;
+	public static final int OFFLINE_LOCATION = 3;
 }

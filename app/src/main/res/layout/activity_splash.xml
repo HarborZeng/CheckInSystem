@@ -7,11 +7,5 @@
     android:layout_height="match_parent"
     tools:context="cn.tellyouwhat.checkinsystem.activities.SplashActivity">
 
- <ImageView
-     android:layout_width="match_parent"
-     android:layout_height="match_parent"
-     android:id="@+id/first_screen_image"
-     android:src="@mipmap/first_screen"
-     android:contentDescription="show on the first screen"
-     tools:ignore="HardcodedText"/>
+
 </FrameLayout>

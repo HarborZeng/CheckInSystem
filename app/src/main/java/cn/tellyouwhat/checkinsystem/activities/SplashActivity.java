@@ -1,99 +1,103 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
-
-import com.jaeger.library.StatusBarUtil;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.xutils.common.Callback;
-import org.xutils.http.RequestParams;
-import org.xutils.x;
-
-import java.io.File;
-import java.math.RoundingMode;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
-import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
-import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
+import cn.tellyouwhat.checkinsystem.utils.FlymeUtil;
+import cn.tellyouwhat.checkinsystem.utils.MIUIUtil;
 import cn.tellyouwhat.checkinsystem.utils.SPUtil;
-
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 public class SplashActivity extends BaseActivity {
 
 	private static final String TAG = "SplashActivity";
-	private PackageInfo packageInfo;
-	private long startTime;
-	private boolean showGuideRequestFromServer;
-	private String versionCode;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			Window window = getWindow();
-			window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
-					| WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-			window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-					| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-					| View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
 
-			window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-			window.setStatusBarColor(Color.TRANSPARENT);
-			window.setNavigationBarColor(Color.TRANSPARENT);
-		}
-		StatusBarUtil.setTransparent(this);
 		setContentView(R.layout.activity_splash);
 
 		//把这一句话注释掉之后，API 21以下就不会报错
 //		x.view().inject(this);
+		askForPermission();
+	}
 
-
-		checkUpdate();
-		initShortCut();
-
-		/*
-		  以下逻辑用于判断是否曾经成功登录过app
-		  以实现热启动效果
-		 */
-		SharedPreferences sharedPreferences = getSharedPreferences("user_info", MODE_PRIVATE);
-		String token = sharedPreferences.getString(ConstantValues.TOKEN, "");
+	/*
+	  以下逻辑用于判断是否曾经成功登录过app
+	  以实现热启动效果
+	 */
+	private void enter() {
+		SharedPreferences SharedPreferences = this.getSharedPreferences("userInfo", Context.MODE_PRIVATE);
+		String token = SharedPreferences.getString(ConstantValues.TOKEN, "");
 		if (TextUtils.isEmpty(token)) {
 			enterLogin();
+		} else {
+			enterMain();
 		}
 	}
 
+	private void askForPermission() {
+		Log.i(TAG, "askForPermission: 获取中ing");
+		if (
+				(PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+						||
+						(PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE))
+						||
+						(PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION))
+				) {
+			Log.i(TAG, "askForPermission: 没权限");
+			String[] perms = {"android.permission.WRITE_EXTERNAL_STORAGE", "android.permission.READ_PHONE_STATE", "android.permission.ACCESS_FINE_LOCATION"};
+			ActivityCompat.requestPermissions(this, perms, 1);
+		} else {
+			initShortCutAndThirdPartPermission();
+		}
+	}
 
-	private void initShortCut() {
+	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+		Boolean canEnter[] = new Boolean[grantResults.length];
+		if (requestCode == 1) {
+			for (int i = 0; i < grantResults.length; i++) {
+				if (grantResults[i] == -1) {
+					canEnter[i] = false;
+//					Toast.makeText(this, "您必须要授予权限才能继续", Toast.LENGTH_LONG).show();
+					finish();
+				} else {
+					canEnter[i] = true;
+				}
+			}
+			if (canEnter[0] && canEnter[1] && canEnter[2]) {
+				initShortCutAndThirdPartPermission();
+			} else {
+				Toast.makeText(this, "您必须要授予权限才能继续", Toast.LENGTH_LONG).show();
+			}
+		}
+	}
+
+	private void enterMain() {
+		Intent intent = new Intent(this, MainActivity.class);
+		startActivity(intent);
+		finish();
+	}
+
+
+	private void initShortCutAndThirdPartPermission() {
 		SPUtil spUtil = new SPUtil(this);
 // 判断是否第一次启动应用程序（默认为true）
 		boolean firstStart = spUtil.getBoolean(ConstantValues.FIRST_TIME_RUN, true);
@@ -116,303 +120,57 @@ public class SplashActivity extends BaseActivity {
 			spUtil.putBoolean(ConstantValues.FIRST_TIME_RUN, false);
 // 提交设置
 			Toast.makeText(this, R.string.shortcut_created, Toast.LENGTH_SHORT).show();
-		}
-	}
 
-	/**
-	 * check if there is a upgrade exiting
-	 */
-	private void checkUpdate() {
-		ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-		NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-		if (networkInfo != null && networkInfo.isAvailable()) {
-//			Log.d(TAG, "checkUpdate: 网络正常");
-			startTime = SystemClock.elapsedRealtime();
-
-			RequestParams params = new RequestParams("http://update.checkin.tellyouwhat.cn/update.json");
-			params.setAsJsonContent(true);
-			x.http().get(params, new Callback.CommonCallback<JSONObject>() {
-				@Override
-				public void onSuccess(JSONObject object) {
-					try {
-						String versionName = object.getString("versionName");
-						String versionDesc = object.getString("versionDesc");
-						versionCode = object.getString("versionCode");
-						String downloadURL = object.getString("downloadURL");
-						boolean forceUpgrade = object.getBoolean("forceUpgrade");
-						String size = object.getString("size");
-						showGuideRequestFromServer = object.getBoolean("showGuide");
-
-						long endTime = SystemClock.elapsedRealtime();
-						long duration = 1500 - (endTime - startTime);
-						if (duration > 0) {
-							SystemClock.sleep(duration);
-						}
-						if (getLocalVersionCode() < Integer.parseInt(versionCode)) {
-//					Log.d(TAG, "onUpdateAvailable: 有更新版本：" + versionName);
-							askToUpgrade(versionName, versionDesc, versionCode, downloadURL, size, forceUpgrade);
-						} else if (getLocalVersionCode() == Integer.parseInt(versionCode)) {
-//					Log.d(TAG, "onUpdateAvailable: 没有更新版本");
-							enterLogin();
-						} else {
-							Toast.makeText(SplashActivity.this, R.string.you_are_using_an_Alpha_Test_application, Toast.LENGTH_LONG).show();
-							enterLogin();
-						}
-					} catch (JSONException e) {
-						e.printStackTrace();
-						enterLogin();
-					}
-//					Log.w(TAG, "onSuccess: "+ s);
-				}
-
-				@Override
-				public void onError(Throwable ex, boolean isOnCallback) {
-					Log.w(TAG, "run: JSON parser may occurred error or it's an IOException", ex);
-					Toast.makeText(SplashActivity.this, R.string.server_error, Toast.LENGTH_SHORT).show();
-					enterLogin();
-				}
-
-				@Override
-				public void onCancelled(CancelledException cex) {
-
-				}
-
-				@Override
-				public void onFinished() {
-
-				}
-			});
-		} else {
-//			Log.d(TAG, "checkUpdate: 网络未连接");
-			enterLogin();
-			Toast.makeText(SplashActivity.this, "您的设备未连接至网络", Toast.LENGTH_LONG).show();
-		}
-	}
-
-	private int getLocalVersionCode() {
-		PackageManager packageManager = getPackageManager();
-		try {
-			packageInfo = packageManager.getPackageInfo(getPackageName(), 0);
-		} catch (PackageManager.NameNotFoundException e) {
-			e.printStackTrace();
-			return 0;
-		}
-		return packageInfo.versionCode;
-	}
-
-
-	@Override
-	public void onRequestPermissionsResult(int requestCode, @NonNull final String[] permissions, @NonNull int[] grantResults) {
-		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-		for (int r : grantResults) {
-			if (r == PackageManager.PERMISSION_DENIED) {
-				Snackbar.make(findViewById(R.id.activity_splash), "必须要授予写入的权限", Snackbar.LENGTH_LONG)
-						.setAction("授权", new View.OnClickListener() {
-							@Override
-							public void onClick(View v) {
-								ActivityCompat.requestPermissions(SplashActivity.this, permissions, 1);
-							}
-						});
-			}
-		}
-
-	}
-
-	private void askToUpgrade(final String versionName, final String versionDesc, String versionCode, final String downloadURL, final String size, final boolean forceUpgrade) {
-		if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(SplashActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-			String[] perms = {"android.permission.WRITE_EXTERNAL_STORAGE"};
-			ActivityCompat.requestPermissions(SplashActivity.this, perms, 1);
-		}
-		runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				final AlertDialog.Builder builder = new AlertDialog.Builder(SplashActivity.this);
-				final AlertDialog.Builder innerBuilder = new AlertDialog.Builder(SplashActivity.this);
-
-				builder.setIcon(R.mipmap.warning);
-				if (forceUpgrade) {
-					builder.setTitle("爸爸，此版本包含重大更新，必须要升级！").setCancelable(false);
-				} else {
-					builder.setTitle(R.string.有新版本啦).setCancelable(true);
-
-					builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-						@Override
-						public void onCancel(DialogInterface dialog) {
-							enterLogin();
-						}
-					});
-				}
-				builder.setMessage(getString(R.string.newer_version_detected) + versionName + "\n" + getString(R.string.size) + size + getString(R.string.newer_version_description) + "\n\n" + versionDesc)
-						.setPositiveButton(getString(R.string.我要升级), new DialogInterface.OnClickListener() {
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setCancelable(false);
+			final Intent[] intent = {new Intent()};
+			intent[0].addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			if (MIUIUtil.isMIUI()) {
+				intent[0].setAction("miui.intent.action.OP_AUTO_START");
+				builder.setTitle("检测到您使用的是小米系统");
+				builder.setMessage("请前往自启动管理界面打开这个app的自启动权限，以免后台定位失效导致漏签\n本程序后台服务耗电极少，请放心使用")
+						.setPositiveButton("设置", new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
-								if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-									Toast.makeText(SplashActivity.this, R.string.cannot_access_external_storage, Toast.LENGTH_LONG).show();
-								} else {
-
-									if (NetTypeUtils.isWifiActive(SplashActivity.this)) {
-										Log.d(TAG, "onClick: 连的是wifi");
-										download(downloadURL);
-									} else {
-										innerBuilder.setIcon(R.mipmap.warning);
-										innerBuilder.setCancelable(false)
-												.setMessage(R.string.you_are_using_data_now)
-												.setTitle(R.string.Are_you_sure)
-												.setNegativeButton(R.string.I_am_broken, new DialogInterface.OnClickListener() {
-													@Override
-													public void onClick(DialogInterface dialog, int which) {
-														Toast.makeText(SplashActivity.this, R.string.update_after_WiFied, Toast.LENGTH_LONG).show();
-														dialog.dismiss();
-														SplashActivity.this.finish();
-													}
-												})
-												.setPositiveButton(R.string.I_am_rich, new DialogInterface.OnClickListener() {
-													@Override
-													public void onClick(DialogInterface dialog, int which) {
-														dialog.dismiss();
-														download(downloadURL);
-
-													}
-												}).show();
-
-									}
+								try {
+									startActivity(intent[0]);
+								} catch (Exception e) {//抛出异常就直接打开设置页面
+									intent[0] = new Intent(Settings.ACTION_SETTINGS);
+									startActivity(intent[0]);
 								}
+								dialog.dismiss();
 							}
-						});
-				if (!forceUpgrade) {
-					builder.setNegativeButton(R.string.不更新, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							enterLogin();
-						}
-					}).show();
-				} else {
-					builder.show();
-				}
+						})
+						.show().setCanceledOnTouchOutside(false);
+			} else if (FlymeUtil.isFlyme()) {
+				//TODO 有了手机在做测试
+				intent[0].setAction("");
+				builder.setTitle("检测到您使用的是魅族系统");
+			} else {
+				enter();
 			}
-		});
+
+		} else {
+			enter();
+		}
 	}
 
-	private void download(String downloadURL) {
-		RequestParams params = new RequestParams(downloadURL);
-//		Log.d(TAG, "download link: " + downloadURL);
-		params.setAutoRename(true);
-		params.setCacheSize(1024 * 1024 * 8);
-		params.setConnectTimeout(3000);
-		params.setCancelFast(true);
-
-		params.setCacheDirName(Environment.getDownloadCacheDirectory().getPath());
-		String newVersionFileName = downloadURL.substring(downloadURL.lastIndexOf("/") + 1, downloadURL.length());
-		params.setSaveFilePath(Environment.getExternalStorageDirectory().getPath() + "/" + Environment.DIRECTORY_DOWNLOADS + "/" + newVersionFileName);
-//		Log.d("TAG", "download: " + Environment.getExternalStorageDirectory().getPath() + "/" + Environment.DIRECTORY_DOWNLOADS + "/" + newVersionFileName);
-//			progressBar.setProgress(0);
-		final ProgressDialog builder = new ProgressDialog(SplashActivity.this, ProgressDialog.STYLE_SPINNER);
-//		Log.d(TAG, "download: params：" + params);
-
-		final Callback.Cancelable cancelable = x.http().get(params, new Callback.ProgressCallback<File>() {
-
-			@Override
-			public void onWaiting() {
-//				Toast.makeText(SplashActivity.this, "正在等待下载开始", Toast.LENGTH_SHORT).show();
-//				Log.d(TAG, "onWaiting: 正在等待下载开始");
-			}
-
-			@Override
-			public void onStarted() {
-				Toast.makeText(SplashActivity.this, R.string.download_begins, Toast.LENGTH_SHORT).show();
-//				Log.d(TAG, "onStarted: 下载开始");
-				builder.setIcon(R.mipmap.downloading);
-				builder.setTitle(getString(R.string.downloading));
-				builder.setCancelable(true);
-				builder.setCanceledOnTouchOutside(false);
-				builder.show();
-			}
-
-			@Override
-			public void onLoading(long total, long current, boolean isDownloading) {
-
-				builder.setMessage(getString(R.string.please_wait_a_second) + DoubleUtil.formatDouble2(((double) current) / 1024 / 1024, RoundingMode.DOWN, 2) + "/" + DoubleUtil.formatDouble2(((double) total) / 1024 / 1024, RoundingMode.DOWN, 2) + "M");
-
-
-//					progressBar.setMax((int) total);
-//					progressBar.setProgress((int) current);
-//                Toast.makeText(SplashActivity.this, "下载中。。。", Toast.LENGTH_SHORT).show();
-//				Log.d(TAG, "onLoading: 下载中");
-			}
-
-			@Override
-			public void onSuccess(File result) {
-				builder.dismiss();
-//				Toast.makeText(x.app(), "下载成功", Toast.LENGTH_SHORT).show();
-//				Log.d(TAG, "onSuccess: The File is: "+result);
-				installAPK(result);
-				finish();
-//				Log.d(TAG, "onSuccess: 下载成功");
-			}
-
-
-			@Override
-			public void onError(Throwable ex, boolean isOnCallback) {
-//				ex.printStackTrace();
-				Toast.makeText(SplashActivity.this, R.string.error_in_downloading, Toast.LENGTH_SHORT).show();
-//				enterHome();
-				enterLogin();
-//				Log.d(TAG, "onError: 下载出错啦");
-			}
-
-			@Override
-			public void onCancelled(CancelledException cex) {
-//				Log.d(TAG, "onCancelled: 下载已取消");
-//				Toast.makeText(x.app(), "cancelled", Toast.LENGTH_SHORT).show();
-//				enterLogin();
-				builder.dismiss();
-			}
-
-			@Override
-			public void onFinished() {
-//				Toast.makeText(x.app(), "下载完成", Toast.LENGTH_SHORT).show();
-//				Log.d(TAG, "onFinished: 下载完成");
-				builder.dismiss();
-
-			}
-		});
-
-		builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-			@Override
-			public void onCancel(DialogInterface dialog) {
-				Snackbar.make(findViewById(R.id.first_screen_image), getString(R.string.cancel_updating), Snackbar.LENGTH_SHORT).show();
-				dialog.dismiss();
-				builder.dismiss();
-				cancelable.cancel();
-				Toast.makeText(SplashActivity.this, R.string.download_canceled, Toast.LENGTH_LONG).show();
-			}
-		});
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
 	}
 
-	private void installAPK(File result) {
-//		Log.i(TAG, "installAPK: 刚刚进入安装apk的方法");
-		Intent intent = new Intent(Intent.ACTION_VIEW);
-		intent.addCategory("android.intent.category.DEFAULT");
-		intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-		intent.setDataAndType(Uri.fromFile(result), "application/vnd.android.package-archive");
-//		Log.i(TAG, "installAPK: 准备好了数据，马上开启下一个activity");
-		SplashActivity.this.startActivity(intent);
+	@Override
+	protected void onRestart() {
+		super.onRestart();
+		enter();
 	}
-
-//	@Override
-//	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//		enterLogin();
-//		super.onActivityResult(requestCode, resultCode, data);
-//	}
 
 	/**
 	 * After checking, if there is no newer version exiting, enter the {@link MainActivity} directly.
 	 */
 	private void enterLogin() {
 		Intent intent = new Intent(this, LoginActivity.class);
-		intent.putExtra("VERSION_CODE", versionCode);
-		intent.putExtra(ConstantValues.INSTRUCTION_SHOW_GUIDE, showGuideRequestFromServer);
 		startActivity(intent);
 		finish();
 	}

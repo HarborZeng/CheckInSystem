@@ -32,6 +32,9 @@
 
     <!-- theme colors -->
     <color name="theme_blue_background">#84ffff</color>
+    <color name="theme_blue_dark">#2D0081</color>
+    <color name="theme_pink_bg">#D14E7A</color>
+
     <color name="theme_blue_primary">#4FC3F7</color>
     <color name="theme_blue_accent">#ff193a</color>
     <color name="theme_blue_text">@color/text_dark</color>

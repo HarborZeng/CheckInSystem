@@ -10,6 +10,16 @@
 # Add any project specific keep options here:
 -keep class com.baidu.** {*;}
 -keep class vi.com.** {*;}
+-keepattributes Signature
+-keepattributes EnclosingMethod
+-assumenosideeffects class android.util.Log {
+    public static *** v(...);
+    public static *** i(...);
+    public static *** d(...);
+    public static *** w(...);
+    public static *** e(...);
+}
+-keep class cn.tellyouwhat.checkinsystem.db.** {*;}
 -dontwarn com.baidu.**
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface

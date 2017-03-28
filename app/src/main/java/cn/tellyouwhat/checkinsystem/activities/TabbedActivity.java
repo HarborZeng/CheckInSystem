@@ -1,5 +1,7 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -11,7 +13,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
+
+import com.jaeger.library.StatusBarUtil;
 
 import cn.tellyouwhat.checkinsystem.R;
 
@@ -41,33 +46,12 @@ public class TabbedActivity extends AppCompatActivity {
 		// primary sections of the activity.
 		mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
+		StatusBarUtil.setTransparent(this);
 		// Set up the ViewPager with the sections adapter.
-		mViewPager = (ViewPager) findViewById(R.id.container);
+		mViewPager = (ViewPager) findViewById(R.id.container_tabbed);
 		mViewPager.setAdapter(mSectionsPagerAdapter);
 	}
 
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.menu_tabbed, menu);
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-
-		//noinspection SimplifiableIfStatement
-		if (id == R.id.action_settings) {
-			return true;
-		}
-
-		return super.onOptionsItemSelected(item);
-	}
 
 	/**
 	 * A placeholder fragment containing a simple view.
@@ -99,7 +83,19 @@ public class TabbedActivity extends AppCompatActivity {
 		                         Bundle savedInstanceState) {
 			View rootView = inflater.inflate(R.layout.fragment_tabbed, container, false);
 			TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-			textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
+			int pageNumber = getArguments().getInt(ARG_SECTION_NUMBER);
+			switch (pageNumber) {
+				case 1:
+					textView.setText("大象装冰箱分3步");
+					break;
+				case 2:
+					textView.setText("签到也分3步");
+					break;
+				case 3:
+					textView.setText("一起开始便捷的签到旅程吧");
+					Button buttonEnterMain = (Button) rootView.findViewById(R.id.entry_main);
+					buttonEnterMain.setVisibility(View.VISIBLE);
+			}
 			return rootView;
 		}
 	}
@@ -139,5 +135,11 @@ public class TabbedActivity extends AppCompatActivity {
 			}
 			return null;
 		}
+	}
+
+	public void enterMain(View view) {
+		Intent intent = new Intent(this, MainActivity.class);
+		startActivity(intent);
+		finish();
 	}
 }
