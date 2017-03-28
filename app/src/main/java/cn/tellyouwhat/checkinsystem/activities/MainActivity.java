@@ -123,12 +123,17 @@ public class MainActivity extends BaseActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		StatusBarUtil.setColor(this, Color.parseColor("#2D0081"), 0);
-		getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-		getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#2D0081")));
-		getFragmentManager()
-				.beginTransaction()
-				.add(R.id.content, CheckInFragment.newInstance(), "CheckIn")
-				.commit();
+
+		//解决Fragment可能出现的重叠问题
+		if (savedInstanceState == null) {
+			// 正常情况下去 加载根Fragment
+			getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+			getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#2D0081")));
+			getFragmentManager()
+					.beginTransaction()
+					.add(R.id.content, CheckInFragment.newInstance(), "CheckIn")
+					.commit();
+		}
 
 		screenReceiver = new ScreenReceiver();
 		/*<intent-filter>

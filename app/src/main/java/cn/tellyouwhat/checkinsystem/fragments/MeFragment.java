@@ -18,7 +18,7 @@ import cn.tellyouwhat.checkinsystem.R;
  *         Me Fragment for MainActivity
  */
 
-public class MeFragment extends Fragment {
+public class MeFragment extends BaseFragment {
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {

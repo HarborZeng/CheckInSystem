@@ -52,7 +52,7 @@ import cn.tellyouwhat.checkinsystem.utils.Polygon;
  * @author HarborZeng
  */
 
-public class CheckInFragment extends Fragment {
+public class CheckInFragment extends BaseFragment {
 	public LocationClient mLocationClient = null;
 	public BDLocationListener myListener = new MyLocationListener();
 	AlphaAnimation alphaAnimation = new AlphaAnimation(0f, 1f);
