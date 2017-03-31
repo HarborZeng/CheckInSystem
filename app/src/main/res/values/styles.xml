@@ -132,4 +132,7 @@
         <item name="android:scaleY">0</item>
     </style>
 
+    <style name="custom_theme" parent="android:Theme.Dialog">
+        <item name="android:textColor">#FF00DFFF</item>
+    </style>
 </resources>

@@ -2,12 +2,12 @@ package cn.tellyouwhat.checkinsystem.services;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -22,12 +22,13 @@ import org.xutils.http.HttpMethod;
 import org.xutils.http.RequestParams;
 import org.xutils.x;
 
-import java.net.URL;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import cn.tellyouwhat.checkinsystem.db.LocationDB;
 import cn.tellyouwhat.checkinsystem.db.LocationItem;
+import cn.tellyouwhat.checkinsystem.receivers.BatteryReceiver;
+import cn.tellyouwhat.checkinsystem.receivers.ScreenReceiver;
 import cn.tellyouwhat.checkinsystem.utils.Polygon;
 
 /**
@@ -42,6 +43,8 @@ public class LocationGettingService extends Service {
 	private TimerTask task;
 	private Polygon polygons[];
 	private int locationIDs[];
+	private BatteryReceiver batteryReceiver;
+	private ScreenReceiver screenReceiver;
 
 	@Nullable
 	@Override
@@ -57,6 +60,22 @@ public class LocationGettingService extends Service {
 		mLocationClient.registerLocationListener(myListener);
 		//注册监听函数
 		initLocation();
+
+		//系统电量过低时
+		batteryReceiver = new BatteryReceiver();
+		IntentFilter batteryfilter = new IntentFilter();
+		batteryfilter.addAction(Intent.ACTION_BATTERY_CHANGED);
+		registerReceiver(batteryReceiver, batteryfilter);
+
+		screenReceiver = new ScreenReceiver();
+		/*<intent-filter>
+		        <action android:name="android.intent.action.SCREEN_OFF"/>
+                <action android:name="android.intent.action.SCREEN_ON"/>
+            </intent-filter>*/
+		IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
+		intentFilter.addAction(Intent.ACTION_SCREEN_ON);
+		registerReceiver(screenReceiver, intentFilter);
 
 		RequestParams requestParams = new RequestParams("http://update.checkin.tellyouwhat.cn/company_location.json");
 		x.http().request(HttpMethod.GET, requestParams, new Callback.CommonCallback<JSONArray>() {
@@ -134,6 +153,9 @@ public class LocationGettingService extends Service {
 		Intent localIntent = new Intent();
 		localIntent.setClass(this, LocationGettingService.class); // 销毁时重新启动Service
 		this.startService(localIntent);
+		unregisterReceiver(batteryReceiver);
+		unregisterReceiver(screenReceiver);
+		super.onDestroy();
 	}
 
 	private void initLocation() {
@@ -284,5 +306,4 @@ public class LocationGettingService extends Service {
 			Log.w("onConnectHotSpotMessage", "onConnectHotSpotMessage: s: " + s + ", i: " + i);
 		}
 	}
-
 }

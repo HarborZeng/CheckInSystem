@@ -1,34 +1,27 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
 import android.Manifest;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.PixelFormat;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
-import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -50,7 +43,6 @@ import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.fragments.CheckInFragment;
 import cn.tellyouwhat.checkinsystem.fragments.HistoryFragment;
 import cn.tellyouwhat.checkinsystem.fragments.MeFragment;
-import cn.tellyouwhat.checkinsystem.receivers.ScreenReceiver;
 import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
 import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
@@ -68,11 +60,11 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-			FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+			FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
 
-			Fragment history = getFragmentManager().findFragmentByTag("History");
-			Fragment me = getFragmentManager().findFragmentByTag("Me");
-			Fragment checkIn = getFragmentManager().findFragmentByTag("CheckIn");
+			Fragment history = getSupportFragmentManager().findFragmentByTag("History");
+			Fragment me = getSupportFragmentManager().findFragmentByTag("Me");
+			Fragment checkIn = getSupportFragmentManager().findFragmentByTag("CheckIn");
 
 			switch (item.getItemId()) {
 				case R.id.navigation_check_in:
@@ -116,7 +108,7 @@ public class MainActivity extends BaseActivity {
 		}
 
 	};
-	private ScreenReceiver screenReceiver;
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -127,23 +119,16 @@ public class MainActivity extends BaseActivity {
 		//解决Fragment可能出现的重叠问题
 		if (savedInstanceState == null) {
 			// 正常情况下去 加载根Fragment
-			getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-			getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#2D0081")));
-			getFragmentManager()
+			ActionBar supportActionBar = getSupportActionBar();
+			if (supportActionBar != null) {
+				supportActionBar.setDisplayHomeAsUpEnabled(false);
+				supportActionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#2D0081")));
+			}
+			getSupportFragmentManager()
 					.beginTransaction()
 					.add(R.id.content, CheckInFragment.newInstance(), "CheckIn")
 					.commit();
 		}
-
-		screenReceiver = new ScreenReceiver();
-		/*<intent-filter>
-	            <action android:name="android.intent.action.SCREEN_OFF"/>
-                <action android:name="android.intent.action.SCREEN_ON"/>
-            </intent-filter>*/
-		IntentFilter intentFilter = new IntentFilter();
-		intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
-		intentFilter.addAction(Intent.ACTION_SCREEN_ON);
-		registerReceiver(screenReceiver, intentFilter);
 
 		//开启获取位置的后台服务
 		Intent intent = new Intent(this, LocationGettingService.class);
@@ -163,7 +148,6 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onDestroy() {
-		unregisterReceiver(screenReceiver);
 		super.onDestroy();
 	}
 
@@ -225,7 +209,12 @@ public class MainActivity extends BaseActivity {
 			});
 		} else {
 //			Log.d(TAG, "checkUpdate: 网络未连接");
-			Toast.makeText(MainActivity.this, R.string.not_connected_to_server, Toast.LENGTH_LONG).show();
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					Toast.makeText(MainActivity.this, R.string.not_connected_to_server, Toast.LENGTH_LONG).show();
+				}
+			});
 		}
 	}
 
@@ -290,7 +279,6 @@ public class MainActivity extends BaseActivity {
 
 													}
 												}).show();
-
 									}
 								}
 							}
@@ -346,8 +334,9 @@ public class MainActivity extends BaseActivity {
 
 			@Override
 			public void onLoading(long total, long current, boolean isDownloading) {
-
-				builder.setMessage(getString(R.string.please_wait_a_second) + DoubleUtil.formatDouble2(((double) current) / 1024 / 1024, RoundingMode.DOWN, 2) + "/" + DoubleUtil.formatDouble2(((double) total) / 1024 / 1024, RoundingMode.DOWN, 2) + "M");
+				StringBuffer stringBuffer = new StringBuffer();
+				stringBuffer.append(getString(R.string.please_wait_a_second)).append(DoubleUtil.formatDouble2(((double) current) / 1024 / 1024, RoundingMode.DOWN, 2)).append("/").append(DoubleUtil.formatDouble2(((double) total) / 1024 / 1024, RoundingMode.DOWN, 2)).append("M");
+				builder.setMessage(stringBuffer);
 //					progressBar.setMax((int) total);
 //					progressBar.setProgress((int) current);
 //                Toast.makeText(SplashActivity.this, "下载中。。。", Toast.LENGTH_SHORT).show();

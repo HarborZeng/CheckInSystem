@@ -1,16 +1,16 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
-import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.os.SystemClock;
-import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 
-import cn.tellyouwhat.checkinsystem.R;
+import com.github.paolorotolo.appintro.AppIntro;
+
+import cn.tellyouwhat.checkinsystem.fragments.GetCheckCodeFragment;
+import cn.tellyouwhat.checkinsystem.fragments.GetSMSCodeFragment;
 
 /**
  * Created by Harbor-Laptop on 2017/3/1.
@@ -18,33 +18,25 @@ import cn.tellyouwhat.checkinsystem.R;
  * @author HarborZeng
  */
 
-public class ResetPasswordActivity extends BaseActivity {
-
-	private static final String TAG = "ResetPasswordActivity";
-	private EditText mPhoneNumber;
-	private EditText mVerificationCode;
-	private Button mSendVerificationCode;
-	private Button mFindPSW;
+public class ResetPasswordActivity extends AppIntro {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-		setContentView(R.layout.activity_reset_psw);
-		mPhoneNumber = (EditText) findViewById(R.id.editText_phoneNumber);
-		mVerificationCode = (EditText) findViewById(R.id.editText_verification_code);
-		mSendVerificationCode = (Button) findViewById(R.id.button_send_verification_code);
-		mFindPSW = (Button) findViewById(R.id.button_findPSW);
-
-		mPhoneNumber.requestFocus();
-		Intent intent = getIntent();
-		String phoneNumber = intent.getStringExtra("PhoneNumber");
-		if (phoneNumber != null) {
-			mPhoneNumber.setText(phoneNumber);
-			mVerificationCode.requestFocus();
+		ActionBar actionBar = getSupportActionBar();
+		if (actionBar != null) {
+			actionBar.setDisplayHomeAsUpEnabled(true);
 		}
+
+		addSlide(new GetCheckCodeFragment());
+		addSlide(new GetSMSCodeFragment());
+
+		showSkipButton(false);
+		setSwipeLock(true);
+		setColorDoneText(Color.parseColor("#000000"));
+		setIndicatorColor(Color.parseColor("#000000"), Color.parseColor("#999999"));
+		setNextArrowColor(Color.parseColor("#222222"));
 
 	}
 
@@ -54,47 +46,22 @@ public class ResetPasswordActivity extends BaseActivity {
 		return super.onOptionsItemSelected(item);
 	}
 
-	public void sendVerificationCode(View view) {
-		if (TextUtils.isEmpty(mPhoneNumber.getText().toString())) {
-			mPhoneNumber.setError(getString(R.string.input_phonenumber));
-			mPhoneNumber.requestFocus();
-		} else {
-			mSendVerificationCode.setClickable(false);
 
-			String phoneNumber = mPhoneNumber.getText().toString();
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					for (int i = 60; i > 0; i--) {
-//					Log.i(TAG, "sendVerificationCode: "+i);
-						final int finalI = i;
-						runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								mSendVerificationCode.setText(finalI + "");
-							}
-						});
-						SystemClock.sleep(1000);
-					}
-					runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
-							mSendVerificationCode.setText("获取验证码");
-							mSendVerificationCode.setClickable(true);
-						}
-					});
-				}
-			}).start();
-
-			//向短信验证码服务器提交手机号码
-			//。。。。。。。。。。
-
-		}
+	@Override
+	public void onSkipPressed(Fragment currentFragment) {
+		super.onSkipPressed(currentFragment);
+		// Do something when users tap on Skip button.
 	}
 
-	public void findPSW(View view) {
-		String phoneNumber = mPhoneNumber.getText().toString();
-		String verificatiuonCode = mVerificationCode.getText().toString();
+	@Override
+	public void onDonePressed(Fragment currentFragment) {
+		super.onDonePressed(currentFragment);
+		// Do something when users tap on Done button.
+	}
 
+	@Override
+	public void onSlideChanged(@Nullable Fragment oldFragment, @Nullable Fragment newFragment) {
+		super.onSlideChanged(oldFragment, newFragment);
+		// Do something when the slide changes.
 	}
 }

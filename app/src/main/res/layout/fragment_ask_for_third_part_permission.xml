@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/theme_purple_primary_dark">
+
+    <TextView
+        android:id="@+id/text_view_title_ask_for_third_part_permission"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="78dp"
+        android:text="服务守护"
+        android:textColor="#000000"
+        android:textSize="36sp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"/>
+
+    <TextView
+        android:id="@+id/text_view_content_ask_for_third_part_permission"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/text_view_title_ask_for_third_part_permission"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="84dp"
+        android:padding="11dp"
+        android:text="请避免使用激进的内存清理功能，包括任务切换界面的切换按钮\n\n您还需要手动将Checkin排除在内存清理、自启动管理之外\n\n三星：设置 -> 安全 -> 自启动\n\nMIUI：设置（安全中心）->授权管理->自启动管理\n\n华为：设置->权限管理->自启动管理\n\n魅族Flyme：设置->应用->CheckIn->权限->自启动\n\n索尼：设置->电源管理->STAMINA模式\n\n\n您可通过点击下一步，转至相应设置界面"
+        android:textAlignment="textStart"/>
+</RelativeLayout>

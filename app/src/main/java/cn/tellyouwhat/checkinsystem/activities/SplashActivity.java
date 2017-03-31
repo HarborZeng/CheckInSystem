@@ -31,7 +31,7 @@ public class SplashActivity extends BaseActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.activity_splash);
+//		setContentView(R.layout.activity_splash);
 
 		//把这一句话注释掉之后，API 21以下就不会报错
 //		x.view().inject(this);
@@ -82,10 +82,14 @@ public class SplashActivity extends BaseActivity {
 					canEnter[i] = true;
 				}
 			}
-			if (canEnter[0] && canEnter[1] && canEnter[2]) {
-				initShortCutAndThirdPartPermission();
-			} else {
-				Toast.makeText(this, "您必须要授予权限才能继续", Toast.LENGTH_LONG).show();
+			try {
+				if (canEnter[0] && canEnter[1] && canEnter[2]) {
+					initShortCutAndThirdPartPermission();
+				} else {
+					Toast.makeText(this, "您必须要授予权限才能继续", Toast.LENGTH_LONG).show();
+				}
+			} catch (ArrayIndexOutOfBoundsException e) {
+				finish();
 			}
 		}
 	}
@@ -121,34 +125,7 @@ public class SplashActivity extends BaseActivity {
 // 提交设置
 			Toast.makeText(this, R.string.shortcut_created, Toast.LENGTH_SHORT).show();
 
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setCancelable(false);
-			final Intent[] intent = {new Intent()};
-			intent[0].addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			if (MIUIUtil.isMIUI()) {
-				intent[0].setAction("miui.intent.action.OP_AUTO_START");
-				builder.setTitle("检测到您使用的是小米系统");
-				builder.setMessage("请前往自启动管理界面打开这个app的自启动权限，以免后台定位失效导致漏签\n本程序后台服务耗电极少，请放心使用")
-						.setPositiveButton("设置", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								try {
-									startActivity(intent[0]);
-								} catch (Exception e) {//抛出异常就直接打开设置页面
-									intent[0] = new Intent(Settings.ACTION_SETTINGS);
-									startActivity(intent[0]);
-								}
-								dialog.dismiss();
-							}
-						})
-						.show().setCanceledOnTouchOutside(false);
-			} else if (FlymeUtil.isFlyme()) {
-				//TODO 有了手机在做测试
-				intent[0].setAction("");
-				builder.setTitle("检测到您使用的是魅族系统");
-			} else {
-				enter();
-			}
+			enter();
 
 		} else {
 			enter();
@@ -163,7 +140,7 @@ public class SplashActivity extends BaseActivity {
 	@Override
 	protected void onRestart() {
 		super.onRestart();
-		enter();
+		askForPermission();
 	}
 
 	/**

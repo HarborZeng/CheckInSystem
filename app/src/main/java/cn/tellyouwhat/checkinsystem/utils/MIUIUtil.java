@@ -8,6 +8,7 @@ public final class MIUIUtil {
 	private static final String KEY_MIUI_VERSION_CODE = "ro.miui.ui.version.code";
 	private static final String KEY_MIUI_VERSION_NAME = "ro.miui.ui.version.name";
 	private static final String KEY_MIUI_INTERNAL_STORAGE = "ro.miui.internal.storage";
+	public static final String MIUI_AUTO_START_MANAGEMENT = "miui.intent.action.OP_AUTO_START";
 
 	public static boolean isMIUI() {
 		try {

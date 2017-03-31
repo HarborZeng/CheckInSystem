@@ -16,6 +16,7 @@
     <color name="blue_semi_transparent_pressed">#80738ffe</color>
     <color name="touch_effect">#9ccc</color>
 
+    <color name="custom_divider_color">#FF79FF00</color>
     <color name="material_animations_primary">#039BE5</color>
     <color name="material_animations_primary_dark">#0277BD</color>
     <color name="material_animations_blank">#424242</color>
@@ -34,6 +35,15 @@
     <color name="theme_blue_background">#84ffff</color>
     <color name="theme_blue_dark">#2D0081</color>
     <color name="theme_pink_bg">#D14E7A</color>
+    <color name="caldroid_white">#ddd</color>
+    <color name="caldroid_holo_blue_light">#ddd</color>
+    <color name="caldroid_555">#555</color>
+    <color name="caldroid_333">#333</color>
+    <color name="caldroid_lighter_gray">#ddd</color>
+    <color name="caldroid_black">#111</color>
+    <color name="caldroid_light_red">#d11</color>
+    <color name="cell_text_color">#666</color>
+    <color name="cell_text_color_dark">#111</color>
 
     <color name="theme_blue_primary">#4FC3F7</color>
     <color name="theme_blue_accent">#ff193a</color>

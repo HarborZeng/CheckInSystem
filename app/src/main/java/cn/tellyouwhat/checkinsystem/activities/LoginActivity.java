@@ -3,18 +3,16 @@ package cn.tellyouwhat.checkinsystem.activities;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.provider.Settings;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -24,8 +22,8 @@ import android.view.animation.AlphaAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.jaeger.library.StatusBarUtil;
 
@@ -38,8 +36,6 @@ import org.xutils.x;
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
-import cn.tellyouwhat.checkinsystem.utils.FlymeUtil;
-import cn.tellyouwhat.checkinsystem.utils.MIUIUtil;
 import cn.tellyouwhat.checkinsystem.utils.SPUtil;
 
 /**
@@ -104,6 +100,49 @@ public class LoginActivity extends BaseActivity {
 		mSharedPreferences = this.getSharedPreferences("userInfo", Context.MODE_PRIVATE);
 		mNumberView.setText(mSharedPreferences.getString("USER_NAME", ""));
 
+		//输入好账号后显示头像
+		mNumberView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+			@Override
+			public void onFocusChange(View v, boolean hasFocus) {
+				if (!hasFocus) {
+					//TODO 等待api
+					String number = mNumberView.getText().toString().trim();
+					RequestParams requestParams = new RequestParams("http://api.checkin.tellyouwhat.cn/User/getHeadImage?" + number);
+					x.http().get(requestParams, new Callback.CacheCallback<Bitmap>() {
+						@Override
+						public void onSuccess(final Bitmap result) {
+							runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									ImageView image_head = (ImageView) findViewById(R.id.head_image);
+									image_head.setImageBitmap(result);
+								}
+							});
+						}
+
+						@Override
+						public void onError(Throwable ex, boolean isOnCallback) {
+							Snackbar.make(findViewById(R.id.login_form), "获取头像出错", Snackbar.LENGTH_LONG).show();
+						}
+
+						@Override
+						public void onCancelled(CancelledException cex) {
+
+						}
+
+						@Override
+						public void onFinished() {
+
+						}
+
+						@Override
+						public boolean onCache(Bitmap result) {
+							return false;
+						}
+					});
+				}
+			}
+		});
 
 		mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 			@Override
@@ -132,8 +171,8 @@ public class LoginActivity extends BaseActivity {
 		mPasswordView.setError(null);
 
 		// Store values at the time of the login attempt.
-		final String number = mNumberView.getText().toString();
-		final String password = mPasswordView.getText().toString();
+		final String number = mNumberView.getText().toString().trim();
+		final String password = mPasswordView.getText().toString().trim();
 
 		boolean cancel = false;
 		View focusView = null;
@@ -171,7 +210,6 @@ public class LoginActivity extends BaseActivity {
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
-					SystemClock.sleep(1000);
 					login(number, password);
 				}
 			}).start();
@@ -281,6 +319,9 @@ public class LoginActivity extends BaseActivity {
 				Log.w(TAG, "onError: " + ex);
 				showProgress(false);
 				Snackbar.make(findViewById(R.id.login_form), "网络开小差了~~", Snackbar.LENGTH_LONG).show();
+				mloginBG.setVisibility(View.INVISIBLE);
+				mNumberSignInButton.setClickable(true);
+				mforgetPasswordButton.setClickable(true);
 			}
 
 			@Override
@@ -288,14 +329,13 @@ public class LoginActivity extends BaseActivity {
 				Log.w(TAG, "onCancelled: cex");
 				showProgress(false);
 				Snackbar.make(findViewById(R.id.login_form), "服务器正忙，请稍候重试", Snackbar.LENGTH_LONG).show();
+				mloginBG.setVisibility(View.INVISIBLE);
+				mNumberSignInButton.setClickable(true);
+				mforgetPasswordButton.setClickable(true);
 			}
 
 			@Override
 			public void onFinished() {
-				//TODO 服务器搭好之后注释掉下面这1句
-//				SPUtil spUtil = new SPUtil(LoginActivity.this);
-//				spUtil.putString(ConstantValues.TOKEN, "this is a fucking token");
-//				initGuidancePages();
 				Log.w(TAG, "onFinished: ");
 			}
 		});
@@ -321,7 +361,7 @@ public class LoginActivity extends BaseActivity {
 		Intent intent;
 		if (isFirstTimeAfterUpgrade && mNeedToShowTabbedActivity) {
 			spUtil.putBoolean(ConstantValues.FIRST_TIME_AFTER_UPGRADE + localVersionCode, false);
-			intent = new Intent(this, TabbedActivity.class);
+			intent = new Intent(this, IntroActivity.class);
 		} else {
 			intent = new Intent(this, MainActivity.class);
 		}

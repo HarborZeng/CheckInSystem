@@ -30,6 +30,7 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
     <application
+        android:persistent="true"
         android:name=".bases.BaseApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -44,6 +45,7 @@
 
         <activity
             android:name=".activities.SplashActivity"
+            android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
@@ -55,8 +57,9 @@
         <activity
             android:name=".activities.LoginActivity"
             android:label="@string/log_in"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:screenOrientation="portrait">
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity
             android:name=".activities.ResetPasswordActivity"
@@ -82,8 +85,8 @@
 
         <activity
             android:name=".activities.MainActivity"
-            android:launchMode="singleTask"
             android:label="@string/check_in"
+            android:launchMode="singleTask"
             android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -95,7 +98,7 @@
             android:screenOrientation="portrait">
         </activity>
         <activity
-            android:name=".activities.TabbedActivity"
+            android:name=".activities.IntroActivity"
             android:label="@string/title_activity_tabbed"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>

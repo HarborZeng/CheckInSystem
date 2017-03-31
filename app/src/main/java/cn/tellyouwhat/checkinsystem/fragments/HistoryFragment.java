@@ -1,22 +1,22 @@
 package cn.tellyouwhat.checkinsystem.fragments;
 
-import android.app.Fragment;
 import android.content.Context;
-import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CalendarView;
+import android.widget.Toast;
 
 import com.roomorama.caldroid.CaldroidFragment;
+import com.roomorama.caldroid.CaldroidListener;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 import cn.tellyouwhat.checkinsystem.R;
 
@@ -37,7 +37,7 @@ public class HistoryFragment extends BaseFragment {
 		View view = inflater.inflate(R.layout.fragment_history, container, false);
 
 		final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-		CaldroidFragment caldroidFragment = new CaldroidFragment();
+		final CaldroidFragment caldroidFragment = new CaldroidFragment();
 		Bundle args = new Bundle();
 		Calendar cal = Calendar.getInstance();
 		args.putInt(CaldroidFragment.MONTH, cal.get(Calendar.MONTH) + 1);
@@ -57,14 +57,44 @@ public class HistoryFragment extends BaseFragment {
 
 		caldroidFragment.setArguments(args);
 
-//		FragmentTransaction t = mContext.getSupportFragmentManager().beginTransaction();
-//		t.replace(R.id.calendar, caldroidFragment);
-//		t.commit();
+		FragmentTransaction t = getFragmentManager().beginTransaction();
+		t.replace(R.id.calendar, caldroidFragment);
+		t.commit();
+		final CaldroidListener listener = new CaldroidListener() {
+
+			@Override
+			public void onSelectDate(Date date, View view) {
+				Toast.makeText(getContext(), formatter.format(date),
+						Toast.LENGTH_SHORT).show();
+				caldroidFragment.setBackgroundDrawableForDate(new ColorDrawable(getResources().getColor(R.color.caldroid_holo_blue_dark)), date);
+				caldroidFragment.refreshView();
+			}
+
+			@Override
+			public void onChangeMonth(int month, int year) {
+				String text = "month: " + month + " year: " + year;
+				Toast.makeText(getContext(), text,
+						Toast.LENGTH_SHORT).show();
+			}
+
+			@Override
+			public void onLongClickDate(Date date, View view) {
+				Toast.makeText(getContext(),
+						"Long click " + formatter.format(date),
+						Toast.LENGTH_SHORT).show();
+			}
+
+			@Override
+			public void onCaldroidViewCreated() {
+
+			}
+
+		};
+		// Setup Caldroid
+		caldroidFragment.setCaldroidListener(listener);
 
 
 		//点击查看当天签到信息
-
-
 
 		return view;
 	}
@@ -80,4 +110,5 @@ public class HistoryFragment extends BaseFragment {
 		super.onAttach(context);
 		this.mContext = context;
 	}
+
 }

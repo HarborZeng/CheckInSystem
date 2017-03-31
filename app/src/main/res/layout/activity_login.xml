@@ -7,6 +7,7 @@
              tools:context="cn.tellyouwhat.checkinsystem.activities.LoginActivity">
 
     <RelativeLayout
+        android:id="@+id/relative_layout_activity_login"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
@@ -28,10 +29,21 @@
                 android:layout_height="wrap_content"
                 android:elevation="20dp"
                 android:src="@mipmap/check_in_logo"
-                android:translationZ="20dp"
-                />
+                android:translationZ="20dp"/>
 
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/head_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/parent_of_imageView_bg_logo"
+            android:layout_centerHorizontal="true"
+            android:layout_centerInParent="false"
+            android:layout_centerVertical="false"
+            android:layout_marginTop="20dp"
+            android:contentDescription="头像"
+            android:src="@drawable/funny"/>
 
         <ScrollView
             android:layout_width="260dp"
@@ -86,7 +98,8 @@
                                 android:background="@null"
                                 android:hint="@string/prompt_name"
                                 android:inputType="number"
-                                android:maxLines="1"/>
+                                android:maxLines="1"
+                                tools:ignore="RtlHardcoded"/>
 
                         </android.support.design.widget.TextInputLayout>
                     </LinearLayout>

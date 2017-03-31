@@ -17,4 +17,9 @@
         android:icon="@drawable/ic_sync_black_24dp"
         android:title="@string/pref_header_data_sync"/>
 
+    <header
+        android:fragment="cn.tellyouwhat.checkinsystem.activities.SettingsActivity$AboutPreferenceFragment"
+        android:icon="@drawable/ic_about"
+        android:title="关于"/>
+
 </preference-headers>
