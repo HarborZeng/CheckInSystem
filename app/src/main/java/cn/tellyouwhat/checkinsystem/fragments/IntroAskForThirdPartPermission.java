@@ -55,7 +55,7 @@ public class IntroAskForThirdPartPermission extends Fragment implements ISlidePo
 			intent.setAction("");
 		} else {
 			buttonClicked = true;
-			Toast.makeText(getActivity(), "您的手机不需要配置启动管理，再点一下继续", Toast.LENGTH_SHORT).show();
+			Toast.makeText(getActivity(), "您的手机不需要配置启动管理", Toast.LENGTH_SHORT).show();
 		}
 	}
 

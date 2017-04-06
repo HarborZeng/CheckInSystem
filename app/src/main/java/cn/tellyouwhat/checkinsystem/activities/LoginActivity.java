@@ -11,7 +11,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.design.widget.Snackbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -24,7 +23,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.daimajia.androidanimations.library.Techniques;
+import com.daimajia.androidanimations.library.YoYo;
 import com.jaeger.library.StatusBarUtil;
 
 import org.json.JSONException;
@@ -72,6 +74,7 @@ public class LoginActivity extends BaseActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		setBackEnable(false);
 		setContentView(R.layout.activity_login);
 
 		mloginBG = findViewById(R.id.login_bg);
@@ -114,8 +117,12 @@ public class LoginActivity extends BaseActivity {
 							runOnUiThread(new Runnable() {
 								@Override
 								public void run() {
-									ImageView image_head = (ImageView) findViewById(R.id.head_image);
+									ImageView image_head = (ImageView) findViewById(R.id.profile_image);
 									image_head.setImageBitmap(result);
+									YoYo.with(Techniques.Tada)
+											.duration(700)
+											.repeat(1)
+											.playOn(image_head);
 								}
 							});
 						}
@@ -180,12 +187,22 @@ public class LoginActivity extends BaseActivity {
 			mPasswordView.setError(getString(R.string.error_field_required));
 			focusView = mPasswordView;
 			cancel = true;
+			YoYo.with(Techniques.Tada)
+					.duration(500)
+					.repeat(1)
+					.playOn(findViewById(R.id.card_view_password));
+			findViewById(R.id.card_view_password).setAlpha(0.5f);
 		} else {
 			// Check for a valid password, if the user entered one.
 			if (!isPasswordValid(password)) {
 				mPasswordView.setError(getString(R.string.error_invalid_password));
 				focusView = mPasswordView;
 				cancel = true;
+				YoYo.with(Techniques.Tada)
+						.duration(500)
+						.repeat(1)
+						.playOn(findViewById(R.id.card_view_password));
+				findViewById(R.id.card_view_password).setAlpha(0.5f);
 			}
 		}
 		// Check for a valid Number address.
@@ -193,10 +210,20 @@ public class LoginActivity extends BaseActivity {
 			mNumberView.setError(getString(R.string.error_field_required));
 			focusView = mNumberView;
 			cancel = true;
+			YoYo.with(Techniques.Tada)
+					.duration(500)
+					.repeat(1)
+					.playOn(findViewById(R.id.card_view_username));
+			findViewById(R.id.card_view_username).setAlpha(0.5f);
 		} else if (!isNumberValid(number)) {
 			mNumberView.setError(getString(R.string.error_invalid_number));
 			focusView = mNumberView;
 			cancel = true;
+			YoYo.with(Techniques.Tada)
+					.duration(500)
+					.repeat(1)
+					.playOn(findViewById(R.id.card_view_username));
+			findViewById(R.id.card_view_username).setAlpha(0.5f);
 		}
 
 		if (cancel) {
@@ -262,29 +289,31 @@ public class LoginActivity extends BaseActivity {
 		final SharedPreferences.Editor editor = mSharedPreferences.edit();
 
 		//通过加盐的MD5算法加密密码，以确保传输过程的安全性
-		String encryptedPassword = EncryptUtil.md5WithSalt(password, "saltforcheckinsystemstorepasswordinserverdatabase");
+		String encryptedPassword = EncryptUtil.md5WithSalt(password, ConstantValues.SALT);
 
 		//开始准备数据
 		RequestParams params = new RequestParams("http://api.checkin.tellyouwhat.cn/User/Login?username=" + number + "&password=" + encryptedPassword + "&deviceid=" + Build.SERIAL);
+		params.setUseCookie(true);
+		params.setMultipart(true);
 		//利用xUtils3post提交
 		x.http().get(params, new Callback.CommonCallback<JSONObject>() {
 
-			private boolean loginSuccess;
+			private int loginResponseCode;
 			private String token;
 
 			@Override
 			public void onSuccess(JSONObject result) {
 				//获取update.json成功的回调
 				try {
-					loginSuccess = result.getBoolean("result");
-					if (loginSuccess) {
+					loginResponseCode = result.getInt("result");
+					if (loginResponseCode == 1) {
 						token = result.getString("token");
 					}
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
 				Log.i(TAG, "onSuccess: " + result);
-				if (!loginSuccess) {
+				if (loginResponseCode == -2) {
 					showProgress(false);
 					Log.d(TAG, "login: Failed");
 					runOnUiThread(new Runnable() {
@@ -298,12 +327,28 @@ public class LoginActivity extends BaseActivity {
 					});
 					mPasswordView.setError(getString(R.string.error_incorrect_password));
 					mPasswordView.requestFocus();
+					YoYo.with(Techniques.Tada)
+							.duration(500)
+							.repeat(1)
+							.playOn(findViewById(R.id.card_view_password));
+					findViewById(R.id.card_view_password).setAlpha(0.5f);
+				} else if (loginResponseCode == -1) {
+					Toast.makeText(LoginActivity.this, "发生了可怕的错误，代码：001，我们正在抢修", Toast.LENGTH_SHORT).show();
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							showProgress(false);
+							mloginBG.setVisibility(View.INVISIBLE);
+							mNumberSignInButton.setClickable(true);
+							mforgetPasswordButton.setClickable(true);
+						}
+					});
 				} else {
 					Log.d(TAG, "onPostExecute: 登录成功");
 					//这里到时候服务器搭好以后传入自己的token
 					if (TextUtils.isEmpty(token)) {
 					} else {
-						editor.putString(ConstantValues.TOKEN, token);
+						editor.putString(ConstantValues.TOKEN, EncryptUtil.encryptBase64withSalt(token, ConstantValues.SALT));
 					}
 					editor.putString("USER_NAME", number);
 					editor.apply();
@@ -311,7 +356,6 @@ public class LoginActivity extends BaseActivity {
 					initGuidancePages();
 					LoginActivity.this.finish();
 				}
-
 			}
 
 			@Override

@@ -34,7 +34,6 @@
     <!-- theme colors -->
     <color name="theme_blue_background">#84ffff</color>
     <color name="theme_blue_dark">#2D0081</color>
-    <color name="theme_pink_bg">#D14E7A</color>
     <color name="caldroid_white">#ddd</color>
     <color name="caldroid_holo_blue_light">#ddd</color>
     <color name="caldroid_555">#555</color>

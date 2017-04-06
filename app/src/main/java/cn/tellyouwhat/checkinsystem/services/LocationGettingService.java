@@ -281,22 +281,24 @@ public class LocationGettingService extends Service {
 
 
 			if (radius < 50 && radius != 0) {
-				for (int i = 0; i < polygons.length; i++) {
-					if (polygons[i].contains(location.getLongitude() * 1000000, location.getLatitude() * 1000000)) {
-						LocationDB locationDB = new LocationDB();
-						LocationItem item = new LocationItem();
-						item.setGotFromService(true);
-						item.setLocationType(locType);
-						item.setRadius(radius);
-						item.setBuildingID(locationIDs[i]);
-						item.setTime(location.getTime());
-						locationDB.saveLocation(item);
-						break;
+				if (polygons != null) {
+					for (int i = 0; i < polygons.length; i++) {
+						if (polygons[i].contains(location.getLongitude() * 1000000, location.getLatitude() * 1000000)) {
+							LocationDB locationDB = new LocationDB();
+							LocationItem item = new LocationItem();
+							item.setGotFromService(true);
+							item.setLocationType(locType);
+							item.setRadius(radius);
+							item.setBuildingID(locationIDs[i]);
+							item.setTime(location.getTime());
+							locationDB.saveLocation(item);
+							break;
+						}
 					}
-				}
 
-			} else {
-				Log.d("存数据", "onReceiveLocation: 精度不够");
+				} else {
+					Log.d("存数据", "onReceiveLocation: 精度不够");
+				}
 			}
 			mLocationClient.stop();
 		}

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:key="background_service_settings"
+        android:title="后台服务">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="use_background_service"
+            android:title="使用后台服务"/>
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:dependency="use_background_service"
+            android:key="use_GPS"
+            android:title="后台服务用GPS"/>
+        <ListPreference
+            android:defaultValue="0"
+            android:dependency="use_background_service"
+            android:entries="@array/pref_low_battery_list_titles"
+            android:entryValues="@array/pref_low_battery_list_values"
+            android:key="when_low_battery"
+            android:title="低电量时停用..."/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="upgrade_settings"
+        android:title="Wi-Fi">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="show_upgrade_dialog_only_under_wifi"
+            android:title="仅在WIFI环境下提示更新"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="battery_settings"
+        android:title="电池">
+        <Preference
+            android:key="ignore_battery_optimizing"
+            android:title="加入电池优化白名单"
+            android:summary="以免因手机长时间待机原因后台签到不工作">
+            <intent
+                android:action="android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+                android:data="package:cn.tellyouwhat.checkinsystem"/>
+        </Preference>
+    </PreferenceCategory>
+    <Preference
+        android:title="关于">
+        <intent android:action="cn.tellyouwhat.checkinsystem.about"/>
+    </Preference>
+</PreferenceScreen>

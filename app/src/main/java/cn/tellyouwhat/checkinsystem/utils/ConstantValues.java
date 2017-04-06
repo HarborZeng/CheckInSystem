@@ -14,5 +14,6 @@ public class ConstantValues {
 	public static final int GPS_LOCATION = 1;
 	public static final int NETWORK_LOCATION = 2;
 	public static final int OFFLINE_LOCATION = 3;
+	public static final String SALT = "saltforcheckinsystemstorepasswordinserverdatabase";
 	public static String cookie = "COOKIE";
 }

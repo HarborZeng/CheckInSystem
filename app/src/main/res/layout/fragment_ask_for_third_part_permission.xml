@@ -2,8 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/theme_purple_primary_dark">
+                android:layout_height="match_parent">
 
     <TextView
         android:id="@+id/text_view_title_ask_for_third_part_permission"

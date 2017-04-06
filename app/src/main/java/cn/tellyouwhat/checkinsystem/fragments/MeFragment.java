@@ -21,6 +21,7 @@ import java.io.File;
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.activities.SettingsActivity;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
+import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 
 /**
  * Created by Harbor-Laptop on 2017/3/4.
@@ -87,6 +88,13 @@ public class MeFragment extends BaseFragment {
 			});
 		}
 
+		Button logoffButton = (Button) view.findViewById(R.id.button_logoff);
+		logoffButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				new ReLoginUtil(getActivity()).reLoginWithAreYouSureDialog();
+			}
+		});
 		return view;
 	}
 

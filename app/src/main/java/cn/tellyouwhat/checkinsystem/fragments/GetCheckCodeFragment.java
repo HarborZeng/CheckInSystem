@@ -1,15 +1,15 @@
 package cn.tellyouwhat.checkinsystem.fragments;
 
-import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
+import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,22 +17,17 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.daimajia.androidanimations.library.Techniques;
+import com.daimajia.androidanimations.library.YoYo;
 import com.github.paolorotolo.appintro.ISlidePolicy;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xutils.common.Callback;
 import org.xutils.http.RequestParams;
-import org.xutils.http.cookie.DbCookieStore;
 import org.xutils.x;
 
-import java.net.HttpCookie;
-import java.util.List;
-
 import cn.tellyouwhat.checkinsystem.R;
-import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
-
-import static android.content.Context.MODE_PRIVATE;
 
 /**
  * Created by Harbor-Laptop on 2017/3/30.
@@ -109,22 +104,35 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 	private void requestCheckCode() {
 		RequestParams params = new RequestParams("http://api.checkin.tellyouwhat.cn/user/GetCheckCode");
 		params.setUseCookie(true);
-		x.http().get(params, new Callback.CommonCallback<Bitmap>() {
+		params.setMultipart(true);
+		x.http().get(params, new Callback.CommonCallback<JSONObject>() {
+
+			private int resultInt = 0;
+
 			@Override
-			public void onSuccess(Bitmap result) {
-				mCheckCodeImageView.setImageBitmap(result);
-				DbCookieStore instance = DbCookieStore.INSTANCE;
-				List<HttpCookie> cookies = instance.getCookies();
-				for (HttpCookie cookie : cookies) {
-					String name = cookie.getName();
-					String value = cookie.getValue();
-					if (".AspNetCore.Session".equals(name)) {
-						SharedPreferences.Editor editor = getActivity().getSharedPreferences(ConstantValues.cookie, MODE_PRIVATE).edit();
-						editor.putString("Cookie", value);
-						editor.apply();
-						ConstantValues.cookie = value;
-						break;
+			public void onSuccess(JSONObject result) {
+				try {
+					resultInt = result.getInt("result");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				if (resultInt == 1) {
+					String imageString = null;
+					try {
+						imageString = result.getString("image");
+					} catch (JSONException e) {
+						e.printStackTrace();
 					}
+					Log.d(TAG, "onSuccess: " + resultInt + ", image:　" + imageString);
+					byte[] imageByte = imageString != null ? imageString.getBytes() : new byte[0];
+					byte[] decodeImage = Base64.decode(imageByte, Base64.DEFAULT);
+					Bitmap bitmap = BitmapFactory.decodeByteArray(decodeImage, 0, decodeImage.length);
+					mCheckCodeImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+					mCheckCodeImageView.setScaleX(3f);
+					mCheckCodeImageView.setScaleY(3f);
+					mCheckCodeImageView.setImageBitmap(bitmap);
+				} else if (resultInt == -1) {
+					Toast.makeText(getActivity(), "发生了可怕的错误，代码：002，我们正在抢修", Toast.LENGTH_SHORT).show();
 				}
 			}
 
@@ -156,25 +164,44 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 		if (TextUtils.isEmpty(mPhoneNumber.getText().toString().trim())) {
 			mPhoneNumber.setError(getString(R.string.input_phonenumber));
 			mPhoneNumber.requestFocus();
+			YoYo.with(Techniques.Tada)
+					.duration(700)
+					.repeat(1)
+					.playOn(view.findViewById(R.id.linearLayout_input_phone_nuber));
 		} else if (TextUtils.isEmpty(mCheckCodeEditText.getText().toString().trim())) {
 			mCheckCodeEditText.setError("请输入图片上的字母！");
 			mCheckCodeEditText.requestFocus();
+			YoYo.with(Techniques.Tada)
+					.duration(700)
+					.repeat(1)
+					.playOn(view.findViewById(R.id.textInputLayoutPassword));
 		} else {
 			phoneNumber = mPhoneNumber.getText().toString().trim();
 			userInput = mCheckCodeEditText.getText().toString().trim();
-			RequestParams requestParams = new RequestParams("http://");
+			String requestURL = "http://api.checkin.tellyouwhat.cn/User/SendSMS?checkcode=" + userInput + "&phonenumber=" + phoneNumber;
+
+			RequestParams requestParams = new RequestParams(requestURL);
+			Log.d(TAG, "onUserIllegallyRequestedNextPage: 请求的链接：" + requestURL);
 			x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 				@Override
 				public void onSuccess(JSONObject result) {
 					try {
-						String resultString = result.getString("");
-						if (resultString.equals("")) {
+						int successCode = result.getInt("result");
+						if (successCode == 1) {
 							isCorrectCode = true;
 							Toast.makeText(getActivity(), "验证码正确，再次点击前进按钮继续", Toast.LENGTH_SHORT).show();
+						} else if (successCode == -1) {
+							Toast.makeText(getActivity(), "发生了可怕的错误，代码：003，我们正在抢修", Toast.LENGTH_SHORT).show();
 						} else {
 							isCorrectCode = false;
-							Toast.makeText(getActivity(), "验证码错误，请重试", Toast.LENGTH_SHORT).show();
+							Toast.makeText(getActivity(), result.getString("message"), Toast.LENGTH_SHORT).show();
+							mCheckCodeEditText.setText("");
+							YoYo.with(Techniques.Tada)
+									.duration(700)
+									.repeat(1)
+									.playOn(view.findViewById(R.id.textInputLayoutPassword));
 						}
+
 					} catch (JSONException e) {
 						e.printStackTrace();
 					}
@@ -184,6 +211,7 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 				public void onError(Throwable ex, boolean isOnCallback) {
 					isCorrectCode = false;
 					Snackbar.make(view.findViewById(R.id.reset_password_step_one_framelayout), "验证验证码出错", Snackbar.LENGTH_SHORT).show();
+					mCheckCodeEditText.setText("");
 				}
 
 				@Override
@@ -194,6 +222,7 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 				@Override
 				public void onFinished() {
 //					isCorrectCode = true;
+					requestCheckCode();
 				}
 			});
 		}

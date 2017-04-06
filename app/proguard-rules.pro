@@ -10,6 +10,7 @@
 # Add any project specific keep options here:
 -keep class com.baidu.** {*;}
 -keep class vi.com.** {*;}
+-keep class cn.tellyouwhat.checkinsystem.fragments.** {*;}
 -keepattributes Signature
 -keepattributes EnclosingMethod
 -assumenosideeffects class android.util.Log {

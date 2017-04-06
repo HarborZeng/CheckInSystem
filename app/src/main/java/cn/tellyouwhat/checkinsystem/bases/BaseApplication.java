@@ -6,6 +6,8 @@ import android.app.Service;
 import android.content.Intent;
 import android.util.Log;
 
+import com.squareup.leakcanary.LeakCanary;
+
 import org.xutils.x;
 
 import java.util.LinkedList;
@@ -19,6 +21,14 @@ public class BaseApplication extends Application {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		if (LeakCanary.isInAnalyzerProcess(this)) {
+			// This process is dedicated to LeakCanary for heap analysis.
+			// You should not init your app in this process.
+			return;
+		}
+		LeakCanary.install(this);
+		// Normal app init code...
+
 		x.Ext.init(this);
 //		x.Ext.setDebug(true);
 		Log.d("ChatApplication", "init");

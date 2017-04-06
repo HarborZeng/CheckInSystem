@@ -1,18 +1,15 @@
 package cn.tellyouwhat.checkinsystem.fragments;
 
 import android.Manifest;
-import android.app.Fragment;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.transition.Scene;
-import android.transition.TransitionInflater;
-import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +25,8 @@ import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.location.Poi;
+import com.daimajia.androidanimations.library.Techniques;
+import com.daimajia.androidanimations.library.YoYo;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
 
@@ -42,9 +41,12 @@ import org.xutils.x;
 import java.util.List;
 
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.activities.OtherActivity;
 import cn.tellyouwhat.checkinsystem.db.LocationDB;
 import cn.tellyouwhat.checkinsystem.db.LocationItem;
+import cn.tellyouwhat.checkinsystem.utils.NotifyUtil;
 import cn.tellyouwhat.checkinsystem.utils.Polygon;
+import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 
 /**
  * Created by Harbor-Laptop on 2017/3/3.
@@ -70,6 +72,7 @@ public class CheckInFragment extends BaseFragment {
 	private Snackbar snackbar;
 	private int locationIDs[];
 	private String locationNames[];
+	private View view;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -141,15 +144,13 @@ public class CheckInFragment extends BaseFragment {
 //    LayoutInflater inflater2 = (LayoutInflater)getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 //    groupPollingAddress = (LinearLayout)inflater2.inflate(R.layout.three_state, null);
 
-		final ViewGroup sceneRoot = (ViewGroup) view.findViewById(R.id.scene_root);
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			TransitionManager.go(Scene.getSceneForLayout(sceneRoot, R.layout.three_state, getActivity()), TransitionInflater.from(getActivity()).inflateTransition(R.transition.slide_and_changebounds_sequential_with_interpolators));
-
-		}
-
 		final FloatingActionsMenu menuMultipleActions = (FloatingActionsMenu) view.findViewById(R.id.multiple_actions);
-		menuMultipleActions.expand();
+		x.task().postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				menuMultipleActions.expand();
+			}
+		}, 1100);
 
 		final FloatingActionButton actionB = (FloatingActionButton) view.findViewById(R.id.action_b);
 		actionB.setIcon(R.drawable.check_out);
@@ -216,7 +217,6 @@ public class CheckInFragment extends BaseFragment {
 			}
 		});
 
-
 		mLocationClient = new LocationClient(getActivity().getApplicationContext());
 		//声明LocationClient类
 		mLocationClient.registerLocationListener(myListener);
@@ -224,7 +224,6 @@ public class CheckInFragment extends BaseFragment {
 		initLocation();
 
 		return view;
-
 	}
 
 
@@ -241,7 +240,7 @@ public class CheckInFragment extends BaseFragment {
 		option.setCoorType("bd09ll");
 		//可选，默认gcj02，设置返回的定位结果坐标系
 
-		int span = 2100;
+		int span = 3000;
 		option.setScanSpan(span);
 		//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
 
@@ -281,7 +280,7 @@ public class CheckInFragment extends BaseFragment {
 			final double latitude = location.getLatitude();
 			final double longitude = location.getLongitude();
 		 /*
-	       以下内容属于测试代码
+		   以下内容属于测试代码
           */
 			//获取定位结果
 			final StringBuffer sb = new StringBuffer(256);
@@ -390,6 +389,14 @@ public class CheckInFragment extends BaseFragment {
 						out_of_range.setVisibility(View.INVISIBLE);
 						imageView_cover_out_company.setVisibility(View.INVISIBLE);
 						in_range.setVisibility(View.INVISIBLE);
+						YoYo.with(Techniques.Tada)
+								.duration(500)
+								.repeat(1)
+								.playOn(imageView2_cover_in50);
+						YoYo.with(Techniques.Tada)
+								.duration(500)
+								.repeat(1)
+								.playOn(enough_accuracy_text_view);
 					}
 				});
 
@@ -417,30 +424,70 @@ public class CheckInFragment extends BaseFragment {
 									Log.i("zdhobuzd", "run: 在");
 									mLocationClient.stop();
 									snackbar.dismiss();
-									imageView_cover_out_company.setVisibility(View.INVISIBLE);
-									out_of_range.setVisibility(View.INVISIBLE);
+									new Thread(new Runnable() {
+										@Override
+										public void run() {
+											SystemClock.sleep(1000);
+											getActivity().runOnUiThread(new Runnable() {
+												@Override
+												public void run() {
+													imageView_cover_out_company.setVisibility(View.INVISIBLE);
+													out_of_range.setVisibility(View.INVISIBLE);
 
-									imageView_cover_in_company.setVisibility(View.VISIBLE);
-									imageView_cover_in_company.setAnimation(alphaAnimation);
-									in_range.startAnimation(alphaAnimation);
-									in_range.setVisibility(View.VISIBLE);
+													imageView_cover_in_company.setVisibility(View.VISIBLE);
+													imageView_cover_in_company.setAnimation(alphaAnimation);
+													in_range.startAnimation(alphaAnimation);
+													in_range.setVisibility(View.VISIBLE);
 
-									imageView2_cover_out50.setVisibility(View.INVISIBLE);
-									enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
-									beginCheckingIn(time);
+													imageView2_cover_out50.setVisibility(View.INVISIBLE);
+													enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
+													YoYo.with(Techniques.Tada)
+															.duration(700)
+															.repeat(1)
+															.playOn(in_range);
+													YoYo.with(Techniques.Tada)
+															.duration(700)
+															.repeat(1)
+															.playOn(imageView_cover_in_company);
+												}
+											});
+										}
+									}).start();
+									beginCheckingIn(radius, longitude, latitude, time);
 									break;
 								} else {
 									Log.i("zdhobuzd", "run: 不在");
-									imageView_cover_out_company.setVisibility(View.VISIBLE);
-									imageView_cover_out_company.startAnimation(alphaAnimation);
-									out_of_range.startAnimation(alphaAnimation);
-									out_of_range.setVisibility(View.VISIBLE);
+									new Thread(new Runnable() {
+										@Override
+										public void run() {
+											SystemClock.sleep(1000);
+											getActivity().runOnUiThread(new Runnable() {
+												@Override
+												public void run() {
+													imageView_cover_out_company.setVisibility(View.VISIBLE);
+													imageView_cover_out_company.startAnimation(alphaAnimation);
+													out_of_range.startAnimation(alphaAnimation);
+													out_of_range.setVisibility(View.VISIBLE);
 
-									imageView2_cover_out50.setVisibility(View.INVISIBLE);
-									imageView_cover_in_company.setVisibility(View.INVISIBLE);
-									succeed.setVisibility(View.INVISIBLE);
-									imageView_cover_finally_success.setVisibility(View.INVISIBLE);
-									enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
+													imageView2_cover_out50.setVisibility(View.INVISIBLE);
+													imageView_cover_in_company.setVisibility(View.INVISIBLE);
+													succeed.setVisibility(View.INVISIBLE);
+													imageView_cover_finally_success.setVisibility(View.INVISIBLE);
+													enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
+													YoYo.with(Techniques.Tada)
+															.duration(500)
+															.repeat(1)
+															.playOn(imageView_cover_out_company);
+//													imageView_cover_out_company.setAlpha(0.5f);
+													YoYo.with(Techniques.Tada)
+															.duration(500)
+															.repeat(1)
+															.playOn(out_of_range);
+//													out_of_range.setAlpha(0.5f);
+												}
+											});
+										}
+									}).start();
 								}
 							}
 						}
@@ -467,10 +514,17 @@ public class CheckInFragment extends BaseFragment {
 						imageView_cover_out_company.setVisibility(View.INVISIBLE);
 						in_range.setVisibility(View.INVISIBLE);
 						enough_accuracy_text_view.setVisibility(View.INVISIBLE);
+						YoYo.with(Techniques.Tada)
+								.duration(500)
+								.repeat(1)
+								.playOn(enable_wifi_gps_textView);
+						YoYo.with(Techniques.Tada)
+								.duration(500)
+								.repeat(1)
+								.playOn(imageView2_cover_out50);
 					}
 				});
 			}
-
 		}
 
 		@Override
@@ -480,8 +534,65 @@ public class CheckInFragment extends BaseFragment {
 	}
 
 
-	private void beginCheckingIn(String time) {
+	private void beginCheckingIn(float radius, double longitude, double latitude, String time) {
+		RequestParams requestParams = new RequestParams("http://api.checkin.tellyouwhat.cn/checkin/checkin");
+		requestParams.setUseCookie(true);
+		requestParams.setConnectTimeout(5000);
+		requestParams.setMultipart(true);
+		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
+			@Override
+			public void onSuccess(JSONObject result) {
+				try {
+					int resultInt = result.getInt("result");
+					switch (resultInt) {
+						case 1:
+							Intent intent = new Intent(getActivity(), OtherActivity.class);
+							intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+							PendingIntent pIntent = PendingIntent.getActivity(getActivity(),
+									1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+//		int smallIcon = R.drawable.tb_bigicon;
+							String ticker = "您有一条新通知";
+							String title = "签到成功";
+							String content = "恭喜您，今日签到成功";
+							NotifyUtil notify1 = new NotifyUtil(getActivity(), 1);
+							notify1.notify_normal_singline(pIntent, R.drawable.calendar_prev_arrow, ticker, title, content, false, true, false);
+							break;
+						case 0:
+							ReLoginUtil util = new ReLoginUtil(getActivity());
+							util.reLoginWithAlertDialog();
+							break;
+						case -1:
+							Toast.makeText(getActivity(), "发生了可怕的错误，代码：008，我们正在抢修", Toast.LENGTH_SHORT).show();
+							break;
+						case -2:
+							Toast.makeText(getActivity(), "然鹅，你已经签过到了", Toast.LENGTH_SHORT).show();
+							break;
+						default:
+							break;
+					}
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			}
 
+			@Override
+			public void onError(Throwable ex, boolean isOnCallback) {
+				view = getView();
+				if (view != null) {
+					Snackbar.make(view, "网络开小差了~~", Snackbar.LENGTH_LONG).show();
+				}
+			}
+
+			@Override
+			public void onCancelled(CancelledException cex) {
+
+			}
+
+			@Override
+			public void onFinished() {
+
+			}
+		});
 	}
 
 	public static CheckInFragment newInstance() {

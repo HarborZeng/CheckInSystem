@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:key="background_service_settings"
+        android:title="后台服务">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="use_background_service"
+            android:title="使用后台服务"/>
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:dependency="use_background_service"
+            android:key="use_GPS"
+            android:title="后台服务用GPS"/>
+        <ListPreference
+            android:defaultValue="0"
+            android:dependency="use_background_service"
+            android:entries="@array/pref_low_battery_list_titles"
+            android:entryValues="@array/pref_low_battery_list_values"
+            android:key="when_low_battery"
+            android:title="低电量时停用..."/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="upgrade_settings"
+        android:title="Wi-Fi">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="show_upgrade_dialog_only_under_wifi"
+            android:title="仅在WIFI环境下提示更新"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="more_settings"
+        android:title="更多">
+        <CheckBoxPreference
+            android:key="immersed_status_bar_enabled"
+            android:title="使用沉浸式状态栏"
+            android:defaultValue="true"/>
+
+    </PreferenceCategory>
+    <Preference
+        android:title="关于">
+        <intent android:action="cn.tellyouwhat.checkinsystem.about"/>
+    </Preference>
+</PreferenceScreen>

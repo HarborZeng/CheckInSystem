@@ -1,11 +1,13 @@
 package cn.tellyouwhat.checkinsystem.utils;
 
 import android.util.Base64;
+import android.util.Log;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 /**
  * Created by Harbor-Laptop on 2017/2/28.
@@ -86,18 +88,19 @@ public final class EncryptUtil {
 	}
 
 	public static String md5WithSalt(String string, String salt) {
-		byte[] encodeBytes = null;
+		byte[] encodeBytes;
 		try {
-			encodeBytes = MessageDigest.getInstance("MD5").digest(string.getBytes("UTF-8"));
-		} catch (NoSuchAlgorithmException | UnsupportedEncodingException neverHappened) {
+			encodeBytes = MessageDigest.getInstance("MD5").digest(string.getBytes());
+		} catch (NoSuchAlgorithmException neverHappened) {
 			throw new RuntimeException(neverHappened);
 		}
 
 		try {
-			encodeBytes = MessageDigest.getInstance("MD5").digest((new String(encodeBytes) + salt).getBytes());
+			encodeBytes = MessageDigest.getInstance("MD5").digest((toHexString(encodeBytes) + salt).getBytes());
 		} catch (NoSuchAlgorithmException neverHappened) {
 			throw new RuntimeException(neverHappened);
 		}
+		Log.d("mima", "md5WithSalt: " + Arrays.toString(encodeBytes) + ", " + toHexString(encodeBytes));
 		return toHexString(encodeBytes);
 	}
 }

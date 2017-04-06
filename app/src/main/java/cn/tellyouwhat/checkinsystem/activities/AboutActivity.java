@@ -1,33 +1,39 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
 import android.Manifest;
+import android.animation.Animator;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomNavigationView;
+import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.jaeger.library.StatusBarUtil;
+import com.daimajia.androidanimations.library.Techniques;
+import com.daimajia.androidanimations.library.YoYo;
+import com.github.ksoichiro.android.observablescrollview.ObservableListView;
+import com.github.ksoichiro.android.observablescrollview.ObservableScrollViewCallbacks;
+import com.github.ksoichiro.android.observablescrollview.ScrollState;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,136 +45,156 @@ import java.io.File;
 import java.math.RoundingMode;
 
 import cn.tellyouwhat.checkinsystem.R;
-import cn.tellyouwhat.checkinsystem.fragments.CheckInFragment;
-import cn.tellyouwhat.checkinsystem.fragments.HistoryFragment;
-import cn.tellyouwhat.checkinsystem.fragments.MeFragment;
-import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
 import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
+import de.psdev.licensesdialog.LicensesDialog;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
-public class MainActivity extends BaseActivity {
+/**
+ * Created by Harbor-Laptop on 2017/4/4.
+ * About Activity
+ */
 
-	private String TAG = "MainActivity";
-	private long time = 0;
+public class AboutActivity extends BaseActivity implements ObservableScrollViewCallbacks {
 
-	private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
-			= new BottomNavigationView.OnNavigationItemSelectedListener() {
 
-		@Override
-		public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-			FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-
-			Fragment history = getSupportFragmentManager().findFragmentByTag("History");
-			Fragment me = getSupportFragmentManager().findFragmentByTag("Me");
-			Fragment checkIn = getSupportFragmentManager().findFragmentByTag("CheckIn");
-
-			switch (item.getItemId()) {
-				case R.id.navigation_check_in:
-					setTitle(item.getTitle());
-					if (checkIn != null)
-						fragmentTransaction.show(checkIn);
-					if (history != null)
-						fragmentTransaction.hide(history);
-					if (me != null)
-						fragmentTransaction.hide(me);
-					fragmentTransaction.commit();
-					return true;
-				case R.id.navigation_history_record:
-					setTitle(item.getTitle());
-					if (checkIn != null)
-						fragmentTransaction.hide(checkIn);
-					if (history != null)
-						fragmentTransaction.show(history);
-					else
-						fragmentTransaction.add(R.id.content, HistoryFragment.newInstance(), "History");
-					if (me != null)
-						fragmentTransaction.hide(me);
-					fragmentTransaction.commit();
-					return true;
-				case R.id.navigation_me:
-					setTitle(item.getTitle());
-					if (checkIn != null)
-						fragmentTransaction.hide(checkIn);
-					if (history != null)
-						fragmentTransaction.hide(history);
-
-					if (me != null)
-						fragmentTransaction.show(me);
-					else
-						fragmentTransaction.add(R.id.content, MeFragment.newInstance(), "Me");
-
-					fragmentTransaction.commit();
-					return true;
-			}
-			return false;
-		}
-
-	};
-
+	private static final String TAG = "AboutActivity";
+	private ActionBar supportActionBar;
 
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setBackEnable(false);
-		setContentView(R.layout.activity_main);
-		StatusBarUtil.setColor(this, Color.parseColor("#2D0081"), 0);
+		setContentView(R.layout.activity_about);
 
-		//解决Fragment可能出现的重叠问题
-		if (savedInstanceState == null) {
-			// 正常情况下去 加载根Fragment
-			ActionBar supportActionBar = getSupportActionBar();
-			if (supportActionBar != null) {
-				supportActionBar.setDisplayHomeAsUpEnabled(false);
-				supportActionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#2D0081")));
+		ObservableListView listView = (ObservableListView) findViewById(R.id.list);
+		listView.setScrollViewCallbacks(this);
+
+		listView.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new String[]{"主要开发者", "合作开发者", "艺术设计", "翻译", "联系我们", "给个赞", "使用的库文件", "版本更新", "功能介绍"}));
+		listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+				switch (position) {
+					case 0:
+						Snackbar.make(view, "HarborZeng", Snackbar.LENGTH_LONG).show();
+						break;
+					case 1:
+						Snackbar.make(view, "lsj", Snackbar.LENGTH_LONG).show();
+						break;
+					case 2:
+						Snackbar.make(view, "Kekeemay、杜皓璠", Snackbar.LENGTH_LONG).show();
+						break;
+					case 3:
+						Snackbar.make(view, "xxx", Snackbar.LENGTH_LONG).show();
+						break;
+					case 4:
+						Snackbar.make(view, "QQ757772438\nWeChat: xiaoyao1682c", Snackbar.LENGTH_LONG).show();
+						break;
+					case 5:
+						Uri uri = Uri.parse("market://details?id=" + getPackageName());
+						Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
+						try {
+							startActivity(goToMarket);
+						} catch (ActivityNotFoundException e) {
+							e.printStackTrace();
+						}
+						break;
+					case 6:
+						new LicensesDialog.Builder(AboutActivity.this)
+								.setNotices(R.raw.notices)
+								.build()
+								.showAppCompat();
+						break;
+					case 7:
+						checkUpdate();
+						break;
+					case 8:
+						startActivity(new Intent(AboutActivity.this, IntroActivity.class));
+						break;
+					default:
+						Snackbar.make(view, "用户不可能看到这个, 否则开发者压实", Snackbar.LENGTH_LONG).show();
+						break;
+				}
 			}
-			getSupportFragmentManager()
-					.beginTransaction()
-					.add(R.id.content, CheckInFragment.newInstance(), "CheckIn")
-					.commit();
+		});
+		supportActionBar = getSupportActionBar();
+		if (supportActionBar != null) {
+			supportActionBar.setDisplayHomeAsUpEnabled(true);
 		}
 
-		//开启获取位置的后台服务
-		Intent intent = new Intent(this, LocationGettingService.class);
-		startService(intent);
+		final View descriptionTextView = findViewById(R.id.text_view_description);
+		descriptionTextView.setVisibility(View.INVISIBLE);
+		TextView versionTextView = (TextView) findViewById(R.id.text_view_version);
+		try {
+			PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), MODE_PRIVATE);
+			versionTextView.setText(packageInfo.versionName + " (" + packageInfo.versionCode + ")");
+		} catch (PackageManager.NameNotFoundException e) {
+			e.printStackTrace();
+		}
 
-		BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
-		navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-
-		new Thread(new Runnable() {
+		ImageView iconImageView = (ImageView) findViewById(R.id.image_view_icon);
+		YoYo.with(Techniques.Shake)
+				.duration(700)
+				.repeat(1)
+				.delay(200)
+				.playOn(iconImageView);
+		iconImageView.setOnClickListener(new View.OnClickListener() {
 			@Override
-			public void run() {
-				checkUpdate();
+			public void onClick(final View v) {
+				YoYo.with(Techniques.ZoomIn)
+						.duration(250)
+						.onEnd(new YoYo.AnimatorCallback() {
+							@Override
+							public void call(Animator animator) {
+								descriptionTextView.setVisibility(View.VISIBLE);
+								YoYo.with(Techniques.DropOut)
+										.duration(600)
+										.repeat(1)
+										.playOn(descriptionTextView);
+							}
+						})
+						.repeat(1)
+						.playOn(v);
 			}
-		}).start();
-	}
+		});
 
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-	}
-
-	@Override
-	public void onConfigurationChanged(Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
-	}
-
-
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			if ((System.currentTimeMillis() - time > 1600)) {
-				Toast.makeText(this, R.string.press_one_more_time, Toast.LENGTH_SHORT).show();
-				time = System.currentTimeMillis();
-			} else {
-				Intent intent = new Intent(Intent.ACTION_MAIN);
-				intent.addCategory(Intent.CATEGORY_HOME);
-				startActivity(intent);
+		Button feedbackButton = (Button) findViewById(R.id.button_feedback);
+		feedbackButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+//					startActivity(new Intent(getActivity(), ));
+				Toast.makeText(AboutActivity.this, "点击了意见反馈", Toast.LENGTH_SHORT).show();
 			}
-			return true;
-		} else {
-			return super.onKeyDown(keyCode, event);
+		});
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		finish();
+		return super.onOptionsItemSelected(item);
+	}
+
+	@Override
+	public void onScrollChanged(int scrollY, boolean firstScroll, boolean dragging) {
+
+	}
+
+	@Override
+	public void onDownMotionEvent() {
+
+	}
+
+	@Override
+	public void onUpOrCancelMotionEvent(ScrollState scrollState) {
+
+		if (scrollState == ScrollState.UP) {
+			if (supportActionBar.isShowing()) {
+				supportActionBar.hide();
+			}
+		} else if (scrollState == ScrollState.DOWN) {
+			if (!supportActionBar.isShowing()) {
+				supportActionBar.show();
+			}
 		}
 	}
 
@@ -194,10 +220,13 @@ public class MainActivity extends BaseActivity {
 //					Log.d(TAG, "onUpdateAvailable: 有更新版本：" + versionName);
 							askToUpgrade(versionName, versionDesc, versionCode, downloadURL, size, forceUpgrade);
 						} else if (getLocalVersionCode() > Integer.parseInt(versionCode)) {
-							Toast.makeText(MainActivity.this, R.string.you_are_using_an_Alpha_Test_application, Toast.LENGTH_LONG).show();
+							Toast.makeText(AboutActivity.this, R.string.you_are_using_an_Alpha_Test_application, Toast.LENGTH_LONG).show();
+						} else {
+							Snackbar.make(findViewById(R.id.relative_layout_about_activity), "您当前安装的就是最新版本啦~", Snackbar.LENGTH_LONG).show();
 						}
 					} catch (JSONException e) {
 						e.printStackTrace();
+						Snackbar.make(findViewById(R.id.relative_layout_about_activity), "服务器又开小差啦~对不起", Snackbar.LENGTH_LONG).show();
 					}
 					Log.w(TAG, "onSuccess");
 				}
@@ -205,7 +234,7 @@ public class MainActivity extends BaseActivity {
 				@Override
 				public void onError(Throwable ex, boolean isOnCallback) {
 					Log.w(TAG, "run: JSON parser may occurred error or it's an IOException", ex);
-					Toast.makeText(MainActivity.this, R.string.server_error, Toast.LENGTH_SHORT).show();
+					Toast.makeText(AboutActivity.this, R.string.server_error, Toast.LENGTH_SHORT).show();
 				}
 
 				@Override
@@ -223,7 +252,7 @@ public class MainActivity extends BaseActivity {
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					Toast.makeText(MainActivity.this, R.string.not_connected_to_server, Toast.LENGTH_LONG).show();
+					Toast.makeText(AboutActivity.this, R.string.not_connected_to_server, Toast.LENGTH_LONG).show();
 				}
 			});
 		}
@@ -242,15 +271,15 @@ public class MainActivity extends BaseActivity {
 	}
 
 	private void askToUpgrade(final String versionName, final String versionDesc, String versionCode, final String downloadURL, final String size, final boolean forceUpgrade) {
-		if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+		if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(AboutActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
 			String[] perms = {"android.permission.WRITE_EXTERNAL_STORAGE"};
-			ActivityCompat.requestPermissions(MainActivity.this, perms, 1);
+			ActivityCompat.requestPermissions(AboutActivity.this, perms, 1);
 		}
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-				final AlertDialog.Builder innerBuilder = new AlertDialog.Builder(MainActivity.this);
+				final AlertDialog.Builder builder = new AlertDialog.Builder(AboutActivity.this);
+				final AlertDialog.Builder innerBuilder = new AlertDialog.Builder(AboutActivity.this);
 
 				builder.setIcon(R.mipmap.warning);
 				if (forceUpgrade) {
@@ -263,10 +292,10 @@ public class MainActivity extends BaseActivity {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
 								if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-									Toast.makeText(MainActivity.this, R.string.cannot_access_external_storage, Toast.LENGTH_LONG).show();
+									Toast.makeText(AboutActivity.this, R.string.cannot_access_external_storage, Toast.LENGTH_LONG).show();
 								} else {
 
-									if (NetTypeUtils.isWifiActive(MainActivity.this)) {
+									if (NetTypeUtils.isWifiActive(AboutActivity.this)) {
 										Log.d(TAG, "onClick: 连的是wifi");
 										download(downloadURL);
 									} else {
@@ -277,9 +306,8 @@ public class MainActivity extends BaseActivity {
 												.setNegativeButton(R.string.I_am_broken, new DialogInterface.OnClickListener() {
 													@Override
 													public void onClick(DialogInterface dialog, int which) {
-														Toast.makeText(MainActivity.this, R.string.update_after_WiFied, Toast.LENGTH_LONG).show();
+														Toast.makeText(AboutActivity.this, R.string.update_after_WiFied, Toast.LENGTH_LONG).show();
 														dialog.dismiss();
-														MainActivity.this.finish();
 													}
 												})
 												.setPositiveButton(R.string.I_am_rich, new DialogInterface.OnClickListener() {
@@ -321,7 +349,7 @@ public class MainActivity extends BaseActivity {
 		params.setSaveFilePath(Environment.getExternalStorageDirectory().getPath() + "/" + Environment.DIRECTORY_DOWNLOADS + "/" + newVersionFileName);
 //		Log.d("TAG", "download: " + Environment.getExternalStorageDirectory().getPath() + "/" + Environment.DIRECTORY_DOWNLOADS + "/" + newVersionFileName);
 //			progressBar.setProgress(0);
-		final ProgressDialog builder = new ProgressDialog(MainActivity.this, ProgressDialog.STYLE_SPINNER);
+		final ProgressDialog builder = new ProgressDialog(AboutActivity.this, ProgressDialog.STYLE_SPINNER);
 //		Log.d(TAG, "download: params：" + params);
 
 		final Callback.Cancelable cancelable = x.http().get(params, new Callback.ProgressCallback<File>() {
@@ -334,7 +362,7 @@ public class MainActivity extends BaseActivity {
 
 			@Override
 			public void onStarted() {
-				Toast.makeText(MainActivity.this, R.string.download_begins, Toast.LENGTH_SHORT).show();
+				Toast.makeText(AboutActivity.this, R.string.download_begins, Toast.LENGTH_SHORT).show();
 				Log.d(TAG, "onStarted: 下载开始");
 				builder.setIcon(R.mipmap.downloading);
 				builder.setTitle(getString(R.string.downloading));
@@ -360,14 +388,14 @@ public class MainActivity extends BaseActivity {
 //				Toast.makeText(x.app(), "下载成功", Toast.LENGTH_SHORT).show();
 				Log.d(TAG, "onSuccess: The File is: " + result);
 				installAPK(result);
-				MainActivity.this.finish();
+				AboutActivity.this.finish();
 				Log.d(TAG, "onSuccess: 下载成功");
 			}
 
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
 //				ex.printStackTrace();
-				Toast.makeText(MainActivity.this, R.string.error_in_downloading, Toast.LENGTH_SHORT).show();
+				Toast.makeText(AboutActivity.this, R.string.error_in_downloading, Toast.LENGTH_SHORT).show();
 //				enterHome();
 				Log.d(TAG, "onError: 下载出错啦");
 			}
@@ -394,7 +422,7 @@ public class MainActivity extends BaseActivity {
 				dialog.dismiss();
 				builder.dismiss();
 				cancelable.cancel();
-				Toast.makeText(MainActivity.this, R.string.download_canceled, Toast.LENGTH_LONG).show();
+				Toast.makeText(AboutActivity.this, R.string.download_canceled, Toast.LENGTH_LONG).show();
 			}
 		});
 	}
