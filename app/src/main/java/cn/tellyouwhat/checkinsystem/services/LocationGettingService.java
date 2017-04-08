@@ -1,13 +1,19 @@
 package cn.tellyouwhat.checkinsystem.services;
 
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseArray;
+import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -22,13 +28,17 @@ import org.xutils.http.HttpMethod;
 import org.xutils.http.RequestParams;
 import org.xutils.x;
 
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.db.LocationDB;
 import cn.tellyouwhat.checkinsystem.db.LocationItem;
 import cn.tellyouwhat.checkinsystem.receivers.BatteryReceiver;
 import cn.tellyouwhat.checkinsystem.receivers.ScreenReceiver;
+import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
+import cn.tellyouwhat.checkinsystem.utils.NotifyUtil;
 import cn.tellyouwhat.checkinsystem.utils.Polygon;
 
 /**
@@ -37,14 +47,59 @@ import cn.tellyouwhat.checkinsystem.utils.Polygon;
  */
 
 public class LocationGettingService extends Service {
+
+	public static final int PERIOD = 1000 * 5 * 60;
+	private static final int IN_RANGE_NOTIFICATION = 200;
+//	public static final int PERIOD = 1000 * 60;
+
+	static {
+		Log.d("static", "static initializer: 后台服务已注册");
+	}
+
 	public LocationClient mLocationClient = null;
 	public BDLocationListener myListener = new MyLocationListenerService();
-	private final Timer timer = new Timer();
+	public final Timer timer = new Timer();
 	private TimerTask task;
 	private Polygon polygons[];
 	private int locationIDs[];
 	private BatteryReceiver batteryReceiver;
 	private ScreenReceiver screenReceiver;
+	private SharedPreferences sharedPref;
+	private static final String TAG = "LocationGettingService";
+	private SharedPreferences.OnSharedPreferenceChangeListener listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+		@Override
+		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+			Log.d(TAG, "onSharedPreferenceChanged: 设置发生了变化");
+			if ("use_background_service".equals(key)) {
+				Log.d(TAG, "onSharedPreferenceChanged: “使用后台服务”发生了变化");
+				if (sharedPreferences.getBoolean("use_background_service", true)) {
+					task = new TimerTask() {
+						@Override
+						public void run() {
+							Message message = Message.obtain();
+							message.what = 1;
+							handler.sendMessage(message);
+						}
+					};
+					timer.schedule(task, 2000, PERIOD);
+				} else {
+					task.cancel();
+				}
+			} else if ("use_GPS".equals(key)) {
+				task.cancel();
+				task = new TimerTask() {
+					@Override
+					public void run() {
+						Message message = Message.obtain();
+						message.what = 1;
+						handler.sendMessage(message);
+					}
+				};
+				timer.schedule(task, 2000, PERIOD);
+			}
+		}
+	};
+	private Handler handler;
 
 	@Nullable
 	@Override
@@ -55,6 +110,9 @@ public class LocationGettingService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+
+		sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
 		mLocationClient = new LocationClient(getApplicationContext());
 		//声明LocationClient类
 		mLocationClient.registerLocationListener(myListener);
@@ -120,10 +178,20 @@ public class LocationGettingService extends Service {
 			}
 		});
 
-		final Handler handler = new Handler() {
+		//				SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+//				boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
+//				if (backGroundServiceEnabled) {
+//				}
+// 要做的事情
+		handler = new Handler() {
 			@Override
 			public void handleMessage(Message msg) {
-				mLocationClient.start();
+				//用户已登录的情况下才会获取地理位置
+				SharedPreferences userInfo = getSharedPreferences("userInfo", MODE_PRIVATE);
+				String token = userInfo.getString(ConstantValues.TOKEN, "");
+				if (!TextUtils.isEmpty(token)) {
+					mLocationClient.start();
+				}
 				// 要做的事情
 				super.handleMessage(msg);
 			}
@@ -132,27 +200,37 @@ public class LocationGettingService extends Service {
 		task = new TimerTask() {
 			@Override
 			public void run() {
-				Message message = new Message();
+				Message message = Message.obtain();
 				message.what = 1;
 				handler.sendMessage(message);
 			}
 		};
 
-		timer.schedule(task, 2000, 1000 * 60 * 5);
-
+		boolean useBackgroundService = sharedPref.getBoolean("use_background_service", true);
+		sharedPref.registerOnSharedPreferenceChangeListener(listener);
+		if (useBackgroundService) {
+			timer.schedule(task, 2000, PERIOD);
+		}
 	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		return START_STICKY_COMPATIBILITY;
-		//return super.onStartCommand(intent, flags, startId);
+		boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
+		if (backGroundServiceEnabled) {
+			return START_STICKY_COMPATIBILITY;
+		} else {
+			return super.onStartCommand(intent, flags, startId);
+		}
 	}
 
 	@Override
 	public void onDestroy() {
-		Intent localIntent = new Intent();
-		localIntent.setClass(this, LocationGettingService.class); // 销毁时重新启动Service
-		this.startService(localIntent);
+		boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
+		if (backGroundServiceEnabled) {
+			Intent localIntent = new Intent();
+			localIntent.setClass(this, LocationGettingService.class); // 销毁时重新启动Service
+			this.startService(localIntent);
+		}
 		unregisterReceiver(batteryReceiver);
 		unregisterReceiver(screenReceiver);
 		super.onDestroy();
@@ -160,7 +238,16 @@ public class LocationGettingService extends Service {
 
 	private void initLocation() {
 		LocationClientOption option = new LocationClientOption();
-		option.setLocationMode(LocationClientOption.LocationMode.Battery_Saving);
+		boolean useGps = sharedPref.getBoolean("use_GPS", true);
+		if (useGps) {
+			Toast.makeText(this, "using GPS", Toast.LENGTH_SHORT).show();
+			option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
+			option.setOpenGps(true);
+			//可选，默认false,设置是否使用gps
+		} else {
+			Toast.makeText(this, "not using GPS", Toast.LENGTH_SHORT).show();
+			option.setLocationMode(LocationClientOption.LocationMode.Battery_Saving);
+		}
 		//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
 
 		option.setCoorType("bd09ll");
@@ -168,14 +255,12 @@ public class LocationGettingService extends Service {
 
 		int span = 10000;
 //		int span = 1000*60*5+1;
-		option.setScanSpan(0);
+		option.setScanSpan(1000 * 6);
 		//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
 
 		option.setIsNeedAddress(true);
 		//可选，设置是否需要地址信息，默认不需要
 
-		option.setOpenGps(false);
-		//可选，默认false,设置是否使用gps
 
 		option.setLocationNotify(false);
 		//可选，默认false，设置是否当GPS有效时按照1S/1次频率输出GPS结果
@@ -198,11 +283,14 @@ public class LocationGettingService extends Service {
 	}
 
 	private class MyLocationListenerService implements BDLocationListener {
+
+		private int timesOfGettingInThisTime = 0;
+		private SparseArray<BDLocation> locationSparseArray = new SparseArray<>();
+		private Float radiusArray[] = new Float[8];
+
 		@Override
 		public void onReceiveLocation(final BDLocation location) {
 			float radius = location.getRadius();
-			int locType = location.getLocType();
-
 			/*
 			  以下内容属于测试代码
 			 */
@@ -279,28 +367,59 @@ public class LocationGettingService extends Service {
 			}
 			Log.i("BaiduLocationApiDem", sb.toString());
 
+			if (timesOfGettingInThisTime < 8) {
+				locationSparseArray.put(timesOfGettingInThisTime, location);
+				radiusArray[timesOfGettingInThisTime] = location.getRadius();
+				timesOfGettingInThisTime++;
+			} else {
+				mLocationClient.stop();
+				float minRadius = Float.MAX_VALUE;
+				int index = 0;
+				for (int i = 0; i < 8; i++) {
+					if (minRadius > radiusArray[i]) {
+						minRadius = radiusArray[i];
+						index = i;
+					}
+				}
+				Toast.makeText(getApplicationContext(), Arrays.toString(radiusArray), Toast.LENGTH_SHORT).show();
+				Log.d(TAG, "onReceiveLocation: 半径数组中都有：" + Arrays.toString(radiusArray));
+				if (radiusArray[index] < 50 && radiusArray[index] != 0) {
+					Toast.makeText(getApplicationContext(), "index=" + index + ", 最小半径是: " + radiusArray[index], Toast.LENGTH_SHORT).show();
+					Log.d(TAG, "onReceiveLocation: 最小半径和他的index是: " + radiusArray[index] + ", " + index);
+					BDLocation bdLocation = locationSparseArray.get(index);
 
-			if (radius < 50 && radius != 0) {
-				if (polygons != null) {
-					for (int i = 0; i < polygons.length; i++) {
-						if (polygons[i].contains(location.getLongitude() * 1000000, location.getLatitude() * 1000000)) {
-							LocationDB locationDB = new LocationDB();
-							LocationItem item = new LocationItem();
-							item.setGotFromService(true);
-							item.setLocationType(locType);
-							item.setRadius(radius);
-							item.setBuildingID(locationIDs[i]);
-							item.setTime(location.getTime());
-							locationDB.saveLocation(item);
-							break;
+					LocationDB locationDB = new LocationDB();
+					LocationItem item = new LocationItem();
+					item.setGotFromService(true);
+					item.setLocationType(bdLocation.getLocType());
+					item.setRadius(bdLocation.getRadius());
+					item.setTime(bdLocation.getTime());
+					item.setLatitude(Double.toString(bdLocation.getLatitude()));
+					item.setLongitide(Double.toString(bdLocation.getLongitude()));
+					item.setAddress(bdLocation.getAddrStr());
+					item.setLocationDescription(bdLocation.getLocationDescribe());
+					if (polygons != null) {
+						for (int i = 0; i < polygons.length; i++) {
+							if (polygons[i].contains(bdLocation.getLongitude() * 1000000, bdLocation.getLatitude() * 1000000)) {
+								item.setBuildingID(locationIDs[i]);
+								sendNotificationInRange();
+								break;
+							} else {
+								item.setBuildingID(0);
+							}
 						}
 					}
-
-				} else {
-					Log.d("存数据", "onReceiveLocation: 精度不够");
+					locationDB.saveLocation(item);
+					timesOfGettingInThisTime = 0;
+					Toast.makeText(getApplicationContext(), "已保存", Toast.LENGTH_SHORT).show();
 				}
+				mLocationClient.stop();
 			}
-			mLocationClient.stop();
+		}
+
+		private void sendNotificationInRange() {
+			NotifyUtil notifyUtil = new NotifyUtil(getApplicationContext(), IN_RANGE_NOTIFICATION);
+//			notifyUtil.notify_button(R.drawable.icon_launcher, 0, "签到", new PendingIntent());
 		}
 
 		@Override

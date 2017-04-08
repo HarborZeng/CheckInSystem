@@ -3,8 +3,6 @@ package cn.tellyouwhat.checkinsystem.db;
 import org.xutils.db.annotation.Column;
 import org.xutils.db.annotation.Table;
 
-import java.util.Date;
-
 
 /**
  * Created by Harbor-Laptop on 2017/3/23.
@@ -29,6 +27,51 @@ public class LocationItem {
 
 	@Column(name = "building_ID")
 	private int buildingID;
+
+	@Column(name = "longitude")
+	private String longitide;
+
+	@Column(name = "latitude")
+	private String latitude;
+
+	@Column(name = "address")
+	private String address;
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	public String getLocationDescription() {
+		return locationDescription;
+	}
+
+	public void setLocationDescription(String locationDescription) {
+		this.locationDescription = locationDescription;
+	}
+
+	@Column(name = "location_desc")
+
+	private String locationDescription;
+
+	public String getLongitide() {
+		return longitide;
+	}
+
+	public void setLongitide(String longitide) {
+		this.longitide = longitide;
+	}
+
+	public String getLatitude() {
+		return latitude;
+	}
+
+	public void setLatitude(String latitude) {
+		this.latitude = latitude;
+	}
 
 	public LocationItem() {
 	}

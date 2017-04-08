@@ -6,12 +6,14 @@
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="use_background_service"
-            android:title="使用后台服务"/>
+            android:title="使用后台服务"
+            android:summary="以免出现漏签现象"/>
         <CheckBoxPreference
             android:defaultValue="false"
             android:dependency="use_background_service"
             android:key="use_GPS"
-            android:title="后台服务用GPS"/>
+            android:title="后台服务用GPS"
+            android:summary="更精准的获取位置信息"/>
         <ListPreference
             android:defaultValue="0"
             android:dependency="use_background_service"
@@ -27,6 +29,36 @@
             android:defaultValue="false"
             android:key="show_upgrade_dialog_only_under_wifi"
             android:title="仅在WIFI环境下提示更新"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="notifications"
+        android:title="通知">
+        <CheckBoxPreference
+            android:key="show_notifications"
+            android:title="启用通知"
+            android:defaultValue="true"
+            android:summary="启用后，将在签到成功等场景后发送一条通知"/>
+        <CheckBoxPreference
+            android:key="notifications_ring_enabled"
+            android:title="通知铃声"
+            android:defaultValue="false"
+            android:summary="启用后，将在通知到达时响铃"
+            android:dependency="show_notifications"/>
+        <CheckBoxPreference
+            android:key="notifications_vibrate_enabled"
+            android:title="通知震动"
+            android:defaultValue="true"
+            android:summary="启用后，将在通知到达时震动"
+            android:dependency="show_notifications"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="more_settings"
+        android:title="更多">
+        <CheckBoxPreference
+            android:key="immersed_status_bar_enabled"
+            android:title="使用沉浸式状态栏"
+            android:defaultValue="true"/>
+
     </PreferenceCategory>
     <PreferenceCategory
         android:key="battery_settings"

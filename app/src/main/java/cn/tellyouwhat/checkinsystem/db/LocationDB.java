@@ -2,6 +2,7 @@ package cn.tellyouwhat.checkinsystem.db;
 
 import android.database.Cursor;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.xutils.DbManager;
 import org.xutils.ex.DbException;

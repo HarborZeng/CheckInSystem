@@ -3,9 +3,11 @@ package cn.tellyouwhat.checkinsystem.fragments;
 import android.Manifest;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -41,7 +43,7 @@ import org.xutils.x;
 import java.util.List;
 
 import cn.tellyouwhat.checkinsystem.R;
-import cn.tellyouwhat.checkinsystem.activities.OtherActivity;
+import cn.tellyouwhat.checkinsystem.activities.MainActivity;
 import cn.tellyouwhat.checkinsystem.db.LocationDB;
 import cn.tellyouwhat.checkinsystem.db.LocationItem;
 import cn.tellyouwhat.checkinsystem.utils.NotifyUtil;
@@ -419,6 +421,10 @@ public class CheckInFragment extends BaseFragment {
 									item.setRadius(radius);
 									item.setTime(time);
 									item.setBuildingID(locationIDs[i]);
+									item.setLatitude(Double.toString(location.getLatitude()));
+									item.setLongitide(Double.toString(location.getLongitude()));
+									item.setAddress(location.getAddrStr());
+									item.setLocationDescription(location.getLocationDescribe());
 									locationDB.saveLocation(item);
 
 									Log.i("zdhobuzd", "run: 在");
@@ -546,16 +552,21 @@ public class CheckInFragment extends BaseFragment {
 					int resultInt = result.getInt("result");
 					switch (resultInt) {
 						case 1:
-							Intent intent = new Intent(getActivity(), OtherActivity.class);
-							intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-							PendingIntent pIntent = PendingIntent.getActivity(getActivity(),
-									1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-//		int smallIcon = R.drawable.tb_bigicon;
-							String ticker = "您有一条新通知";
-							String title = "签到成功";
-							String content = "恭喜您，今日签到成功";
-							NotifyUtil notify1 = new NotifyUtil(getActivity(), 1);
-							notify1.notify_normal_singline(pIntent, R.drawable.calendar_prev_arrow, ticker, title, content, false, true, false);
+							SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+							boolean showNotifications = sharedPref.getBoolean("show_notifications", true);
+							boolean notificationsRingEnabled = sharedPref.getBoolean("notifications_ring_enabled", false);
+							boolean notificationsVibrateEnabled = sharedPref.getBoolean("notifications_vibrate_enabled", true);
+							if (showNotifications) {
+								Intent intent = new Intent(getActivity(), MainActivity.class);
+								intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+								PendingIntent pIntent = PendingIntent.getActivity(getActivity(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+								String ticker = "您有一条新通知";
+								String title = "签到成功";
+								String content = "恭喜您，今日签到成功";
+								NotifyUtil notificationSucceededCheckIn = new NotifyUtil(getActivity().getApplicationContext(), 1);
+								notificationSucceededCheckIn.setOnGoing(false);
+								notificationSucceededCheckIn.notify_normal_singline(pIntent, R.mipmap.ic_launcher, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, true);
+							}
 							break;
 						case 0:
 							ReLoginUtil util = new ReLoginUtil(getActivity());

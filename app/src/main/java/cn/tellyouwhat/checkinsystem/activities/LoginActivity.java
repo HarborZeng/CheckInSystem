@@ -2,7 +2,6 @@ package cn.tellyouwhat.checkinsystem.activities;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -33,11 +33,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.xutils.common.Callback;
 import org.xutils.http.RequestParams;
+import org.xutils.http.cookie.DbCookieStore;
 import org.xutils.x;
 
+import java.util.List;
+
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
+import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 import cn.tellyouwhat.checkinsystem.utils.SPUtil;
 
 /**
@@ -255,13 +260,12 @@ public class LoginActivity extends BaseActivity {
 	}
 
 	private boolean isPasswordValid(String password) {
-		return password.length() >= 6 && password.length() <= 18;
+		return password.length() >= 6;
 	}
 
 	/**
 	 * Shows the progress UI and hides the login form.
 	 */
-	@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
 	private void showProgress(final boolean show) {
 		// On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
 		// for very easy animations. If available, use these APIs to fade-in
@@ -293,9 +297,8 @@ public class LoginActivity extends BaseActivity {
 
 		//开始准备数据
 		RequestParams params = new RequestParams("http://api.checkin.tellyouwhat.cn/User/Login?username=" + number + "&password=" + encryptedPassword + "&deviceid=" + Build.SERIAL);
-		params.setUseCookie(true);
-		params.setMultipart(true);
-		//利用xUtils3post提交
+		params.setConnectTimeout(5000);
+		//利用xUtils3get提交
 		x.http().get(params, new Callback.CommonCallback<JSONObject>() {
 
 			private int loginResponseCode;
@@ -303,7 +306,11 @@ public class LoginActivity extends BaseActivity {
 
 			@Override
 			public void onSuccess(JSONObject result) {
-				//获取update.json成功的回调
+				DbCookieStore instance = DbCookieStore.INSTANCE;
+				List cookies = instance.getCookies();
+				for (int i = 0; i < cookies.size(); i++) {
+
+				}
 				try {
 					loginResponseCode = result.getInt("result");
 					if (loginResponseCode == 1) {
@@ -346,15 +353,13 @@ public class LoginActivity extends BaseActivity {
 				} else {
 					Log.d(TAG, "onPostExecute: 登录成功");
 					//这里到时候服务器搭好以后传入自己的token
-					if (TextUtils.isEmpty(token)) {
-					} else {
+					if (!TextUtils.isEmpty(token)) {
 						editor.putString(ConstantValues.TOKEN, EncryptUtil.encryptBase64withSalt(token, ConstantValues.SALT));
 					}
 					editor.putString("USER_NAME", number);
 					editor.apply();
 
-					initGuidancePages();
-					LoginActivity.this.finish();
+					updateSession();
 				}
 			}
 
@@ -381,6 +386,16 @@ public class LoginActivity extends BaseActivity {
 			@Override
 			public void onFinished() {
 				Log.w(TAG, "onFinished: ");
+				//TODO delete this after server complete
+/*				token = "askdjgaoidfiaovlfhivalifgvaipgfvpioauwgfpia";
+				if (!TextUtils.isEmpty(token)) {
+					editor.putString(ConstantValues.TOKEN, EncryptUtil.encryptBase64withSalt(token, ConstantValues.SALT));
+				}
+				editor.putString("USER_NAME", number);
+				editor.apply();
+
+				initGuidancePages();
+				LoginActivity.this.finish();*/
 			}
 		});
 	}
@@ -413,5 +428,60 @@ public class LoginActivity extends BaseActivity {
 		finish();
 	}
 
+	private void updateSession() {
+		SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
+		String userName = sharedPreferences.getString("USER_NAME", "");
+		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");
+		String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
+		RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+		x.http().get(p, new Callback.CommonCallback<JSONObject>() {
+
+			private int resultInt;
+
+			@Override
+			public void onSuccess(JSONObject result) {
+				try {
+					resultInt = result.getInt("result");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				switch (resultInt) {
+					case 1:
+						Log.i(TAG, "onSuccess: session 已经更新");
+						initGuidancePages();
+						break;
+					case 0:
+						ReLoginUtil reLoginUtil = new ReLoginUtil(LoginActivity.this);
+						try {
+							Toast.makeText(LoginActivity.this, result.getString("message"), Toast.LENGTH_SHORT).show();
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}
+						reLoginUtil.reLoginWithAlertDialog();
+						break;
+					case -1:
+						Toast.makeText(LoginActivity.this, "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
+						break;
+					default:
+						break;
+				}
+			}
+
+			@Override
+			public void onError(Throwable ex, boolean isOnCallback) {
+
+			}
+
+			@Override
+			public void onCancelled(CancelledException cex) {
+
+			}
+
+			@Override
+			public void onFinished() {
+
+			}
+		});
+	}
 }
 

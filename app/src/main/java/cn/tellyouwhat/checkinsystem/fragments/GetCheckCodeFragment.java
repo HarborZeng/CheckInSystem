@@ -45,7 +45,6 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 	private String userInput;
 	private boolean isCorrectCode = false;
 
-
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -62,34 +61,6 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 			mPhoneNumber.setText(phoneNumber);
 			mCheckCodeEditText.requestFocus();
 		}
-
-/*					new Thread(new Runnable() {
-						@Override
-						public void run() {
-							for (int i = 60; i > 0; i--) {
-//					Log.i(TAG, "sendVerificationCode: "+i);
-								final int finalI = i;
-								getActivity().runOnUiThread(new Runnable() {
-									@Override
-									public void run() {
-										mNextStepOfGetCheckCode.setText(finalI + "");
-										mNextStepOfGetCheckCode.setBackgroundColor(getResources().getColor(R.color.caldroid_333));
-									}
-								});
-								SystemClock.sleep(1000);
-							}
-							getActivity().runOnUiThread(new Runnable() {
-								@Override
-								public void run() {
-									mNextStepOfGetCheckCode.setText("获取验证码");
-									mNextStepOfGetCheckCode.setClickable(true);
-								}
-							});
-						}
-					}).start();*/
-
-		//向短信验证码服务器提交手机号码
-		//。。。。。。。。。。
 
 		mCheckCodeImageView.setOnClickListener(new View.OnClickListener() {
 			@Override

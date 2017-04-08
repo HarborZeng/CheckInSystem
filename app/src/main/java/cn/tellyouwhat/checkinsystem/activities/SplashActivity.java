@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -35,6 +36,7 @@ public class SplashActivity extends BaseActivity {
 
 		//把这一句话注释掉之后，API 21以下就不会报错
 //		x.view().inject(this);
+		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 		askForPermission();
 	}
 

@@ -4,7 +4,9 @@ import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.BatteryManager;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.text.SimpleDateFormat;
@@ -17,9 +19,19 @@ import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 
 public class BatteryReceiver extends BroadcastReceiver {
 	private String TAG = "batteryReceiver";
+	private Context mContext;
+	private SharedPreferences.OnSharedPreferenceChangeListener listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+		@Override
+		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+			if ("use_background_service".equals(key)) {
+				mContext.stopService(new Intent(mContext, LocationGettingService.class));
+			}
+		}
+	};
 
 	@Override
-	public void onReceive(Context context, Intent intent) {
+	public void onReceive(final Context context, Intent intent) {
+		mContext = context;
 		Log.i(TAG, "BatteryReceiver--------------");
 		String action = intent.getAction();
 		Log.i(TAG, " 0 action:" + action);
@@ -35,9 +47,19 @@ public class BatteryReceiver extends BroadcastReceiver {
 		int temperature = intent.getIntExtra("temperature", 0);
 		String technology = intent.getStringExtra("technology");
 
-		if (level > 15) {
-			context.startService(new Intent(context, LocationGettingService.class));
+		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+		String whenLowBattery = sharedPref.getString("when_low_battery", "0");
+		if (level < 15) {
+			SharedPreferences.Editor editor = sharedPref.edit();
+			if ("0".equals(whenLowBattery)) {
+				editor.putBoolean("use_GPS", false);
+			} else if ("1".equals(whenLowBattery)) {
+				editor.putBoolean("use_background_service", false);
+			}
+			editor.apply();
 		}
+		sharedPref.registerOnSharedPreferenceChangeListener(listener);
+
 		String statusString = "";
 		switch (status) {
 			case BatteryManager.BATTERY_STATUS_UNKNOWN:
@@ -45,7 +67,10 @@ public class BatteryReceiver extends BroadcastReceiver {
 				break;
 			case BatteryManager.BATTERY_STATUS_CHARGING:
 				statusString = "charging";
-				context.startService(new Intent(context, LocationGettingService.class));
+				boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
+				if (backGroundServiceEnabled) {
+					context.startService(new Intent(context, LocationGettingService.class));
+				}
 				break;
 			case BatteryManager.BATTERY_STATUS_DISCHARGING:
 				statusString = "discharging";

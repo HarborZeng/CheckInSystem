@@ -22,6 +22,9 @@
 }
 -keep class cn.tellyouwhat.checkinsystem.db.** {*;}
 -dontwarn com.baidu.**
+-dontwarn com.yalantis.ucrop**
+-keep class com.yalantis.ucrop** { *; }
+-keep interface com.yalantis.ucrop** { *; }
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:

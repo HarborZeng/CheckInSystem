@@ -3,6 +3,8 @@ package cn.tellyouwhat.checkinsystem.receivers;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 
@@ -15,11 +17,16 @@ import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 public class ScreenReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		String action = intent.getAction();
-		if (Intent.ACTION_SCREEN_ON.equals(action)) {
-			context.startService(new Intent(context, LocationGettingService.class));
-		} else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
-			context.startService(new Intent(context, LocationGettingService.class));
+		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+		boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
+		if (backGroundServiceEnabled) {
+			String action = intent.getAction();
+			if (Intent.ACTION_SCREEN_ON.equals(action)) {
+				context.startService(new Intent(context, LocationGettingService.class));
+			} else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
+				context.startService(new Intent(context, LocationGettingService.class));
+			}
 		}
+
 	}
 }

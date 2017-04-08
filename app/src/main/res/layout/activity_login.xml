@@ -54,7 +54,7 @@
             android:layout_centerHorizontal="true"
             android:gravity="bottom"
             android:orientation="vertical"
-            android:paddingBottom="30dp">
+            android:paddingBottom="40dp">
 
 
             <LinearLayout

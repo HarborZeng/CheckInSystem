@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -12,8 +13,10 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -43,8 +46,11 @@ import cn.tellyouwhat.checkinsystem.fragments.CheckInFragment;
 import cn.tellyouwhat.checkinsystem.fragments.HistoryFragment;
 import cn.tellyouwhat.checkinsystem.fragments.MeFragment;
 import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
+import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
+import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
 import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
+import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -114,7 +120,7 @@ public class MainActivity extends BaseActivity {
 		setBackEnable(false);
 		setContentView(R.layout.activity_main);
 		StatusBarUtil.setColor(this, Color.parseColor("#2D0081"), 0);
-
+		updateSession();
 		//解决Fragment可能出现的重叠问题
 		if (savedInstanceState == null) {
 			// 正常情况下去 加载根Fragment
@@ -130,8 +136,12 @@ public class MainActivity extends BaseActivity {
 		}
 
 		//开启获取位置的后台服务
-		Intent intent = new Intent(this, LocationGettingService.class);
-		startService(intent);
+		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
+		if (backGroundServiceEnabled) {
+			Intent intent = new Intent(getApplicationContext(), LocationGettingService.class);
+			startService(intent);
+		}
 
 		BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
 		navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
@@ -249,15 +259,13 @@ public class MainActivity extends BaseActivity {
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
+
+				SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+				boolean showUpgradeDialogOnlyUnderWifi = sharedPref.getBoolean("show_upgrade_dialog_only_under_wifi", true);
+
 				final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 				final AlertDialog.Builder innerBuilder = new AlertDialog.Builder(MainActivity.this);
-
 				builder.setIcon(R.mipmap.warning);
-				if (forceUpgrade) {
-					builder.setTitle(R.string.must_upgrade).setCancelable(false);
-				} else {
-					builder.setTitle(R.string.有新版本啦).setCancelable(true);
-				}
 				builder.setMessage(getString(R.string.newer_version_detected) + versionName + "\n" + getString(R.string.size) + size + getString(R.string.newer_version_description) + "\n\n" + versionDesc)
 						.setPositiveButton(getString(R.string.我要升级), new DialogInterface.OnClickListener() {
 							@Override
@@ -294,15 +302,20 @@ public class MainActivity extends BaseActivity {
 								}
 							}
 						});
-				if (!forceUpgrade) {
+				if (forceUpgrade) {
+					builder.setTitle(R.string.must_upgrade).setCancelable(false);
+					builder.show().setCanceledOnTouchOutside(false);
+				} else {
+					builder.setTitle(R.string.有新版本啦).setCancelable(true);
 					builder.setNegativeButton(R.string.不更新, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.dismiss();
 						}
-					}).show().setCanceledOnTouchOutside(false);
-				} else {
-					builder.show().setCanceledOnTouchOutside(false);
+					});
+					if (!showUpgradeDialogOnlyUnderWifi) {
+						builder.show().setCanceledOnTouchOutside(false);
+					}
 				}
 			}
 		});
@@ -407,5 +420,60 @@ public class MainActivity extends BaseActivity {
 		intent.setDataAndType(Uri.fromFile(result), "application/vnd.android.package-archive");
 		Log.i(TAG, "installAPK: 准备好了数据，马上开启下一个activity");
 		startActivity(intent);
+	}
+
+	private void updateSession() {
+		SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
+		String userName = sharedPreferences.getString("USER_NAME", "");
+		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");
+		String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
+		RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+		x.http().get(p, new Callback.CommonCallback<JSONObject>() {
+
+			private int resultInt;
+
+			@Override
+			public void onSuccess(JSONObject result) {
+				try {
+					resultInt = result.getInt("result");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				switch (resultInt) {
+					case 1:
+						Log.i(TAG, "onSuccess: session 已经更新");
+						break;
+					case 0:
+						ReLoginUtil reLoginUtil = new ReLoginUtil(MainActivity.this);
+						try {
+							Toast.makeText(MainActivity.this, result.getString("message"), Toast.LENGTH_SHORT).show();
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}
+						reLoginUtil.reLoginWithAlertDialog();
+						break;
+					case -1:
+						Toast.makeText(MainActivity.this, "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
+						break;
+					default:
+						break;
+				}
+			}
+
+			@Override
+			public void onError(Throwable ex, boolean isOnCallback) {
+
+			}
+
+			@Override
+			public void onCancelled(CancelledException cex) {
+
+			}
+
+			@Override
+			public void onFinished() {
+
+			}
+		});
 	}
 }

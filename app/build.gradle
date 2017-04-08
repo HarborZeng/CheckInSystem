@@ -62,4 +62,5 @@ dependencies {
 	compile 'com.github.anzewei:parallaxbacklayout:0.5'
 	compile 'de.hdodenhof:circleimageview:2.1.0'
 	compile 'com.github.ksoichiro:android-observablescrollview:1.6.0'
+	compile 'com.yalantis:ucrop:2.2.0'
 }

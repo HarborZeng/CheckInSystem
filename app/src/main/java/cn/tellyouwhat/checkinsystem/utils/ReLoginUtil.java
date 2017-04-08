@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.support.v7.app.AlertDialog;
 
 import cn.tellyouwhat.checkinsystem.activities.LoginActivity;
+import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 
 /**
  * Created by Harbor-Laptop on 2017/4/6.
@@ -72,5 +73,9 @@ public class ReLoginUtil {
 		SharedPreferences.Editor edit = preferences.edit();
 		edit.putString(ConstantValues.TOKEN, "");
 		edit.apply();
+	}
+
+	private void stopService() {
+		activity.stopService(new Intent(activity, LocationGettingService.class));
 	}
 }
