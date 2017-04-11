@@ -15,5 +15,8 @@ public class ConstantValues {
 	public static final int NETWORK_LOCATION = 2;
 	public static final int OFFLINE_LOCATION = 3;
 	public static final String SALT = "saltforcheckinsystemstorepasswordinserverdatabase";
+	public static final String COOKIE_NAME = ".AspNetCore.Session";
+	public static final String COOIKE_SHARED_PREFERENCE_NAME = "cookies";
+	public static final java.lang.String WX_APP_ID = "wxe00e35e7ab9c1db3";
 	public static String cookie = "COOKIE";
 }

@@ -36,6 +36,7 @@ import org.xutils.http.RequestParams;
 import org.xutils.http.cookie.DbCookieStore;
 import org.xutils.x;
 
+import java.net.HttpCookie;
 import java.util.List;
 
 import cn.tellyouwhat.checkinsystem.R;
@@ -166,8 +167,6 @@ public class LoginActivity extends BaseActivity {
 				return false;
 			}
 		});
-
-
 	}
 
 
@@ -306,11 +305,6 @@ public class LoginActivity extends BaseActivity {
 
 			@Override
 			public void onSuccess(JSONObject result) {
-				DbCookieStore instance = DbCookieStore.INSTANCE;
-				List cookies = instance.getCookies();
-				for (int i = 0; i < cookies.size(); i++) {
-
-				}
 				try {
 					loginResponseCode = result.getInt("result");
 					if (loginResponseCode == 1) {
@@ -358,7 +352,6 @@ public class LoginActivity extends BaseActivity {
 					}
 					editor.putString("USER_NAME", number);
 					editor.apply();
-
 					updateSession();
 				}
 			}
@@ -433,55 +426,74 @@ public class LoginActivity extends BaseActivity {
 		String userName = sharedPreferences.getString("USER_NAME", "");
 		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");
 		String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
-		RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
-		x.http().get(p, new Callback.CommonCallback<JSONObject>() {
+		if (!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(token)) {
+			RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+			x.http().get(p, new Callback.CommonCallback<JSONObject>() {
 
-			private int resultInt;
+				private int resultInt;
 
-			@Override
-			public void onSuccess(JSONObject result) {
-				try {
-					resultInt = result.getInt("result");
-				} catch (JSONException e) {
-					e.printStackTrace();
+				@Override
+				public void onSuccess(JSONObject result) {
+					try {
+						resultInt = result.getInt("result");
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
+					switch (resultInt) {
+						case 1:
+							Log.i(TAG, "onSuccess: session 已经更新");
+							DbCookieStore instance = DbCookieStore.INSTANCE;
+							List<HttpCookie> cookies = instance.getCookies();
+							for (HttpCookie cookie : cookies) {
+								String name = cookie.getName();
+								String value = cookie.getValue();
+								if (ConstantValues.COOKIE_NAME.equals(name)) {
+									SharedPreferences preferences = getSharedPreferences(ConstantValues.COOIKE_SHARED_PREFERENCE_NAME, MODE_PRIVATE);
+									SharedPreferences.Editor editor = preferences.edit();
+									editor.putString(ConstantValues.cookie, value);
+									editor.apply();
+									break;
+								}
+							}
+							initGuidancePages();
+							break;
+						case 0:
+							ReLoginUtil reLoginUtil = new ReLoginUtil(LoginActivity.this);
+							try {
+								Toast.makeText(LoginActivity.this, result.getString("message"), Toast.LENGTH_SHORT).show();
+							} catch (JSONException e) {
+								e.printStackTrace();
+							}
+							reLoginUtil.reLoginWithAlertDialog();
+							break;
+						case -1:
+							Toast.makeText(LoginActivity.this, "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
+							break;
+						default:
+							break;
+					}
 				}
-				switch (resultInt) {
-					case 1:
-						Log.i(TAG, "onSuccess: session 已经更新");
-						initGuidancePages();
-						break;
-					case 0:
-						ReLoginUtil reLoginUtil = new ReLoginUtil(LoginActivity.this);
-						try {
-							Toast.makeText(LoginActivity.this, result.getString("message"), Toast.LENGTH_SHORT).show();
-						} catch (JSONException e) {
-							e.printStackTrace();
-						}
-						reLoginUtil.reLoginWithAlertDialog();
-						break;
-					case -1:
-						Toast.makeText(LoginActivity.this, "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
-						break;
-					default:
-						break;
+
+				@Override
+				public void onError(Throwable ex, boolean isOnCallback) {
+
 				}
-			}
 
-			@Override
-			public void onError(Throwable ex, boolean isOnCallback) {
+				@Override
+				public void onCancelled(CancelledException cex) {
 
-			}
+				}
 
-			@Override
-			public void onCancelled(CancelledException cex) {
+				@Override
+				public void onFinished() {
 
-			}
-
-			@Override
-			public void onFinished() {
-
-			}
-		});
+				}
+			});
+		} else {
+			//存在sharedPreference里面的username或token是空的
+			ReLoginUtil reLoginUtil = new ReLoginUtil(LoginActivity.this);
+			reLoginUtil.reLoginWithAlertDialog();
+		}
 	}
 }
 

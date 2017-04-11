@@ -1,7 +1,6 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -12,12 +11,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -26,7 +25,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,9 +41,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 
 import cn.tellyouwhat.checkinsystem.R;
-import cn.tellyouwhat.checkinsystem.utils.InputDialog;
+import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -61,13 +60,172 @@ public class UserInfoActivity extends BaseActivity {
 	protected static final int REQUEST_STORAGE_WRITE_ACCESS_PERMISSION = 102;
 	private static final String TAG = "UserInfoActivity";
 	private CardView mEditPageHeadCardView;
-	private Uri mHeadImage;
 	private TextView nameEditPageTextView;
 	private TextView jobNumberEditPageTextView;
 	private TextView phoneNumberEditPageTextView;
 	private TextView emailEditPageTextView;
 	private TextView departmentEditPageTextView;
-	private AlertDialog mAlertDialog;
+	public String newName;
+	private View.OnClickListener nameListener = new View.OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			rename();
+		}
+	};
+	private String newJobNumber;
+	private View.OnClickListener jobNumberListener = new View.OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			reJobNumber();
+		}
+	};
+	private String newPhoneNumber;
+	private View.OnClickListener phoneNumberListener = new View.OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			rePhoneNumber();
+		}
+	};
+	private String newEmail;
+	private View.OnClickListener emailListener = new View.OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			reEmail();
+		}
+	};
+
+
+	private void rename() {
+		LayoutInflater factory = LayoutInflater.from(this);
+		View textEntryView = factory.inflate(R.layout.myedit, null);
+		final EditText mname_edit = (EditText) textEntryView.findViewById(R.id.rename_edit);
+		mname_edit.setText(nameEditPageTextView.getText());
+		mname_edit.setInputType(InputType.TYPE_TEXT_VARIATION_PERSON_NAME);
+		new AlertDialog.Builder(UserInfoActivity.this)
+				.setTitle("输入新的名字")
+				.setView(textEntryView)
+				.setNegativeButton("取消",
+						new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog,
+							                    int which) {
+
+							}
+
+						})
+				.setPositiveButton("确定",
+						new DialogInterface.OnClickListener() {
+
+							@Override
+							public void onClick(DialogInterface dialog,
+							                    int which) {
+								if (!mname_edit.getText().toString().equals("")) {
+									newName = mname_edit.getText().toString();
+								}
+								nameEditPageTextView.setText(newName);
+							}
+
+						}).show();
+	}
+
+	private void reJobNumber() {
+		LayoutInflater factory = LayoutInflater.from(this);
+		View textEntryView = factory.inflate(R.layout.myedit, null);
+		final EditText mname_edit = (EditText) textEntryView.findViewById(R.id.rename_edit);
+		mname_edit.setText(jobNumberEditPageTextView.getText());
+		mname_edit.setInputType(InputType.TYPE_CLASS_PHONE);
+		new AlertDialog.Builder(UserInfoActivity.this)
+				.setTitle("输入新的工号")
+				.setView(textEntryView)
+				.setNegativeButton("取消",
+						new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog,
+							                    int which) {
+
+							}
+
+						})
+				.setPositiveButton("确定",
+						new DialogInterface.OnClickListener() {
+
+							@Override
+							public void onClick(DialogInterface dialog,
+							                    int which) {
+								if (!mname_edit.getText().toString().equals("")) {
+									newJobNumber = mname_edit.getText().toString();
+								}
+								jobNumberEditPageTextView.setText(newJobNumber);
+							}
+
+						}).show();
+	}
+
+	private void rePhoneNumber() {
+		LayoutInflater factory = LayoutInflater.from(this);
+		View textEntryView = factory.inflate(R.layout.myedit, null);
+		final EditText mname_edit = (EditText) textEntryView.findViewById(R.id.rename_edit);
+		mname_edit.setText(phoneNumberEditPageTextView.getText());
+		mname_edit.setInputType(InputType.TYPE_CLASS_PHONE);
+		new AlertDialog.Builder(UserInfoActivity.this)
+				.setTitle("输入新的手机号")
+				.setView(textEntryView)
+				.setNegativeButton("取消",
+						new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog,
+							                    int which) {
+
+							}
+
+						})
+				.setPositiveButton("确定",
+						new DialogInterface.OnClickListener() {
+
+							@Override
+							public void onClick(DialogInterface dialog,
+							                    int which) {
+								if (!mname_edit.getText().toString().equals("")) {
+									newPhoneNumber = mname_edit.getText().toString();
+								}
+								phoneNumberEditPageTextView.setText(newPhoneNumber);
+							}
+
+						}).show();
+	}
+
+	private void reEmail() {
+		LayoutInflater factory = LayoutInflater.from(this);
+		View textEntryView = factory.inflate(R.layout.myedit, null);
+		final EditText mname_edit = (EditText) textEntryView.findViewById(R.id.rename_edit);
+		mname_edit.setText(emailEditPageTextView.getText());
+		mname_edit.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+		new AlertDialog.Builder(UserInfoActivity.this)
+				.setTitle("输入新的邮箱")
+				.setView(textEntryView)
+				.setNegativeButton("取消",
+						new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog,
+							                    int which) {
+
+							}
+
+						})
+				.setPositiveButton("确定",
+						new DialogInterface.OnClickListener() {
+
+							@Override
+							public void onClick(DialogInterface dialog,
+							                    int which) {
+								if (!mname_edit.getText().toString().equals("")) {
+									newEmail = mname_edit.getText().toString();
+								}
+								emailEditPageTextView.setText(newEmail);
+							}
+
+						}).show();
+	}
 
 	@Override
 	protected void onCreate(Bundle arg0) {
@@ -75,31 +233,6 @@ public class UserInfoActivity extends BaseActivity {
 		setContentView(R.layout.activity_user_info);
 		setUpActionBar();
 		setUpUI();
-	}
-
-	protected void showAlertDialog(@Nullable String title,
-	                               @NonNull String positiveText,
-	                               @NonNull final TextView parentView) {
-		AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-		LayoutInflater inflater = (LayoutInflater) getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		FrameLayout layout = (FrameLayout) inflater.inflate(R.layout.dialog, null);
-		dialog.setView(layout);
-		final EditText fill = (EditText) findViewById(R.id.editText_fill_in_blank);
-		dialog.setTitle(title)
-				.setPositiveButton(positiveText, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						parentView.setText(fill.getText().toString());
-						dialog.dismiss();
-					}
-				})
-				.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				})
-				.show();
 	}
 
 	private void setUpUI() {
@@ -152,28 +285,10 @@ public class UserInfoActivity extends BaseActivity {
 		});
 
 
-		nameEditPageTextView.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				new InputDialog.Builder(getApplicationContext())
-						.setTitle("请输入新名字")
-						.setPositiveButton("确定", new InputDialog.ButtonActionListener() {
-							@Override
-							public void onClick(CharSequence inputText) {
-								nameEditPageTextView.setText(inputText);
-							}
-						})
-						.setNegativeButton("取消", new InputDialog.ButtonActionListener() {
-							@Override
-							public void onClick(CharSequence inputText) {
-
-							}
-						}).show();
-			}
-		});
-//		jobNumberEditPageTextView;
-//		phoneNumberEditPageTextView;
-//		emailEditPageTextView;
+		nameEditPageTextView.setOnClickListener(nameListener);
+		jobNumberEditPageTextView.setOnClickListener(jobNumberListener);
+		phoneNumberEditPageTextView.setOnClickListener(phoneNumberListener);
+		emailEditPageTextView.setOnClickListener(emailListener);
 //		departmentEditPageTextView;
 	}
 
@@ -188,74 +303,71 @@ public class UserInfoActivity extends BaseActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		if (item.getItemId() == android.R.id.home) {
 			finish();
+			return true;
 		} else if (item.getItemId() == R.id.item_finish) {
-			item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+			Log.d(TAG, "onMenuItemClick: 点击了完成");
+			String jobNumber = jobNumberEditPageTextView.getText().toString().trim();
+			String department = departmentEditPageTextView.getText().toString().trim();
+			String name = nameEditPageTextView.getText().toString().trim();
+			String phone = phoneNumberEditPageTextView.getText().toString().trim();
+			String email = emailEditPageTextView.getText().toString().trim();
+			Log.i(TAG, "onOptionsItemSelected: jobNumber: " + jobNumber + ", department: " + department + ", name:" + name + ", phone: " + phone + ", email: " + email);
+			CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateUserInfo");
+			requestParams.setMultipart(true);
+			File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/head.jpg");
+			requestParams.addBodyParameter("headimage", file, null);
+			requestParams.addBodyParameter("employeeid", jobNumber);
+//			requestParams.addBodyParameter("departmentid", department);
+			requestParams.addBodyParameter("name", new String(name.getBytes(Charset.defaultCharset()), Charset.defaultCharset()));
+			requestParams.addBodyParameter("phonenumber", phone);
+			requestParams.addBodyParameter("email", email);
+
+			x.http().post(requestParams, new Callback.CommonCallback<JSONObject>() {
 				@Override
-				public boolean onMenuItemClick(MenuItem item) {
-					Log.d(TAG, "onMenuItemClick: 点击了完成");
-					RequestParams requestParams = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateUserInfo");
-					requestParams.setMultipart(true);
-
-					File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/head.png");
+				public void onSuccess(JSONObject result) {
+					int resultInt = -1;
+					Log.d(TAG, "onSuccess: result: " + result.toString());
 					try {
-						requestParams.addBodyParameter("headimage", file);
-					} catch (NullPointerException e) {
+						resultInt = result.getInt("result");
+					} catch (JSONException e) {
 						e.printStackTrace();
-						requestParams.addBodyParameter("headimage", "null");
 					}
-					requestParams.addBodyParameter("employeeid", jobNumberEditPageTextView.getText().toString().trim());
-					requestParams.addBodyParameter("departmentid", departmentEditPageTextView.getText().toString().trim());
-					requestParams.addBodyParameter("name", nameEditPageTextView.getText().toString().trim());
-					requestParams.addBodyParameter("phonenumber", phoneNumberEditPageTextView.getText().toString().trim());
-					requestParams.addBodyParameter("email", emailEditPageTextView.getText().toString().trim());
+					switch (resultInt) {
+						case 1:
+							Snackbar.make(findViewById(R.id.scroll_view_user_info), "保存成功", Snackbar.LENGTH_LONG).show();
+							break;
+						case 0:
+							ReLoginUtil reLoginUtil = new ReLoginUtil(UserInfoActivity.this);
+							reLoginUtil.reLoginWithAlertDialog();
+							break;
+						case -1:
+							Snackbar.make(findViewById(R.id.scroll_view_user_info), "发生了不可描述的错误011", Snackbar.LENGTH_LONG).show();
+							break;
+						default:
+							Snackbar.make(findViewById(R.id.scroll_view_user_info), "出错0110", Snackbar.LENGTH_LONG).show();
+							break;
+					}
+				}
 
-					x.http().post(requestParams, new Callback.CommonCallback<JSONObject>() {
-						@Override
-						public void onSuccess(JSONObject result) {
-							int resultInt = -1;
-							Log.d(TAG, "onSuccess: result: " + result.toString());
-							try {
-								resultInt = result.getInt("result");
-							} catch (JSONException e) {
-								e.printStackTrace();
-							}
-							switch (resultInt) {
-								case 1:
-									Snackbar.make(findViewById(R.id.scroll_view_user_info), "保存成功", Snackbar.LENGTH_LONG).show();
-									break;
-								case 0:
-									ReLoginUtil reLoginUtil = new ReLoginUtil(UserInfoActivity.this);
-									reLoginUtil.reLoginWithAlertDialog();
-									break;
-								case -1:
-									Snackbar.make(findViewById(R.id.scroll_view_user_info), "发生了不可描述的错误011", Snackbar.LENGTH_LONG).show();
-									break;
-								default:
-									Snackbar.make(findViewById(R.id.scroll_view_user_info), "出错0110", Snackbar.LENGTH_LONG).show();
-									break;
-							}
-						}
+				@Override
+				public void onError(Throwable ex, boolean isOnCallback) {
+					ex.printStackTrace();
+				}
 
-						@Override
-						public void onError(Throwable ex, boolean isOnCallback) {
-							ex.printStackTrace();
-						}
+				@Override
+				public void onCancelled(CancelledException cex) {
+					cex.printStackTrace();
+				}
 
-						@Override
-						public void onCancelled(CancelledException cex) {
-							cex.printStackTrace();
-						}
-
-						@Override
-						public void onFinished() {
-							Log.d(TAG, "onFinished");
-						}
-					});
-					return true;
+				@Override
+				public void onFinished() {
+					Log.d(TAG, "onFinished");
 				}
 			});
+			return true;
+		} else {
+			return super.onOptionsItemSelected(item);
 		}
-		return super.onOptionsItemSelected(item);
 	}
 
 	private void pickFromGallery() {
@@ -317,7 +429,7 @@ public class UserInfoActivity extends BaseActivity {
 
 	private void startCropActivity(@NonNull Uri uri) {
 		String destinationFileName = SAMPLE_CROPPED_IMAGE_NAME;
-		destinationFileName += ".png";
+		destinationFileName += ".jpg";
 
 		UCrop uCrop = UCrop.of(uri, Uri.fromFile(new File(getCacheDir(), destinationFileName)));
 
@@ -348,7 +460,7 @@ public class UserInfoActivity extends BaseActivity {
 	private UCrop advancedConfig(@NonNull UCrop uCrop) {
 		UCrop.Options options = new UCrop.Options();
 
-		options.setCompressionFormat(Bitmap.CompressFormat.PNG);
+		options.setCompressionFormat(Bitmap.CompressFormat.JPEG);
 		options.setCompressionQuality(80);
 
 		options.setHideBottomControls(false);
@@ -450,7 +562,7 @@ public class UserInfoActivity extends BaseActivity {
 
 	private void copyFileToDownloads(Uri croppedFileUri) throws Exception {
 		String downloadsDirectoryPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
-		String filename = "head.png";
+		String filename = "head.jpg";
 
 		File saveFile = new File(downloadsDirectoryPath, filename);
 
@@ -462,6 +574,4 @@ public class UserInfoActivity extends BaseActivity {
 		inStream.close();
 		outStream.close();
 	}
-
-
 }

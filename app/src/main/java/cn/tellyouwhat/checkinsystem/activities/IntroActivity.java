@@ -26,8 +26,8 @@ public class IntroActivity extends AppIntro2 {
 		addSlide(IntroTwo.newInstance());
 		addSlide(IntroThree.newInstance());
 		addSlide(IntroAskForThirdPartPermission.newInstance());
-		addSlide(AppIntroFragment.newInstance("", "内容", R.drawable.cell_bg, Color.parseColor("#124874")));
-		setFadeAnimation();
+		addSlide(AppIntroFragment.newInstance("", "内容", R.drawable.funny, Color.parseColor("#124874")));
+//		setFadeAnimation();
 //		setDepthAnimation();
 //		setFlowAnimation();
 //		setZoomAnimation();

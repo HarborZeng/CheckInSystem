@@ -7,12 +7,16 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.squareup.leakcanary.LeakCanary;
+import com.tencent.mm.opensdk.openapi.IWXAPI;
+import com.tencent.mm.opensdk.openapi.WXAPIFactory;
 
 import org.xutils.x;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+
+import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 
 public class BaseApplication extends Application {
 	List<Activity> activities = new LinkedList<>();
@@ -33,6 +37,7 @@ public class BaseApplication extends Application {
 //		x.Ext.setDebug(true);
 		Log.d("ChatApplication", "init");
 	}
+
 
 	public void addActivity(Activity activity) {
 		activities.add(activity);

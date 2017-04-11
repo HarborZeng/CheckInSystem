@@ -57,8 +57,6 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
  */
 
 public class AboutActivity extends BaseActivity implements ObservableScrollViewCallbacks {
-
-
 	private static final String TAG = "AboutActivity";
 	private ActionBar supportActionBar;
 
@@ -97,6 +95,7 @@ public class AboutActivity extends BaseActivity implements ObservableScrollViewC
 							startActivity(goToMarket);
 						} catch (ActivityNotFoundException e) {
 							e.printStackTrace();
+							Toast.makeText(AboutActivity.this, "您的手机并没有任何应用市场", Toast.LENGTH_LONG).show();
 						}
 						break;
 					case 6:
@@ -162,8 +161,7 @@ public class AboutActivity extends BaseActivity implements ObservableScrollViewC
 		feedbackButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-//					startActivity(new Intent(getActivity(), ));
-				Toast.makeText(AboutActivity.this, "点击了意见反馈", Toast.LENGTH_SHORT).show();
+				startActivity(new Intent(AboutActivity.this, FeedBackActivity.class));
 			}
 		});
 	}

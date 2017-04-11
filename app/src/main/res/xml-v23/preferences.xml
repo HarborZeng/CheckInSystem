@@ -9,7 +9,7 @@
             android:title="使用后台服务"
             android:summary="以免出现漏签现象"/>
         <CheckBoxPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:dependency="use_background_service"
             android:key="use_GPS"
             android:title="后台服务用GPS"

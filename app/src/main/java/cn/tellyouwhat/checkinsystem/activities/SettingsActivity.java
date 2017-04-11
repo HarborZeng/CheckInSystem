@@ -11,11 +11,13 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.preference.RingtonePreference;
+import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
 import android.text.TextUtils;
@@ -82,7 +84,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 		scrollToFinishActivity();
 	}
 
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -91,6 +92,20 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 		addPreferencesFromResource(R.xml.preferences);
 		bindPreferenceSummaryToValue(findPreference("when_low_battery"));
 		batteryOptimizing = findPreference("ignore_battery_optimizing");
+		if (batteryOptimizing != null) {
+			PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+
+			boolean hasIgnored = false;
+			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+				hasIgnored = powerManager.isIgnoringBatteryOptimizations(SettingsActivity.this.getPackageName());
+			}
+			//  判断当前APP是否有加入电池优化的白名单，如果没有，弹出加入电池优化的白名单的设置对话框。
+			if (hasIgnored) {
+				batteryOptimizing.setSummary("已加入。关闭请前往系统电池优化设置");
+			} else {
+				batteryOptimizing.setSummary("未加入。长时间静止息屏时暂停后台服务");
+			}
+		}
 	}
 
 	/**
@@ -108,9 +123,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if (batteryOptimizing != null) {
-			batteryOptimizing.setSummary("已优化");
-		}
 		getPreferenceScreen().getSharedPreferences()
 				.registerOnSharedPreferenceChangeListener(this);
 	}

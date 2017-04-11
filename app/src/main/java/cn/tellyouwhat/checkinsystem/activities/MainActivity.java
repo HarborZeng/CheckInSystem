@@ -13,7 +13,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -26,7 +25,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -46,9 +44,7 @@ import cn.tellyouwhat.checkinsystem.fragments.CheckInFragment;
 import cn.tellyouwhat.checkinsystem.fragments.HistoryFragment;
 import cn.tellyouwhat.checkinsystem.fragments.MeFragment;
 import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
-import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
-import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
 import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 
@@ -57,7 +53,6 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 public class MainActivity extends BaseActivity {
 
 	private String TAG = "MainActivity";
-	private long time = 0;
 
 	private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
 			= new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -113,14 +108,18 @@ public class MainActivity extends BaseActivity {
 
 	};
 
+	@Override
+	protected void onResume() {
+		super.onResume();
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		Log.i(TAG, "onCreate: in MainActivity");
 		super.onCreate(savedInstanceState);
 		setBackEnable(false);
 		setContentView(R.layout.activity_main);
 		StatusBarUtil.setColor(this, Color.parseColor("#2D0081"), 0);
-		updateSession();
 		//解决Fragment可能出现的重叠问题
 		if (savedInstanceState == null) {
 			// 正常情况下去 加载根Fragment
@@ -143,8 +142,8 @@ public class MainActivity extends BaseActivity {
 			startService(intent);
 		}
 
-		BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
-		navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+		BottomNavigationView mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
+		mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
 		new Thread(new Runnable() {
 			@Override
@@ -154,9 +153,12 @@ public class MainActivity extends BaseActivity {
 		}).start();
 	}
 
+
 	@Override
 	protected void onDestroy() {
+		Log.i(TAG, "onDestroy: in MainActivity");
 		super.onDestroy();
+		ReLoginUtil.removeAllDialog();
 	}
 
 	@Override
@@ -164,8 +166,7 @@ public class MainActivity extends BaseActivity {
 		super.onConfigurationChanged(newConfig);
 	}
 
-
-	@Override
+/*	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
 			if ((System.currentTimeMillis() - time > 1600)) {
@@ -180,7 +181,7 @@ public class MainActivity extends BaseActivity {
 		} else {
 			return super.onKeyDown(keyCode, event);
 		}
-	}
+	}*/
 
 	public void checkUpdate() {
 		ConnectivityManager connectivityManager = (ConnectivityManager) getApplicationContext().getSystemService(CONNECTIVITY_SERVICE);
@@ -326,7 +327,6 @@ public class MainActivity extends BaseActivity {
 //		Log.d(TAG, "download link: " + downloadURL);
 		params.setAutoRename(true);
 		params.setCacheSize(1024 * 1024 * 8);
-		params.setConnectTimeout(3000);
 		params.setCancelFast(true);
 
 		params.setCacheDirName(Environment.getDownloadCacheDirectory().getPath());
@@ -420,60 +420,5 @@ public class MainActivity extends BaseActivity {
 		intent.setDataAndType(Uri.fromFile(result), "application/vnd.android.package-archive");
 		Log.i(TAG, "installAPK: 准备好了数据，马上开启下一个activity");
 		startActivity(intent);
-	}
-
-	private void updateSession() {
-		SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
-		String userName = sharedPreferences.getString("USER_NAME", "");
-		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");
-		String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
-		RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
-		x.http().get(p, new Callback.CommonCallback<JSONObject>() {
-
-			private int resultInt;
-
-			@Override
-			public void onSuccess(JSONObject result) {
-				try {
-					resultInt = result.getInt("result");
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-				switch (resultInt) {
-					case 1:
-						Log.i(TAG, "onSuccess: session 已经更新");
-						break;
-					case 0:
-						ReLoginUtil reLoginUtil = new ReLoginUtil(MainActivity.this);
-						try {
-							Toast.makeText(MainActivity.this, result.getString("message"), Toast.LENGTH_SHORT).show();
-						} catch (JSONException e) {
-							e.printStackTrace();
-						}
-						reLoginUtil.reLoginWithAlertDialog();
-						break;
-					case -1:
-						Toast.makeText(MainActivity.this, "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
-						break;
-					default:
-						break;
-				}
-			}
-
-			@Override
-			public void onError(Throwable ex, boolean isOnCallback) {
-
-			}
-
-			@Override
-			public void onCancelled(CancelledException cex) {
-
-			}
-
-			@Override
-			public void onFinished() {
-
-			}
-		});
 	}
 }

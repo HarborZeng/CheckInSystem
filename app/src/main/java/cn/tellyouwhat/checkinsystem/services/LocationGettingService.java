@@ -1,6 +1,5 @@
 package cn.tellyouwhat.checkinsystem.services;
 
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -13,7 +12,6 @@ import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
-import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -32,7 +30,6 @@ import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.db.LocationDB;
 import cn.tellyouwhat.checkinsystem.db.LocationItem;
 import cn.tellyouwhat.checkinsystem.receivers.BatteryReceiver;
@@ -50,6 +47,8 @@ public class LocationGettingService extends Service {
 
 	public static final int PERIOD = 1000 * 5 * 60;
 	private static final int IN_RANGE_NOTIFICATION = 200;
+	private static final int DELAY = 200;
+
 //	public static final int PERIOD = 1000 * 60;
 
 	static {
@@ -81,7 +80,7 @@ public class LocationGettingService extends Service {
 							handler.sendMessage(message);
 						}
 					};
-					timer.schedule(task, 2000, PERIOD);
+					timer.schedule(task, DELAY, PERIOD);
 				} else {
 					task.cancel();
 				}
@@ -95,7 +94,7 @@ public class LocationGettingService extends Service {
 						handler.sendMessage(message);
 					}
 				};
-				timer.schedule(task, 2000, PERIOD);
+				timer.schedule(task, DELAY, PERIOD);
 			}
 		}
 	};
@@ -209,7 +208,7 @@ public class LocationGettingService extends Service {
 		boolean useBackgroundService = sharedPref.getBoolean("use_background_service", true);
 		sharedPref.registerOnSharedPreferenceChangeListener(listener);
 		if (useBackgroundService) {
-			timer.schedule(task, 2000, PERIOD);
+			timer.schedule(task, DELAY * 50, PERIOD);
 		}
 	}
 
@@ -240,12 +239,12 @@ public class LocationGettingService extends Service {
 		LocationClientOption option = new LocationClientOption();
 		boolean useGps = sharedPref.getBoolean("use_GPS", true);
 		if (useGps) {
-			Toast.makeText(this, "using GPS", Toast.LENGTH_SHORT).show();
+//			Toast.makeText(this, "using GPS", Toast.LENGTH_SHORT).show();
 			option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
 			option.setOpenGps(true);
 			//可选，默认false,设置是否使用gps
 		} else {
-			Toast.makeText(this, "not using GPS", Toast.LENGTH_SHORT).show();
+//			Toast.makeText(this, "not using GPS", Toast.LENGTH_SHORT).show();
 			option.setLocationMode(LocationClientOption.LocationMode.Battery_Saving);
 		}
 		//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
@@ -255,7 +254,7 @@ public class LocationGettingService extends Service {
 
 		int span = 10000;
 //		int span = 1000*60*5+1;
-		option.setScanSpan(1000 * 6);
+		option.setScanSpan(1000 * 5);
 		//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
 
 		option.setIsNeedAddress(true);
@@ -381,10 +380,10 @@ public class LocationGettingService extends Service {
 						index = i;
 					}
 				}
-				Toast.makeText(getApplicationContext(), Arrays.toString(radiusArray), Toast.LENGTH_SHORT).show();
+//				Toast.makeText(getApplicationContext(), Arrays.toString(radiusArray), Toast.LENGTH_SHORT).show();
 				Log.d(TAG, "onReceiveLocation: 半径数组中都有：" + Arrays.toString(radiusArray));
 				if (radiusArray[index] < 50 && radiusArray[index] != 0) {
-					Toast.makeText(getApplicationContext(), "index=" + index + ", 最小半径是: " + radiusArray[index], Toast.LENGTH_SHORT).show();
+//					Toast.makeText(getApplicationContext(), "index=" + index + ", 最小半径是: " + radiusArray[index], Toast.LENGTH_SHORT).show();
 					Log.d(TAG, "onReceiveLocation: 最小半径和他的index是: " + radiusArray[index] + ", " + index);
 					BDLocation bdLocation = locationSparseArray.get(index);
 
@@ -411,7 +410,7 @@ public class LocationGettingService extends Service {
 					}
 					locationDB.saveLocation(item);
 					timesOfGettingInThisTime = 0;
-					Toast.makeText(getApplicationContext(), "已保存", Toast.LENGTH_SHORT).show();
+//					Toast.makeText(getApplicationContext(), "已保存", Toast.LENGTH_SHORT).show();
 				}
 				mLocationClient.stop();
 			}

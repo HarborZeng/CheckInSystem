@@ -48,7 +48,6 @@
                     android:layout_marginTop="10dp"
                     android:ems="10"
                     android:gravity="start"
-                    android:text="Name"
                     android:textAlignment="textStart"
                     android:textColor="#000"
                     android:textSize="24sp"/>
@@ -61,7 +60,6 @@
                     android:gravity="start"
                     android:paddingBottom="10dp"
                     android:paddingTop="20dp"
-                    android:text="2015111123"
                     android:textAlignment="textStart"
                     android:textSize="18sp"/>
             </LinearLayout>
@@ -200,5 +198,41 @@
         android:textSize="18sp"
         android:textStyle="bold"/>
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="16dp">
 
+        <android.support.v7.widget.CardView
+            android:id="@+id/get_userinfo_bg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.7"
+            android:clickable="true"
+            android:contextClickable="false"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/caldroid_holo_blue_light"
+            app:cardElevation="4dp">
+        </android.support.v7.widget.CardView>
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentStart="false"
+        android:layout_centerHorizontal="false"
+        android:layout_centerInParent="true"
+        android:layout_centerVertical="false"
+        android:elevation="16dp"
+        >
+
+        <ProgressBar
+            android:id="@+id/get_userinfo_progress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:visibility="visible"/>
+    </FrameLayout>
 </RelativeLayout>
