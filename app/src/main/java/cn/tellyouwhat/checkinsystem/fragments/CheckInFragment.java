@@ -42,8 +42,6 @@ import com.getbase.floatingactionbutton.FloatingActionsMenu;
 import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
 import com.tencent.mm.opensdk.modelmsg.WXMediaMessage;
 import com.tencent.mm.opensdk.modelmsg.WXTextObject;
-import com.tencent.mm.opensdk.openapi.IWXAPI;
-import com.tencent.mm.opensdk.openapi.WXAPIFactory;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -61,10 +59,11 @@ import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.activities.MainActivity;
 import cn.tellyouwhat.checkinsystem.db.LocationDB;
 import cn.tellyouwhat.checkinsystem.db.LocationItem;
-import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 import cn.tellyouwhat.checkinsystem.utils.NotifyUtil;
 import cn.tellyouwhat.checkinsystem.utils.Polygon;
+
+import static cn.tellyouwhat.checkinsystem.bases.BaseApplication.api;
 
 /**
  * Created by Harbor-Laptop on 2017/3/3.
@@ -116,7 +115,7 @@ public class CheckInFragment extends BaseFragment {
 								//睡100毫秒是为了防止当执行setVisibility INVISIBLE时不至于 服务器对于是否在设定区域内的结果还未返回
 								//就已经执行了findViewById(R.id.out_of_range).setVisibility(View.INVISIBLE);
 								//类似的代码从而导致取消定位之后有残留的图片
-								SystemClock.sleep(100);
+								SystemClock.sleep(300);
 								getActivity().runOnUiThread(new Runnable() {
 									@Override
 									public void run() {
@@ -206,19 +205,12 @@ public class CheckInFragment extends BaseFragment {
 	private TextView mCheckStatusTextView;
 	private TextView mLocationTextView;
 	private CardView mLocationCardView;
-	private IWXAPI mWeChatApi;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		Log.i(TAG, "onCreate: in CheckInFragment");
 		super.onCreate(savedInstanceState);
-		registerToWeChat();
 		getLocationGPSDetail();
-	}
-
-	private void registerToWeChat() {
-		mWeChatApi = WXAPIFactory.createWXAPI(getActivity(), ConstantValues.WX_APP_ID, true);
-		mWeChatApi.registerApp(ConstantValues.WX_APP_ID);
 	}
 
 	@Override
@@ -381,7 +373,7 @@ public class CheckInFragment extends BaseFragment {
 			@Override
 			public void onClick(View v) {
 				ClipboardManager clipboardManager = (ClipboardManager) getActivity().getApplicationContext().getSystemService(Context.CLIPBOARD_SERVICE);
-				clipboardManager.setPrimaryClip(ClipData.newPlainText(null, ((TextView) v).getText().toString()));  // 将内容set到剪贴板
+				clipboardManager.setPrimaryClip(ClipData.newPlainText(null, mLocationTextView.getText().toString()));  // 将内容set到剪贴板
 				if (clipboardManager.hasPrimaryClip()) {
 					Toast.makeText(getActivity(), "内容已复制", Toast.LENGTH_SHORT).show();
 				}
@@ -393,21 +385,37 @@ public class CheckInFragment extends BaseFragment {
 			@Override
 			public void onClick(View v) {
 				String text = mLocationTextView.getText().toString();
+				//TODO 继续添加分享的逻辑
+//				shareToSystemDialog(text);
+				shareToWeChatFriend(text);
+			}
+
+			private void shareToWeChatFriend(String text) {
+				//使用Application全局静态变量，有违迪米特法则
 				WXTextObject textObject = new WXTextObject();
 				textObject.text = text;
 
-				WXMediaMessage mediaMessage = new WXMediaMessage();
-				mediaMessage.mediaObject = textObject;
-				mediaMessage.description = text;
+				WXMediaMessage wxMediaMessage = new WXMediaMessage();
+				wxMediaMessage.mediaObject = textObject;
+				wxMediaMessage.description = text;
 
 				SendMessageToWX.Req req = new SendMessageToWX.Req();
 				req.transaction = String.valueOf(System.currentTimeMillis());
-				req.message = mediaMessage;
+				req.message = wxMediaMessage;
 
-				boolean sendAction = mWeChatApi.sendReq(req);
-				if (!sendAction) {
-					Toast.makeText(getActivity(), "分享失败，您可能是没有安装微信", Toast.LENGTH_SHORT).show();
+				boolean sendSuccessfully = api.sendReq(req);
+				if (!sendSuccessfully) {
+					Toast.makeText(getActivity(), "分享失败，可能没有安装微信", Toast.LENGTH_SHORT).show();
 				}
+			}
+
+			private void shareToSystemDialog(String text) {
+				Intent shareIntent = new Intent();
+				shareIntent.setAction(Intent.ACTION_SEND);
+				shareIntent.putExtra(Intent.EXTRA_TEXT, text);
+				shareIntent.setType("text/plain");
+				//设置分享列表的标题，并且每次都显示分享列表
+				startActivity(Intent.createChooser(shareIntent, "分享到"));
 			}
 		});
 

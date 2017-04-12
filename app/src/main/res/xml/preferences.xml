@@ -29,6 +29,10 @@
             android:defaultValue="false"
             android:key="show_upgrade_dialog_only_under_wifi"
             android:title="仅在WIFI环境下提示更新"/>
+        <Preference
+            android:key="custom_download_directory"
+            android:summary="默认为SD卡根目录下的Download"
+            android:title="自定义更新下载目录"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:key="notifications"

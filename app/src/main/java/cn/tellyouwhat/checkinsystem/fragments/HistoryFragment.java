@@ -1,17 +1,15 @@
 package cn.tellyouwhat.checkinsystem.fragments;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
@@ -32,8 +30,10 @@ import org.xutils.x;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.bean.CheckInRecord;
@@ -59,8 +59,7 @@ public class HistoryFragment extends BaseFragment {
 	private AlphaAnimation mAnimationOut = new AlphaAnimation(1f, 0f);
 	private ProgressBar mHistoryProgressBar;
 	private CardView mHistoryCardView;
-	private List<CheckInRecord> mRecordList = new ArrayList<>();
-	;
+	private Map<CalendarDay, CheckInRecord> mRecordMap = new HashMap<>();
 	private TextView mCheckOutTimeTextView;
 	private TextView mCheckInTimeTextView;
 	private ArrayList<CalendarDay> normalDates = new ArrayList<>();
@@ -112,23 +111,47 @@ public class HistoryFragment extends BaseFragment {
 				showCheckTime(date);
 			}
 		});
-		//TODO 按钮更新逻辑
-//				CalendarDay currentDate = mCalendarView.getCurrentDate();
-//				getThisMonthStatus(currentDate.getYear(), currentDate.getMonth());
+
+		//点击按钮更新数据的逻辑
+		FloatingActionButton reFreshFloatingActionBar = (FloatingActionButton) view.findViewById(R.id.floatingActionButton_refresh_calendar);
+		reFreshFloatingActionBar.setBackgroundColor(Color.WHITE);
+		reFreshFloatingActionBar.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				CalendarDay currentDate = mCalendarView.getCurrentDate();
+				getThisMonthStatus(currentDate.getYear(), currentDate.getMonth());
+			}
+		});
+
+		//点击签到时间文本即可修正签到记录
+		mCheckInTimeTextView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+
+			}
+		});
+		mCheckOutTimeTextView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+
+			}
+		});
 
 		return view;
 	}
 
 	private void showCheckTime(CalendarDay date) {
-		int month = date.getMonth();
-		int year = date.getYear();
-		int realMonth = month + 1;
-		int day = date.getDay();
-
-
-//		mCheckInTimeTextView.setText();
-//		mCheckOutTimeTextView.setText();
-
+		Calendar calendar = date.getCalendar();
+		CheckInRecord record = mRecordMap.get(CalendarDay.from(calendar));
+		if (record != null) {
+			String checkInTime = record.getCheckInTime();
+			String checkOutTime = record.getCheckOutTime();
+			mCheckInTimeTextView.setText(checkInTime.replace("T", " "));
+			mCheckOutTimeTextView.setText(checkOutTime.replace("T", " ").replace("0001-01-01 00:00:00", "未签出"));
+		} else {
+			mCheckInTimeTextView.setText("未签到");
+			mCheckOutTimeTextView.setText("未签出");
+		}
 	}
 
 	private void getThisMonthStatus(int year, int month) {
@@ -144,7 +167,7 @@ public class HistoryFragment extends BaseFragment {
 					int resultInt = result.getInt("result");
 					switch (resultInt) {
 						case 1:
-							mRecordList.clear();
+							mRecordMap.clear();
 							JSONArray resultJSONArray = result.getJSONArray("data");
 							for (int i = 0; i < resultJSONArray.length(); i++) {
 								JSONObject jsonObject = resultJSONArray.getJSONObject(i);
@@ -161,9 +184,17 @@ public class HistoryFragment extends BaseFragment {
 								record.setHasCheckOut(hasCheckOut);
 								record.setOriCheckInTime(oriCheckInTime);
 								record.setOriCheckOutTime(oriCheckOutTime);
-								mRecordList.add(record);
+
+								String date = checkInTime.substring(0, checkInTime.indexOf("T"));
+								String[] dateFlags = date.split("-");
+								int year = Integer.valueOf(dateFlags[0]);
+								int month = Integer.valueOf(dateFlags[1]);
+								int day = Integer.valueOf(dateFlags[2]);
+								CalendarDay calendarDay = CalendarDay.from(new Date(year - 1900, month - 1, day));
+								mRecordMap.put(calendarDay, record);
 							}
-							showCheckInStatusOnCalendar(mRecordList);
+							showCheckInStatusOnCalendar(mRecordMap);
+							showCheckTime(mCalendarView.getSelectedDate());
 							break;
 						case 0:
 							updateSession();
@@ -214,11 +245,12 @@ public class HistoryFragment extends BaseFragment {
 		mHistoryCardView.startAnimation(show ? mAnimationIn : mAnimationOut);
 	}
 
-	private void showCheckInStatusOnCalendar(List<CheckInRecord> list) {
+	private void showCheckInStatusOnCalendar(Map<CalendarDay, CheckInRecord> recordMap) {
 		normalDates.clear();
 		abnormalDates.clear();
+		Collection<CheckInRecord> values = recordMap.values();
 		for (CheckInRecord record :
-				list) {
+				values) {
 			String checkInID = record.getCheckInID();
 			String checkInTime = record.getCheckInTime();
 			String checkOutTime = record.getCheckOutTime();

@@ -17,8 +17,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.preference.RingtonePreference;
-import android.provider.Settings;
-import android.support.design.widget.Snackbar;
+import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -28,6 +27,9 @@ import android.widget.ListView;
 
 import com.github.anzewei.parallaxbacklayout.ParallaxBackActivityHelper;
 import com.github.anzewei.parallaxbacklayout.ParallaxBackLayout;
+
+import net.rdrei.android.dirchooser.DirectoryChooserConfig;
+import net.rdrei.android.dirchooser.DirectoryChooserFragment;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
@@ -43,9 +45,11 @@ import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
  * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
  * API Guide</a> for more information on developing a Settings UI.
  */
-public class SettingsActivity extends AppCompatPreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class SettingsActivity extends AppCompatPreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener, DirectoryChooserFragment.OnFragmentInteractionListener {
 	private ParallaxBackActivityHelper mHelper;
 	private Preference batteryOptimizing;
+	private String mDirectory;
+	private DirectoryChooserFragment mDialog;
 
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
@@ -88,9 +92,12 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mHelper = new ParallaxBackActivityHelper(this);
+		setBackEnable(true);
 		setupActionBar();
 		addPreferencesFromResource(R.xml.preferences);
 		bindPreferenceSummaryToValue(findPreference("when_low_battery"));
+
+		//电池优化选项
 		batteryOptimizing = findPreference("ignore_battery_optimizing");
 		if (batteryOptimizing != null) {
 			PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
@@ -106,6 +113,21 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 				batteryOptimizing.setSummary("未加入。长时间静止息屏时暂停后台服务");
 			}
 		}
+
+		//文件夹选择
+		final DirectoryChooserConfig config = DirectoryChooserConfig.builder()
+				.newDirectoryName("checkin")
+				.allowNewDirectoryNameModification(true)
+				.build();
+		mDialog = DirectoryChooserFragment.newInstance(config);
+		Preference customDownloadDirectory = findPreference("custom_download_directory");
+		customDownloadDirectory.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+			@Override
+			public boolean onPreferenceClick(Preference preference) {
+				mDialog.show(getFragmentManager(), null);
+				return true;
+			}
+		});
 	}
 
 	/**
@@ -237,28 +259,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-		Intent intent = new Intent(getApplicationContext(), LocationGettingService.class);
 		switch (key) {
-			/*case "use_background_service":
-				boolean useBackgroundService = sharedPreferences.getBoolean("use_background_service", true);
-				Log.d("useBackgroundService", "onSharedPreferenceChanged: " + useBackgroundService);
-				*//*if(useBackgroundService){
-					startService(intent);
-				}else {
-					stopService(intent);
-				}*//*
-				Snackbar.make(getCurrentFocus(), "需要重启应用程序生效", Snackbar.LENGTH_INDEFINITE).setAction("重启", new View.OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						restartApplication();
-					}
-				}).show();
-				break;*/
-			//TODO more settings changed should be listened here.
-			case "use_GPS":
-				/*	stopService(intent);
-					startService(intent);*/
-				break;
 			case "b":
 				break;
 			case "n":
@@ -270,23 +271,20 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 		}
 	}
 
-	private void restartApplication() {
-		AlarmManager alm = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
-		alm.set(AlarmManager.RTC, System.currentTimeMillis() + 1000, PendingIntent.getActivity(this, 0, new Intent(this, this.getClass()), 0));
+	@Override
+	public void onSelectDirectory(@NonNull String path) {
+		Preference customDownloadDirectory = findPreference("custom_download_directory");
+		customDownloadDirectory.setSummary(path);
+		customDownloadDirectory.setDefaultValue(path);
+		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		SharedPreferences.Editor editor = sharedPref.edit();
+		editor.putString("custom_download_directory", path);
+		editor.apply();
+		mDialog.dismiss();
 	}
 
-	public static void restart(Context context, int delay) {
-		if (delay == 0) {
-			delay = 1;
-		}
-		Log.e("", "restarting app");
-		Intent restartIntent = context.getPackageManager()
-				.getLaunchIntentForPackage(context.getPackageName());
-		PendingIntent intent = PendingIntent.getActivity(
-				context, 0,
-				restartIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-		AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-		manager.set(AlarmManager.RTC, System.currentTimeMillis() + delay, intent);
-		System.exit(2);
+	@Override
+	public void onCancelChooser() {
+		mDialog.dismiss();
 	}
 }

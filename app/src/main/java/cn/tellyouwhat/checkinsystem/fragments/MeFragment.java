@@ -50,17 +50,16 @@ public class MeFragment extends BaseFragment {
 	private String mHeadImage;
 	private ProgressBar mGetUserInfoProgressBar;
 	private CardView mGetUserInfoBGCharView;
-	AlphaAnimation alphaAnimation = new AlphaAnimation(1f, 0f);
-	AlphaAnimation alphaAnimation1 = new AlphaAnimation(0f, 1f);
+	AlphaAnimation mAlphaAnimationOut = new AlphaAnimation(1f, 0f);
+	AlphaAnimation mAlphaAnimationIn = new AlphaAnimation(0f, 1f);
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		Log.i(TAG, "onCreate: in MeFragment");
 		super.onCreate(savedInstanceState);
-		alphaAnimation.setDuration(500);
-		alphaAnimation1.setDuration(1200);
+		mAlphaAnimationOut.setDuration(500);
+		mAlphaAnimationIn.setDuration(1000);
 	}
-
 
 	private void setUpUserInfo() {
 		Log.i(TAG, "setUpUserInfo: setting up...");
@@ -83,7 +82,7 @@ public class MeFragment extends BaseFragment {
 				switch (resultInt) {
 					case 1:
 						mGetUserInfoBGCharView.setVisibility(View.INVISIBLE);
-						mGetUserInfoBGCharView.startAnimation(alphaAnimation);
+						mGetUserInfoBGCharView.startAnimation(mAlphaAnimationOut);
 						showProgress(false);
 						try {
 							mEmployeeID = result.getString("employeeid");
@@ -149,7 +148,7 @@ public class MeFragment extends BaseFragment {
 		Log.i(TAG, "onPause: in MeFragment");
 		super.onPause();
 		mGetUserInfoBGCharView.setVisibility(View.VISIBLE);
-		mGetUserInfoBGCharView.startAnimation(alphaAnimation1);
+		mGetUserInfoBGCharView.startAnimation(mAlphaAnimationIn);
 		showProgress(true);
 	}
 

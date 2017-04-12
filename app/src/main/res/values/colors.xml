@@ -5,7 +5,7 @@
     <color name="colorAccent">#ff4081</color>
     <color name="colorGray">#999</color>
     <color name="black_semi_transparent">#B2000000</color>
-    <color name="background">#e5e5e5</color>
+    <color name="background">#e9dddd</color>
     <color name="half_black">#808080</color>
     <color name="white">#fafafa</color>
     <color name="true_white">#ffffff</color>
@@ -34,11 +34,11 @@
     <!-- theme colors -->
     <color name="theme_blue_background">#84ffff</color>
     <color name="theme_blue_dark">#2D0081</color>
-    <color name="caldroid_white">#ddd</color>
+    <color name="caldroid_white">#f4f0ef</color>
     <color name="caldroid_holo_blue_light">#ddd</color>
     <color name="caldroid_555">#555</color>
     <color name="caldroid_333">#333</color>
-    <color name="caldroid_lighter_gray">#ddd</color>
+    <color name="caldroid_lighter_gray">#dddddd</color>
     <color name="caldroid_black">#111</color>
     <color name="caldroid_light_red">#d11</color>
     <color name="cell_text_color">#666</color>

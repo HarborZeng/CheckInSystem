@@ -40,7 +40,8 @@
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        tools:ignore="AllowBackup,GoogleAppIndexingWarning">
+        tools:ignore="AllowBackup,GoogleAppIndexingWarning"
+        tools:replace="android:theme">
         <meta-data
             android:name="com.baidu.lbsapi.API_KEY"
             android:value="nIT6orX82KFVr8fKyWgkvCWGIpGFaS0r"/>
@@ -137,6 +138,11 @@
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
         <activity
             android:name=".activities.FeedBackActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name="net.rdrei.android.dirchooser.DirectoryChooserActivity"/>
+        <activity
+            android:name=".activities.ModifyCheckTimeActivity"
+            android:theme="@style/AppTheme.NoActionBar"
             android:screenOrientation="portrait"/>
     </application>
 

@@ -35,6 +35,10 @@
 -keep class com.tencent.mm.sdk.** {
    *;
 }
+# BaseRecyclerViewAdapterHelper的混淆
+-keep class com.chad.library.adapter.** {
+   *;
+}
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:
