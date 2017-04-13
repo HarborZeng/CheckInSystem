@@ -1,5 +1,6 @@
 package cn.tellyouwhat.checkinsystem.services;
 
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -30,6 +31,8 @@ import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.activities.MainActivity;
 import cn.tellyouwhat.checkinsystem.db.LocationDB;
 import cn.tellyouwhat.checkinsystem.db.LocationItem;
 import cn.tellyouwhat.checkinsystem.receivers.BatteryReceiver;
@@ -99,6 +102,7 @@ public class LocationGettingService extends Service {
 		}
 	};
 	private Handler handler;
+	private String[] locationNames;
 
 	@Nullable
 	@Override
@@ -140,11 +144,13 @@ public class LocationGettingService extends Service {
 			public void onSuccess(JSONArray jsonArray) {
 				polygons = new Polygon[jsonArray.length()];
 				locationIDs = new int[jsonArray.length()];
+				locationNames = new String[jsonArray.length()];
 				for (int i = 0; i < jsonArray.length(); i++) {
 					JSONObject jsonObject;
 					try {
 						jsonObject = jsonArray.getJSONObject(i);
 						locationIDs[i] = jsonObject.getInt("locationID");
+						locationNames[i] = jsonObject.getString("name");
 						int x1 = (int) (jsonObject.getDouble("x1") * 1000000);
 						int x2 = (int) (jsonObject.getDouble("x2") * 1000000);
 						int x3 = (int) (jsonObject.getDouble("x3") * 1000000);
@@ -259,7 +265,6 @@ public class LocationGettingService extends Service {
 
 		option.setIsNeedAddress(true);
 		//可选，设置是否需要地址信息，默认不需要
-
 
 		option.setLocationNotify(false);
 		//可选，默认false，设置是否当GPS有效时按照1S/1次频率输出GPS结果
@@ -401,7 +406,24 @@ public class LocationGettingService extends Service {
 						for (int i = 0; i < polygons.length; i++) {
 							if (polygons[i].contains(bdLocation.getLongitude() * 1000000, bdLocation.getLatitude() * 1000000)) {
 								item.setBuildingID(locationIDs[i]);
-								sendNotificationInRange();
+								item.setBuildingDesc(locationNames[i]);
+								boolean showNotifications = sharedPref.getBoolean("notifications_check_in_reminder_enabled", true);
+								boolean notificationsCheckInReminderRingtoneAndVibrateEnabled = sharedPref.getBoolean("notifications_check_in_reminder_ringtone_and_vibrate_enabled", true);
+								boolean hasCheckIn = sharedPref.getBoolean("has_check_in", false);
+								if (showNotifications && !hasCheckIn) {
+									Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+									intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+									intent.putExtra("BEGIN_CHECK_IN", true);
+									PendingIntent pIntent = PendingIntent.getActivity(getApplicationContext(), IN_RANGE_NOTIFICATION, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+									String ticker = "您已进入签到范围";
+									String title = "您已进入签到范围";
+									String content = "点击签到\n您在" + locationNames[i] + "，位于" + bdLocation.getAddrStr();
+
+									NotifyUtil notificationSucceededCheckIn = new NotifyUtil(getApplicationContext(), IN_RANGE_NOTIFICATION);
+									notificationSucceededCheckIn.setOnGoing(false);
+									notificationSucceededCheckIn.notifyNormailMmoreline(pIntent, R.mipmap.ic_launcher, ticker, title, content, notificationsCheckInReminderRingtoneAndVibrateEnabled, notificationsCheckInReminderRingtoneAndVibrateEnabled, true);
+								}
 								break;
 							} else {
 								item.setBuildingID(0);
@@ -410,15 +432,9 @@ public class LocationGettingService extends Service {
 					}
 					locationDB.saveLocation(item);
 					timesOfGettingInThisTime = 0;
-//					Toast.makeText(getApplicationContext(), "已保存", Toast.LENGTH_SHORT).show();
 				}
 				mLocationClient.stop();
 			}
-		}
-
-		private void sendNotificationInRange() {
-			NotifyUtil notifyUtil = new NotifyUtil(getApplicationContext(), IN_RANGE_NOTIFICATION);
-//			notifyUtil.notify_button(R.drawable.icon_launcher, 0, "签到", new PendingIntent());
 		}
 
 		@Override
@@ -426,4 +442,5 @@ public class LocationGettingService extends Service {
 			Log.w("onConnectHotSpotMessage", "onConnectHotSpotMessage: s: " + s + ", i: " + i);
 		}
 	}
+
 }

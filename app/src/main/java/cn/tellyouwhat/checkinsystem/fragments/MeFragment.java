@@ -67,9 +67,7 @@ public class MeFragment extends BaseFragment {
 		showProgress(true);
 		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/User/GetUserInfo");
 		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
-
 			private int resultInt;
-
 			@Override
 			public void onSuccess(JSONObject result) {
 //				Toast.makeText(getActivity(), "hoquuserinfosucceed", Toast.LENGTH_SHORT).show();
@@ -91,19 +89,23 @@ public class MeFragment extends BaseFragment {
 							mPhoneNumber = result.getString("phonenumber");
 							mEmail = result.getString("email");
 							mHeadImage = result.getString("headimage");
-							TextView userNameTextView = (TextView) view.findViewById(R.id.user_name);
-							if (!TextUtils.isEmpty(mName)) {
-								userNameTextView.setText(mName);
-							}
-							TextView jobNumberTextView = (TextView) view.findViewById(R.id.job_number);
-							if (!TextUtils.isEmpty(mEmployeeID)) {
-								jobNumberTextView.setText(mEmployeeID);
-							}
-							ImageView profileImageView = (ImageView) view.findViewById(R.id.profile_image);
-							if (!TextUtils.isEmpty(mHeadImage)) {
-								byte[] decodedHeadImage = Base64.decode(mHeadImage, Base64.DEFAULT);
-								Bitmap bitmapHeadImage = BitmapFactory.decodeByteArray(decodedHeadImage, 0, decodedHeadImage.length);
-								profileImageView.setImageBitmap(bitmapHeadImage);
+							TextView userNameTextView = null;
+							if (view != null) {
+								userNameTextView = (TextView) view.findViewById(R.id.user_name);
+
+								if (!TextUtils.isEmpty(mName)) {
+									userNameTextView.setText(mName);
+								}
+								TextView jobNumberTextView = (TextView) view.findViewById(R.id.job_number);
+								if (!TextUtils.isEmpty(mEmployeeID)) {
+									jobNumberTextView.setText(mEmployeeID);
+								}
+								ImageView profileImageView = (ImageView) view.findViewById(R.id.profile_image);
+								if (!TextUtils.isEmpty(mHeadImage)) {
+									byte[] decodedHeadImage = Base64.decode(mHeadImage, Base64.DEFAULT);
+									Bitmap bitmapHeadImage = BitmapFactory.decodeByteArray(decodedHeadImage, 0, decodedHeadImage.length);
+									profileImageView.setImageBitmap(bitmapHeadImage);
+								}
 							}
 						} catch (JSONException e) {
 							e.printStackTrace();
@@ -113,7 +115,7 @@ public class MeFragment extends BaseFragment {
 						updateSession();
 						break;
 					case -1:
-						Toast.makeText(getActivity(), "发生了不可描述的错误010", Toast.LENGTH_SHORT).show();
+						Toast.makeText(getActivity().getApplicationContext(), "发生了不可描述的错误010", Toast.LENGTH_SHORT).show();
 						break;
 					default:
 						break;

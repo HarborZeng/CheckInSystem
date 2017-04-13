@@ -120,6 +120,12 @@ public class MainActivity extends BaseActivity {
 		setBackEnable(false);
 		setContentView(R.layout.activity_main);
 		StatusBarUtil.setColor(this, Color.parseColor("#2D0081"), 0);
+
+		Intent checkIntent = getIntent();
+		boolean beginCheckIn = checkIntent.getBooleanExtra("BEGIN_CHECK_IN", false);
+		Bundle bundle = new Bundle();
+		bundle.putBoolean("BEGIN_CHECK_IN", beginCheckIn);
+
 		//解决Fragment可能出现的重叠问题
 		if (savedInstanceState == null) {
 			// 正常情况下去 加载根Fragment
@@ -128,9 +134,11 @@ public class MainActivity extends BaseActivity {
 				supportActionBar.setDisplayHomeAsUpEnabled(false);
 				supportActionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#2D0081")));
 			}
+			CheckInFragment checkInFragment = CheckInFragment.newInstance();
+			checkInFragment.setArguments(bundle);
 			getSupportFragmentManager()
 					.beginTransaction()
-					.add(R.id.content, CheckInFragment.newInstance(), "CheckIn")
+					.add(R.id.content, checkInFragment, "CheckIn")
 					.commit();
 		}
 

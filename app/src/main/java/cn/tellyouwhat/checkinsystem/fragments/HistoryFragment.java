@@ -1,6 +1,7 @@
 package cn.tellyouwhat.checkinsystem.fragments;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -36,6 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.activities.ModifyCheckTimeActivity;
 import cn.tellyouwhat.checkinsystem.bean.CheckInRecord;
 import cn.tellyouwhat.checkinsystem.decorators.HighlightWeekendsDecorator;
 import cn.tellyouwhat.checkinsystem.decorators.OneDayDecorator;
@@ -64,6 +66,8 @@ public class HistoryFragment extends BaseFragment {
 	private TextView mCheckInTimeTextView;
 	private ArrayList<CalendarDay> normalDates = new ArrayList<>();
 	private ArrayList<CalendarDay> abnormalDates = new ArrayList<>();
+	private String checkInID;
+
 
 	@Nullable
 	@Override
@@ -127,7 +131,29 @@ public class HistoryFragment extends BaseFragment {
 		mCheckInTimeTextView.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-
+				CalendarDay currentDate = mCalendarView.getSelectedDate();
+				String year = String.valueOf(currentDate.getYear());
+				int month = currentDate.getMonth();
+				int realMonth = month + 1;
+				String realMonthString;
+				if (realMonth < 10) {
+					realMonthString = "0" + realMonth;
+				} else {
+					realMonthString = String.valueOf(realMonth);
+				}
+				int day = currentDate.getDay();
+				String dayString;
+				if (day < 10) {
+					dayString = "0" + day;
+				} else {
+					dayString = String.valueOf(day);
+				}
+				Intent intent = new Intent(getActivity(), ModifyCheckTimeActivity.class);
+				intent.putExtra("year", year);
+				intent.putExtra("month", realMonthString);
+				intent.putExtra("day", dayString);
+				intent.putExtra("id", checkInID);
+				startActivityForResult(intent, 11);
 			}
 		});
 		mCheckOutTimeTextView.setOnClickListener(new View.OnClickListener() {
@@ -171,7 +197,7 @@ public class HistoryFragment extends BaseFragment {
 							JSONArray resultJSONArray = result.getJSONArray("data");
 							for (int i = 0; i < resultJSONArray.length(); i++) {
 								JSONObject jsonObject = resultJSONArray.getJSONObject(i);
-								String checkInID = jsonObject.getString("CheckInID");
+								checkInID = jsonObject.getString("CheckInID");
 								String checkInTime = jsonObject.getString("CheckInTime");
 								String checkOutTime = jsonObject.getString("CheckOutTime");
 								String oriCheckInTime = jsonObject.getString("OriCheckInTime");

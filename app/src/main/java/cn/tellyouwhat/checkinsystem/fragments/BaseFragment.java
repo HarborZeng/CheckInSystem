@@ -8,9 +8,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -25,7 +23,6 @@ import org.xutils.x;
 import java.net.HttpCookie;
 import java.util.List;
 
-import cn.tellyouwhat.checkinsystem.activities.MainActivity;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
@@ -117,7 +114,7 @@ public class BaseFragment extends Fragment {
 							reLoginUtil.reLoginWithAlertDialog();
 							break;
 						case -1:
-							Toast.makeText(getActivity(), "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
+							Toast.makeText(getActivity().getApplicationContext(), "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
 							break;
 						default:
 							break;

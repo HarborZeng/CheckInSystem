@@ -1,14 +1,33 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.github.anzewei.parallaxbacklayout.ParallaxActivityBase;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.xutils.common.Callback;
+import org.xutils.http.RequestParams;
+import org.xutils.http.cookie.DbCookieStore;
+import org.xutils.x;
+
+import java.net.HttpCookie;
+import java.util.List;
+
+import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
+import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
+import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 
 /**
  * Created by Harbor-Laptop on 2017/2/24.
@@ -77,6 +96,80 @@ public class BaseActivity extends ParallaxActivityBase {
 		super.onStop();
 		if (mAlertDialog != null && mAlertDialog.isShowing()) {
 			mAlertDialog.dismiss();
+		}
+	}
+
+	public void updateSession() {
+		SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
+		String userName = sharedPreferences.getString("USER_NAME", "");
+		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");
+		String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
+		if (!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(token)) {
+			RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+			x.http().get(p, new Callback.CommonCallback<JSONObject>() {
+
+				private int resultInt;
+
+				@Override
+				public void onSuccess(JSONObject result) {
+					try {
+						resultInt = result.getInt("result");
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
+					switch (resultInt) {
+						case 1:
+							DbCookieStore instance = DbCookieStore.INSTANCE;
+							List<HttpCookie> cookies = instance.getCookies();
+							for (HttpCookie cookie : cookies) {
+								String name = cookie.getName();
+								String value = cookie.getValue();
+								if (ConstantValues.COOKIE_NAME.equals(name)) {
+									SharedPreferences preferences = x.app().getSharedPreferences(ConstantValues.COOIKE_SHARED_PREFERENCE_NAME, MODE_PRIVATE);
+									SharedPreferences.Editor editor = preferences.edit();
+									editor.putString(ConstantValues.cookie, value);
+									editor.apply();
+									Log.i("在BaseFragment里面", "onSuccess: session 已经更新");
+									break;
+								}
+							}
+							break;
+						case 0:
+							ReLoginUtil reLoginUtil = new ReLoginUtil(BaseActivity.this);
+							try {
+								Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+							} catch (JSONException e) {
+								e.printStackTrace();
+							}
+							reLoginUtil.reLoginWithAlertDialog();
+							break;
+						case -1:
+							Toast.makeText(BaseActivity.this, "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
+							break;
+						default:
+							break;
+					}
+				}
+
+				@Override
+				public void onError(Throwable ex, boolean isOnCallback) {
+
+				}
+
+				@Override
+				public void onCancelled(CancelledException cex) {
+
+				}
+
+				@Override
+				public void onFinished() {
+
+				}
+			});
+		} else {
+			//存在sharedPreference里面的username或token是空的
+			ReLoginUtil reLoginUtil = new ReLoginUtil(BaseActivity.this);
+			reLoginUtil.reLoginWithAlertDialog();
 		}
 	}
 }

@@ -421,7 +421,7 @@ public class LoginActivity extends BaseActivity {
 		finish();
 	}
 
-	private void updateSession() {
+	public void updateSession() {
 		SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
 		String userName = sharedPreferences.getString("USER_NAME", "");
 		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");

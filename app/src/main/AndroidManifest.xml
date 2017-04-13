@@ -142,7 +142,6 @@
         <activity android:name="net.rdrei.android.dirchooser.DirectoryChooserActivity"/>
         <activity
             android:name=".activities.ModifyCheckTimeActivity"
-            android:theme="@style/AppTheme.NoActionBar"
             android:screenOrientation="portrait"/>
     </application>
 

@@ -35,13 +35,28 @@
             android:title="自定义更新下载目录"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="remind_check"
+        android:title="签到提醒">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="notifications_check_in_reminder_enabled"
+            android:summary="启用后，检测您身处公司，则通知"
+            android:title="进入签到区域提醒"/>
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:dependency="notifications_check_in_reminder_enabled"
+            android:key="notifications_check_in_reminder_ringtone_and_vibrate_enabled"
+            android:summary="启用后，通知将响铃震动"
+            android:title="通知响铃&amp;震动"/>
+    </PreferenceCategory>
+    <PreferenceCategory
         android:key="notifications"
         android:title="通知">
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="show_notifications"
-            android:summary="启用后，将在签到成功等场景后发送一条通知"
-            android:title="启用通知"/>
+            android:summary="启用后，将在签到成功等场景发送一条通知"
+            android:title="启用签到成功通知"/>
         <CheckBoxPreference
             android:defaultValue="false"
             android:dependency="show_notifications"

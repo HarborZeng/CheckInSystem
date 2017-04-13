@@ -37,6 +37,17 @@ public class LocationItem {
 	@Column(name = "address")
 	private String address;
 
+	@Column(name = "building_desc")
+	private String buildingDesc;
+
+	public String getBuildingDesc() {
+		return buildingDesc;
+	}
+
+	public void setBuildingDesc(String buildingDesc) {
+		this.buildingDesc = buildingDesc;
+	}
+
 	public String getAddress() {
 		return address;
 	}

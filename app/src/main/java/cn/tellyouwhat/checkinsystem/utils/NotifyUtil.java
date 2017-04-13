@@ -224,13 +224,13 @@ public class NotifyUtil {
 	 * @param title
 	 * @param content
 	 */
-	public void notify_normail_moreline(PendingIntent pendingIntent, int smallIcon, String ticker,
-	                                    String title, String content, boolean sound, boolean vibrate, boolean lights) {
+	public void notifyNormailMmoreline(PendingIntent pendingIntent, int smallIcon, String ticker,
+	                                   String title, String content, boolean sound, boolean vibrate, boolean lights) {
 
 		final int sdk = Build.VERSION.SDK_INT;
 		if (sdk < Build.VERSION_CODES.JELLY_BEAN) {
 			notify_normal_singline(pendingIntent, smallIcon, ticker, title, content, sound, vibrate, lights);
-			Toast.makeText(mContext, "您的手机低于Android 4.1.2，不支持多行通知显示！！", Toast.LENGTH_SHORT).show();
+//			Toast.makeText(mContext, "您的手机低于Android 4.1.2，不支持多行通知显示！！", Toast.LENGTH_SHORT).show();
 		} else {
 			setBuilder(pendingIntent, smallIcon, ticker, true, true, false);
 			mNotificationBuilder.setContentTitle(title);
@@ -334,13 +334,14 @@ public class NotifyUtil {
 		sent();
 	}
 
-	public void notifyOneButton(int smallIcon, int leftbtnicon, String lefttext, PendingIntent leftPendIntent, int rightbtnicon, String righttext, PendingIntent rightPendIntent, String ticker,
+	public void notifyOneButton(int smallIcon, int rightbtnicon, String righttext, PendingIntent rightPendIntent, String ticker,
 	                            String title, String content, boolean sound, boolean vibrate, boolean lights) {
 
 		requestCode = (int) SystemClock.uptimeMillis();
 		setCompatBuilder(rightPendIntent, smallIcon, ticker, title, content, sound, vibrate, lights);
-		mNotificationCompatBuilder.addAction(leftbtnicon,
-				lefttext, leftPendIntent);
+		mNotificationCompatBuilder.addAction(rightbtnicon,
+				righttext, rightPendIntent);
+		sent();
 	}
 
 	public void notify_HeadUp(PendingIntent pendingIntent, int smallIcon, int largeIcon,

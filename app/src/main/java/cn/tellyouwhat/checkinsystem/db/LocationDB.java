@@ -7,6 +7,7 @@ import android.widget.Toast;
 import org.xutils.DbManager;
 import org.xutils.ex.DbException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,25 +54,24 @@ public class LocationDB {
 	}
 
 	/**
-	 * @param location 传入location
-	 * @return 如果SQL语句执行有误，返回null
+	 * @return 返回
 	 */
-	public Map queryLocation(LocationItem location) {
-		Map<String, String> map = null;
+	public List queryLocation(String year, String month, String day) {
+		List<LocationItem> list = new ArrayList<>();
 		try {
-			//TODO aaaaa
-			Cursor cursor = db.execQuery("select * from locations where date=");
+			Cursor cursor = db.execQuery("select building_desc, location_type, time, radius from locations where time like '" + year + "-" + month + "-" + day + "%'" + "and building_id != 0");
 			while (cursor.moveToNext()) {
-				int in = cursor.getInt(cursor.getColumnIndex("in"));
-				String date = cursor.getString(cursor.getColumnIndex("date"));
-				map = new HashMap<>();
-				map.put("in", String.valueOf(in));
-				map.put("date", date);
+				LocationItem item = new LocationItem();
+				item.setBuildingDesc(cursor.getString(cursor.getColumnIndex("building_desc")));
+				item.setTime(cursor.getString(cursor.getColumnIndex("time")));
+				item.setLocationType(cursor.getInt(cursor.getColumnIndex("location_type")));
+				item.setRadius(cursor.getFloat(cursor.getColumnIndex("radius")));
+				list.add(item);
 			}
 		} catch (DbException e) {
 			e.printStackTrace();
 		}
-		return map;
+		return list;
 	}
 
 	//将Person实例存进数据库

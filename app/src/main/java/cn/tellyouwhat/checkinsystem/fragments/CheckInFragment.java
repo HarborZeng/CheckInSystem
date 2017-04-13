@@ -253,6 +253,7 @@ public class CheckInFragment extends BaseFragment {
 						try {
 							mHasCheckIn = result.getBoolean("hascheckin");
 							mHasCheckOut = result.getBoolean("hascheckout");
+							saveTodayStatus();
 							SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 							mCheckStatusTextView.setText(formatter.format(new Date()) + "\n今日 ");
 							mCheckStatusTextView.append(mHasCheckIn ? "已签到" : "未签到");
@@ -297,6 +298,14 @@ public class CheckInFragment extends BaseFragment {
 
 			}
 		});
+	}
+
+	private void saveTodayStatus() {
+		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		SharedPreferences.Editor editor = sharedPref.edit();
+		editor.putBoolean("has_check_in", mHasCheckIn);
+		editor.putBoolean("has_check_out", mHasCheckOut);
+		editor.apply();
 	}
 
 	private void getLocationGPSDetail() {
@@ -523,6 +532,64 @@ public class CheckInFragment extends BaseFragment {
 		mLocationClient.registerLocationListener(mCheckInLocationListener);
 		//注册监听函数
 		initCheckinLocation();
+
+		Bundle arguments = getArguments();
+		final boolean beginCheckIn = arguments.getBoolean("BEGIN_CHECK_IN");
+		x.task().postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				if (beginCheckIn) {
+					isCheckingIn = true;
+					if (PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
+						//开始定位
+						mLocationClient.start();
+						mMenuMultipleActions.collapse();
+
+						snackbar = Snackbar.make(view, R.string.getting_location, Snackbar.LENGTH_INDEFINITE);
+						snackbar.setAction("取消", new OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								mLocationClient.stop();
+								new Thread(new Runnable() {
+									@Override
+									public void run() {
+										//睡100毫秒是为了防止当执行setVisibility INVISIBLE时不至于 服务器对于是否在设定区域内的结果还未返回
+										//就已经执行了findViewById(R.id.out_of_range).setVisibility(View.INVISIBLE);
+										//类似的代码从而导致取消定位之后有残留的图片
+										SystemClock.sleep(300);
+										getActivity().runOnUiThread(new Runnable() {
+											@Override
+											public void run() {
+												imageView_cover_out_company.setVisibility(View.INVISIBLE);
+												imageView_cover_in_company.setVisibility(View.INVISIBLE);
+												succeed.setVisibility(View.INVISIBLE);
+												imageView_cover_finally_success.setVisibility(View.INVISIBLE);
+												out_of_range.setVisibility(View.INVISIBLE);
+												in_range.setVisibility(View.INVISIBLE);
+												imageView2_cover_in50.setVisibility(View.INVISIBLE);
+												imageView2_cover_out50.setVisibility(View.INVISIBLE);
+												enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
+												enough_accuracy_text_view.setVisibility(View.INVISIBLE);
+											}
+										});
+									}
+								}).start();
+							}
+						}).show();
+					} else {
+						Snackbar.make(view, "必须要授权位置访问才能正常工作", Snackbar.LENGTH_INDEFINITE)
+								.setAction("授权", new OnClickListener() {
+									@Override
+									public void onClick(View v) {
+										String[] perms = {"android.permission.ACCESS_FINE_LOCATION"};
+										ActivityCompat.requestPermissions(getActivity(), perms, 1);
+									}
+								}).show();
+					}
+
+				}
+			}
+		}, 500);
 
 		return view;
 	}
@@ -762,6 +829,7 @@ public class CheckInFragment extends BaseFragment {
 									item.setLongitide(Double.toString(location.getLongitude()));
 									item.setAddress(location.getAddrStr());
 									item.setLocationDescription(location.getLocationDescribe());
+									item.setBuildingDesc(locationNames[i]);
 									locationDB.saveLocation(item);
 
 									Log.i("zdhobuzd", "run: 在");
