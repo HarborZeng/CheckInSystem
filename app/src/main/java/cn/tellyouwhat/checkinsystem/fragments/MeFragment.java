@@ -3,12 +3,12 @@ package cn.tellyouwhat.checkinsystem.fragments;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.CardView;
-import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,16 +21,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.xutils.common.Callback;
-import org.xutils.x;
-
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.activities.PhoneCollectionActivity;
 import cn.tellyouwhat.checkinsystem.activities.SettingsActivity;
 import cn.tellyouwhat.checkinsystem.activities.UserInfoActivity;
-import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
+
+import static android.app.Activity.RESULT_OK;
+import static android.content.Context.MODE_PRIVATE;
 
 /**
  * Created by Harbor-Laptop on 2017/3/4.
@@ -41,6 +39,7 @@ import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 
 public class MeFragment extends BaseFragment {
 
+	private static final int OPEN_USER_INFO_ACTIVITY = 13;
 	private final String TAG = "MeFragment";
 	private String mName;
 	private String mEmployeeID;
@@ -61,116 +60,16 @@ public class MeFragment extends BaseFragment {
 		mAlphaAnimationIn.setDuration(1000);
 	}
 
-	private void setUpUserInfo() {
-		Log.i(TAG, "setUpUserInfo: setting up...");
-		final View view = getView();
-		showProgress(true);
-		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/User/GetUserInfo");
-		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
-			private int resultInt;
-			@Override
-			public void onSuccess(JSONObject result) {
-//				Toast.makeText(getActivity(), "hoquuserinfosucceed", Toast.LENGTH_SHORT).show();
-				try {
-					resultInt = result.getInt("result");
-					Log.d(TAG, "onSuccess: resultInt=" + resultInt + "and result is " + result.toString());
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-				switch (resultInt) {
-					case 1:
-						mGetUserInfoBGCharView.setVisibility(View.INVISIBLE);
-						mGetUserInfoBGCharView.startAnimation(mAlphaAnimationOut);
-						showProgress(false);
-						try {
-							mEmployeeID = result.getString("employeeid");
-							mName = result.getString("name");
-							mDepartmentName = result.getString("departmentname");
-							mPhoneNumber = result.getString("phonenumber");
-							mEmail = result.getString("email");
-							mHeadImage = result.getString("headimage");
-							TextView userNameTextView = null;
-							if (view != null) {
-								userNameTextView = (TextView) view.findViewById(R.id.user_name);
-
-								if (!TextUtils.isEmpty(mName)) {
-									userNameTextView.setText(mName);
-								}
-								TextView jobNumberTextView = (TextView) view.findViewById(R.id.job_number);
-								if (!TextUtils.isEmpty(mEmployeeID)) {
-									jobNumberTextView.setText(mEmployeeID);
-								}
-								ImageView profileImageView = (ImageView) view.findViewById(R.id.profile_image);
-								if (!TextUtils.isEmpty(mHeadImage)) {
-									byte[] decodedHeadImage = Base64.decode(mHeadImage, Base64.DEFAULT);
-									Bitmap bitmapHeadImage = BitmapFactory.decodeByteArray(decodedHeadImage, 0, decodedHeadImage.length);
-									profileImageView.setImageBitmap(bitmapHeadImage);
-								}
-							}
-						} catch (JSONException e) {
-							e.printStackTrace();
-						}
-						break;
-					case 0:
-						updateSession();
-						break;
-					case -1:
-						Toast.makeText(getActivity().getApplicationContext(), "发生了不可描述的错误010", Toast.LENGTH_SHORT).show();
-						break;
-					default:
-						break;
-				}
-			}
-
-			@Override
-			public void onError(Throwable ex, boolean isOnCallback) {
-			}
-
-			@Override
-			public void onCancelled(CancelledException cex) {
-			}
-
-			@Override
-			public void onFinished() {
-
-			}
-		});
-
-	}
-
 	@Override
 	public void onResume() {
 		Log.i(TAG, "onResume: in MeFragment");
 		super.onResume();
-		setUpUserInfo();
 	}
 
 	@Override
 	public void onPause() {
 		Log.i(TAG, "onPause: in MeFragment");
 		super.onPause();
-		mGetUserInfoBGCharView.setVisibility(View.VISIBLE);
-		mGetUserInfoBGCharView.startAnimation(mAlphaAnimationIn);
-		showProgress(true);
-	}
-
-	/**
-	 * Shows the progress UI and hides the login form.
-	 */
-	private void showProgress(final boolean show) {
-		// On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-		// for very easy animations. If available, use these APIs to fade-in
-		// the progress spinner.
-		int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
-
-		mGetUserInfoProgressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-		mGetUserInfoProgressBar.animate().setDuration(shortAnimTime).alpha(
-				show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-			@Override
-			public void onAnimationEnd(Animator animation) {
-				mGetUserInfoProgressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-			}
-		});
 	}
 
 	@Nullable
@@ -180,7 +79,8 @@ public class MeFragment extends BaseFragment {
 		final View view = inflater.inflate(R.layout.fragment_me, container, false);
 		mGetUserInfoBGCharView = (CardView) view.findViewById(R.id.get_userinfo_bg);
 		mGetUserInfoProgressBar = (ProgressBar) view.findViewById(R.id.get_userinfo_progress);
-		mGetUserInfoBGCharView.setVisibility(View.VISIBLE);
+		//set up UserInfo
+		setUpUserInfo(view);
 
 		view.findViewById(R.id.card_view_person_profile).setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -194,7 +94,7 @@ public class MeFragment extends BaseFragment {
 				bundle.putString("email", mEmail);
 				bundle.putString("headImage", mHeadImage);
 				intent.putExtra("userInfo", bundle);
-				startActivity(intent);
+				startActivityForResult(intent, OPEN_USER_INFO_ACTIVITY);
 			}
 		});
 
@@ -212,7 +112,63 @@ public class MeFragment extends BaseFragment {
 				new ReLoginUtil(getActivity()).reLoginWithAreYouSureDialog();
 			}
 		});
+
+		CardView checkInGraphicCardView = (CardView) view.findViewById(R.id.card_view_check_in_graphic);
+		checkInGraphicCardView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Toast.makeText(getContext(), "尚未开放", Toast.LENGTH_LONG).show();
+			}
+		});
+
+		CardView phoneCollectionCardView = (CardView) view.findViewById(R.id.card_view_phone_collection);
+		phoneCollectionCardView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(getContext(), PhoneCollectionActivity.class);
+				startActivity(intent);
+			}
+		});
+
 		return view;
+	}
+
+	private void setUpUserInfo(View view) {
+		if (view != null) {
+			SharedPreferences sharedPreferences = getActivity().getSharedPreferences("userInfo", MODE_PRIVATE);
+			mName = sharedPreferences.getString("name", "");
+			mDepartmentName = sharedPreferences.getString("departmentName", "");
+			mPhoneNumber = sharedPreferences.getString("phoneNumber", "");
+			mEmployeeID = sharedPreferences.getString("employeeID", "");
+			mEmail = sharedPreferences.getString("email", "");
+			mHeadImage = sharedPreferences.getString("headImage", "");
+			TextView userNameTextView = (TextView) view.findViewById(R.id.user_name);
+			userNameTextView.setText(mName);
+			TextView jobNumberTextView = (TextView) view.findViewById(R.id.job_number);
+			jobNumberTextView.setText(mEmployeeID);
+			ImageView profileImageView = (ImageView) view.findViewById(R.id.profile_image);
+			byte[] decodedHeadImage = Base64.decode(mHeadImage, Base64.DEFAULT);
+			Bitmap bitmapHeadImage = BitmapFactory.decodeByteArray(decodedHeadImage, 0, decodedHeadImage.length);
+			profileImageView.setImageBitmap(bitmapHeadImage);
+		}
+	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		switch (requestCode) {
+			case OPEN_USER_INFO_ACTIVITY:
+				switch (resultCode) {
+					case RESULT_OK:
+						setUpUserInfo(getView());
+						break;
+					default:
+						break;
+				}
+				break;
+			default:
+				break;
+		}
 	}
 
 	public static MeFragment newInstance() {

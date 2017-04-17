@@ -19,6 +19,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.CardView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -63,6 +64,7 @@ import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 import cn.tellyouwhat.checkinsystem.utils.NotifyUtil;
 import cn.tellyouwhat.checkinsystem.utils.Polygon;
 
+import static android.content.Context.MODE_PRIVATE;
 import static cn.tellyouwhat.checkinsystem.bases.BaseApplication.api;
 
 /**
@@ -341,7 +343,7 @@ public class CheckInFragment extends BaseFragment {
 
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
-				Toast.makeText(getActivity(), "获取公司位置出错", Toast.LENGTH_LONG).show();
+				Toast.makeText(x.app(), "获取公司位置出错", Toast.LENGTH_LONG).show();
 			}
 
 			@Override
@@ -830,6 +832,7 @@ public class CheckInFragment extends BaseFragment {
 									item.setAddress(location.getAddrStr());
 									item.setLocationDescription(location.getLocationDescribe());
 									item.setBuildingDesc(locationNames[i]);
+									item.setUserID(getActivity().getSharedPreferences("userInfo", MODE_PRIVATE).getString("employeeID", ""));
 									locationDB.saveLocation(item);
 
 									Log.i("zdhobuzd", "run: 在");
@@ -1030,14 +1033,29 @@ public class CheckInFragment extends BaseFragment {
 
 			builder.append("\n位置信息描述: ");
 			builder.append(location.getLocationDescribe() == null || "null".equals(location.getLocationDescribe()) ? "离线定位，位置未知" : location.getLocationDescribe());    //位置语义化信息
-			Log.i("BaiduLocationApiDem", builder.toString());
-			getActivity().runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					mLocationTextView.setText(builder.toString());
-					mLocationCardView.setVisibility(View.VISIBLE);
+			if (polygons == null) {
+				Toast.makeText(getContext(), "还在初始化数据", Toast.LENGTH_SHORT).show();
+			} else {
+				for (int i = 0; i < polygons.length; i++) {
+					Log.d(TAG, "onReceiveLocation: 测验: " + locationNames[i]);
+					if (polygons[i].contains(longitude * 1000000, latitude * 1000000)) {
+						Log.d(TAG, "onReceiveLocation: 在" + locationNames[i]);
+						builder.append("\n身处: ").append(TextUtils.isEmpty(locationNames[i]) ? "不在公司范围" : locationNames[i]);
+						break;
+					} else {
+						Log.d(TAG, "onReceiveLocation: 不在" + locationNames[i]);
+					}
 				}
-			});
+				Log.i("BaiduLocationApiDem", builder.toString());
+				getActivity().runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						mLocationTextView.setText(builder.toString());
+						mLocationCardView.setVisibility(View.VISIBLE);
+//					mLocationCardView.startAnimation(alphaAnimation);
+					}
+				});
+			}
 		}
 
 		@Override
@@ -1084,20 +1102,20 @@ public class CheckInFragment extends BaseFragment {
 							if (showNotifications) {
 								Intent intent = new Intent(getActivity(), MainActivity.class);
 								intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-								PendingIntent pIntent = PendingIntent.getActivity(getActivity(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+								PendingIntent pIntent = PendingIntent.getActivity(x.app(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 								String ticker = "您有一条新通知";
 								String title = "签到成功";
 								String content = "恭喜您，今日签出成功";
-								NotifyUtil notificationSucceededCheckIn = new NotifyUtil(getActivity().getApplicationContext(), 1);
+								NotifyUtil notificationSucceededCheckIn = new NotifyUtil(x.app(), 1);
 								notificationSucceededCheckIn.setOnGoing(false);
-								notificationSucceededCheckIn.notify_normal_singline(pIntent, R.mipmap.ic_launcher, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, true);
+								notificationSucceededCheckIn.notify_normal_singline(pIntent, R.mipmap.ic_launcher, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, false);
 							}
 							break;
 						case 0:
 							updateSession();
 							break;
 						case -1:
-							Toast.makeText(getActivity(), "发生了可怕的错误，代码：008，我们正在抢修", Toast.LENGTH_SHORT).show();
+							Toast.makeText(x.app(), "发生了可怕的错误，代码：008，我们正在抢修", Toast.LENGTH_SHORT).show();
 							break;
 						case -2:
 							imageView_cover_finally_success.setVisibility(View.VISIBLE);
@@ -1188,11 +1206,11 @@ public class CheckInFragment extends BaseFragment {
 							if (showNotifications) {
 								Intent intent = new Intent(getActivity(), MainActivity.class);
 								intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-								PendingIntent pIntent = PendingIntent.getActivity(getActivity(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+								PendingIntent pIntent = PendingIntent.getActivity(x.app(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 								String ticker = "您有一条新通知";
 								String title = "签到成功";
 								String content = "恭喜您，今日签到成功";
-								NotifyUtil notificationSucceededCheckIn = new NotifyUtil(getActivity().getApplicationContext(), 1);
+								NotifyUtil notificationSucceededCheckIn = new NotifyUtil(x.app(), 1);
 								notificationSucceededCheckIn.setOnGoing(false);
 								notificationSucceededCheckIn.notify_normal_singline(pIntent, R.mipmap.ic_launcher, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, true);
 							}
@@ -1201,7 +1219,7 @@ public class CheckInFragment extends BaseFragment {
 							updateSession();
 							break;
 						case -1:
-							Toast.makeText(getActivity(), "发生了可怕的错误，代码：008，我们正在抢修", Toast.LENGTH_SHORT).show();
+							Toast.makeText(x.app(), "发生了可怕的错误，代码：008，我们正在抢修", Toast.LENGTH_SHORT).show();
 							break;
 						case -2:
 							imageView_cover_finally_success.setVisibility(View.VISIBLE);

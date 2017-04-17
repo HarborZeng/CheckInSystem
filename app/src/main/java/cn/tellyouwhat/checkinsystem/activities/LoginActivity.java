@@ -8,11 +8,12 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -40,11 +41,12 @@ import java.net.HttpCookie;
 import java.util.List;
 
 import cn.tellyouwhat.checkinsystem.R;
-import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
+import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 import cn.tellyouwhat.checkinsystem.utils.SPUtil;
+import de.hdodenhof.circleimageview.CircleImageView;
 
 /**
  * A login screen that offers login via number/password.
@@ -116,21 +118,36 @@ public class LoginActivity extends BaseActivity {
 				if (!hasFocus) {
 					//TODO 等待api
 					String number = mNumberView.getText().toString().trim();
-					RequestParams requestParams = new RequestParams("http://api.checkin.tellyouwhat.cn/User/getHeadImage?" + number);
-					x.http().get(requestParams, new Callback.CacheCallback<Bitmap>() {
+					RequestParams requestParams = new RequestParams("http://api.checkin.tellyouwhat.cn/User/getHeadImage?username=" + number);
+					x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 						@Override
-						public void onSuccess(final Bitmap result) {
-							runOnUiThread(new Runnable() {
-								@Override
-								public void run() {
-									ImageView image_head = (ImageView) findViewById(R.id.profile_image);
-									image_head.setImageBitmap(result);
-									YoYo.with(Techniques.Tada)
-											.duration(700)
-											.repeat(1)
-											.playOn(image_head);
+						public void onSuccess(JSONObject result) {
+							Log.d(TAG, "onSuccess: 获取头像的结果是：" + result);
+							try {
+								int resultInt = result.getInt("result");
+								switch (resultInt) {
+									case 1:
+										String headImageBase64ed = result.getString("image");
+										byte[] decodedHeadImage = Base64.decode(headImageBase64ed, Base64.DEFAULT);
+										Bitmap bitmapHeadImage = BitmapFactory.decodeByteArray(decodedHeadImage, 0, decodedHeadImage.length);
+										CircleImageView headImage = (CircleImageView) findViewById(R.id.profile_image);
+										headImage.setImageBitmap(bitmapHeadImage);
+										YoYo.with(Techniques.FadeIn)
+												.duration(300)
+												.repeat(1)
+												.playOn(headImage);
+										break;
+									case -1:
+										break;
+									case -2:
+										Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_LONG).show();
+										break;
+									default:
+										break;
 								}
-							});
+							} catch (JSONException e) {
+								e.printStackTrace();
+							}
 						}
 
 						@Override
@@ -146,11 +163,6 @@ public class LoginActivity extends BaseActivity {
 						@Override
 						public void onFinished() {
 
-						}
-
-						@Override
-						public boolean onCache(Bitmap result) {
-							return false;
 						}
 					});
 				}
@@ -168,7 +180,6 @@ public class LoginActivity extends BaseActivity {
 			}
 		});
 	}
-
 
 	/**
 	 * Attempts to sign in or register the account specified by the login form.
@@ -406,6 +417,7 @@ public class LoginActivity extends BaseActivity {
 	}
 
 	private void initGuidancePages() {
+		storeUserInfo();
 		int localVersionCode = getLocalVersionCode();
 		SPUtil spUtil = new SPUtil(this);
 		//isFirstTimeAfterUpgrade用来表示是否是当前版本安卓上的第一次运行
@@ -419,6 +431,67 @@ public class LoginActivity extends BaseActivity {
 		}
 		startActivity(intent);
 		finish();
+	}
+
+	private void storeUserInfo() {
+		Log.i(TAG, "store user information: setting up...");
+		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/User/GetUserInfo");
+		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
+			private int resultInt;
+
+			@Override
+			public void onSuccess(JSONObject result) {
+				try {
+					resultInt = result.getInt("result");
+					Log.d(TAG, "onSuccess: resultInt=" + resultInt + "and result is " + result.toString());
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				switch (resultInt) {
+					case 1:
+						try {
+							String employeeID = result.getString("employeeid");
+							String name = result.getString("name");
+							String departmentName = result.getString("departmentname");
+							String phoneNumber = result.getString("phonenumber");
+							String email = result.getString("email");
+							String headImage = result.getString("headimage");
+							SharedPreferences.Editor editor = getSharedPreferences("userInfo", MODE_PRIVATE).edit();
+							editor.putString("employeeID", employeeID);
+							editor.putString("name", name);
+							editor.putString("departmentName", departmentName);
+							editor.putString("phoneNumber", phoneNumber);
+							editor.putString("email", email);
+							editor.putString("headImage", headImage);
+							editor.apply();
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}
+						break;
+					case 0:
+						updateSession();
+						break;
+					case -1:
+						Toast.makeText(getApplicationContext(), "发生了不可描述的错误010", Toast.LENGTH_SHORT).show();
+						break;
+					default:
+						break;
+				}
+			}
+
+			@Override
+			public void onError(Throwable ex, boolean isOnCallback) {
+			}
+
+			@Override
+			public void onCancelled(CancelledException cex) {
+			}
+
+			@Override
+			public void onFinished() {
+
+			}
+		});
 	}
 
 	public void updateSession() {

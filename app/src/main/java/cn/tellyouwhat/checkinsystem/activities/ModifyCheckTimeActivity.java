@@ -2,6 +2,7 @@ package cn.tellyouwhat.checkinsystem.activities;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
@@ -26,6 +27,7 @@ import java.util.List;
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.adpter.AllBackGroundLocationAdapter;
 import cn.tellyouwhat.checkinsystem.db.LocationItem;
+import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 
 /**
@@ -61,7 +63,8 @@ public class ModifyCheckTimeActivity extends BaseActivity {
 		String month = intent.getStringExtra("month");
 		String day = intent.getStringExtra("day");
 		String id = intent.getStringExtra("id");
-		initAdapter(year, month, day, id);
+		boolean isCheckIn = intent.getBooleanExtra("isCheckIn", true);
+		initAdapter(year, month, day, id, isCheckIn);
 	}
 
 	@Override
@@ -76,8 +79,11 @@ public class ModifyCheckTimeActivity extends BaseActivity {
 		}
 	}
 
-	private void initAdapter(String year, String month, String day, final String id) {
-		adapter = new AllBackGroundLocationAdapter(year, month, day);
+	private void initAdapter(String year, String month, String day, final String id, final boolean isCheckIn) {
+		SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
+		String employeeID = sharedPreferences.getString("employeeID", "");
+		Log.d("用户名debug", "initAdapter: " + employeeID);
+		adapter = new AllBackGroundLocationAdapter(year, month, day, employeeID);
 		adapter.openLoadAnimation();
 		adapter.setNotDoAnimationCount(3);
 		adapter.openLoadAnimation(BaseQuickAdapter.SCALEIN);
@@ -108,8 +114,13 @@ public class ModifyCheckTimeActivity extends BaseActivity {
 								String minute = time.substring(14, 16);
 								String second = time.substring(17, 19);
 //								Toast.makeText(ModifyCheckTimeActivity.this, hour+minute+second, Toast.LENGTH_SHORT).show();
-
-								CookiedRequestParams params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?id=" + id + "&hour=" + hour + "&minute=" + minute + "&second=" + second);
+								Log.d("传的api网址", "onClick: 传的api网址：" + "http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?id=" + id + "&hour=" + hour + "&minute=" + minute + "&second=" + second);
+								CookiedRequestParams params;
+								if (isCheckIn) {
+									params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?id=" + id + "&hour=" + hour + "&minute=" + minute + "&second=" + second);
+								} else {
+									params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckOut?id=" + id + "&hour=" + hour + "&minute=" + minute + "&second=" + second);
+								}
 								x.http().get(params, new Callback.CommonCallback<JSONObject>() {
 									@Override
 									public void onSuccess(JSONObject result) {
@@ -119,6 +130,7 @@ public class ModifyCheckTimeActivity extends BaseActivity {
 											switch (resultInt) {
 												case 1:
 													Snackbar.make(view, "修改记录成功", Snackbar.LENGTH_LONG).show();
+													setResult(RESULT_OK);
 													break;
 												case 0:
 													updateSession();
@@ -139,7 +151,7 @@ public class ModifyCheckTimeActivity extends BaseActivity {
 
 									@Override
 									public void onError(Throwable ex, boolean isOnCallback) {
-
+										setResult(RESULT_CANCELED);
 									}
 
 									@Override

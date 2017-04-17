@@ -1,10 +1,7 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.media.Ringtone;
@@ -20,11 +17,11 @@ import android.preference.RingtonePreference;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.github.anzewei.parallaxbacklayout.ParallaxBackActivityHelper;
 import com.github.anzewei.parallaxbacklayout.ParallaxBackLayout;
 
@@ -32,7 +29,6 @@ import net.rdrei.android.dirchooser.DirectoryChooserConfig;
 import net.rdrei.android.dirchooser.DirectoryChooserFragment;
 
 import cn.tellyouwhat.checkinsystem.R;
-import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -100,6 +96,18 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 		//电池优化选项
 		batteryOptimizing = findPreference("ignore_battery_optimizing");
 		if (batteryOptimizing != null) {
+			batteryOptimizing.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+				@Override
+				public boolean onPreferenceClick(Preference preference) {
+					new MaterialDialog.Builder(SettingsActivity.this)
+							.title(R.string.shareLocationPrompt)
+							.content(R.string.conntent)
+							.positiveText(R.string.agree)
+							.negativeText(R.string.disagree)
+							.show();
+					return true;
+				}
+			});
 			PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
 
 			boolean hasIgnored = false;

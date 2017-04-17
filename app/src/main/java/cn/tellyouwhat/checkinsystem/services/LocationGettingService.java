@@ -27,6 +27,7 @@ import org.xutils.http.HttpMethod;
 import org.xutils.http.RequestParams;
 import org.xutils.x;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -50,7 +51,7 @@ public class LocationGettingService extends Service {
 
 	public static final int PERIOD = 1000 * 5 * 60;
 	private static final int IN_RANGE_NOTIFICATION = 200;
-	private static final int DELAY = 200;
+	private static final int DELAY = 100;
 
 //	public static final int PERIOD = 1000 * 60;
 
@@ -103,6 +104,7 @@ public class LocationGettingService extends Service {
 	};
 	private Handler handler;
 	private String[] locationNames;
+	private String userID;
 
 	@Nullable
 	@Override
@@ -113,7 +115,7 @@ public class LocationGettingService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-
+		userID = getSharedPreferences("userInfo", MODE_PRIVATE).getString("employeeID", "");
 		sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
 		mLocationClient = new LocationClient(getApplicationContext());
@@ -258,15 +260,15 @@ public class LocationGettingService extends Service {
 		option.setCoorType("bd09ll");
 		//可选，默认gcj02，设置返回的定位结果坐标系
 
-		int span = 10000;
+//		int span = 10000;
 //		int span = 1000*60*5+1;
-		option.setScanSpan(1000 * 5);
+		option.setScanSpan(1000 * 3);
 		//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
 
 		option.setIsNeedAddress(true);
 		//可选，设置是否需要地址信息，默认不需要
 
-		option.setLocationNotify(false);
+		option.setLocationNotify(true);
 		//可选，默认false，设置是否当GPS有效时按照1S/1次频率输出GPS结果
 
 		option.setIsNeedLocationDescribe(true);
@@ -290,7 +292,8 @@ public class LocationGettingService extends Service {
 
 		private int timesOfGettingInThisTime = 0;
 		private SparseArray<BDLocation> locationSparseArray = new SparseArray<>();
-		private Float radiusArray[] = new Float[8];
+		private ArrayList<Float> radiusArray = new ArrayList<>(8);
+		private int hasNotifiedNTimes = 0;
 
 		@Override
 		public void onReceiveLocation(final BDLocation location) {
@@ -373,23 +376,23 @@ public class LocationGettingService extends Service {
 
 			if (timesOfGettingInThisTime < 8) {
 				locationSparseArray.put(timesOfGettingInThisTime, location);
-				radiusArray[timesOfGettingInThisTime] = location.getRadius();
+				radiusArray.add(location.getRadius());
 				timesOfGettingInThisTime++;
 			} else {
-				mLocationClient.stop();
+//				mLocationClient.stop();
 				float minRadius = Float.MAX_VALUE;
 				int index = 0;
 				for (int i = 0; i < 8; i++) {
-					if (minRadius > radiusArray[i]) {
-						minRadius = radiusArray[i];
+					if (minRadius > radiusArray.get(i)) {
+						minRadius = radiusArray.get(i);
 						index = i;
 					}
 				}
 //				Toast.makeText(getApplicationContext(), Arrays.toString(radiusArray), Toast.LENGTH_SHORT).show();
-				Log.d(TAG, "onReceiveLocation: 半径数组中都有：" + Arrays.toString(radiusArray));
-				if (radiusArray[index] < 50 && radiusArray[index] != 0) {
+				Log.d(TAG, "onReceiveLocation: 半径数组中都有：" + radiusArray);
+				if (radiusArray.get(index) < 50 && radiusArray.get(index) != 0) {
 //					Toast.makeText(getApplicationContext(), "index=" + index + ", 最小半径是: " + radiusArray[index], Toast.LENGTH_SHORT).show();
-					Log.d(TAG, "onReceiveLocation: 最小半径和他的index是: " + radiusArray[index] + ", " + index);
+					Log.d(TAG, "onReceiveLocation: 最小半径和他的index是: " + radiusArray.get(index) + ", " + index);
 					BDLocation bdLocation = locationSparseArray.get(index);
 
 					LocationDB locationDB = new LocationDB();
@@ -402,6 +405,7 @@ public class LocationGettingService extends Service {
 					item.setLongitide(Double.toString(bdLocation.getLongitude()));
 					item.setAddress(bdLocation.getAddrStr());
 					item.setLocationDescription(bdLocation.getLocationDescribe());
+					item.setUserID(userID);
 					if (polygons != null) {
 						for (int i = 0; i < polygons.length; i++) {
 							if (polygons[i].contains(bdLocation.getLongitude() * 1000000, bdLocation.getLatitude() * 1000000)) {
@@ -422,7 +426,14 @@ public class LocationGettingService extends Service {
 
 									NotifyUtil notificationSucceededCheckIn = new NotifyUtil(getApplicationContext(), IN_RANGE_NOTIFICATION);
 									notificationSucceededCheckIn.setOnGoing(false);
-									notificationSucceededCheckIn.notifyNormailMmoreline(pIntent, R.mipmap.ic_launcher, ticker, title, content, notificationsCheckInReminderRingtoneAndVibrateEnabled, notificationsCheckInReminderRingtoneAndVibrateEnabled, true);
+									notificationSucceededCheckIn.notifyNormailMmoreline(pIntent, R.mipmap.ic_launcher, ticker, title, content, notificationsCheckInReminderRingtoneAndVibrateEnabled, notificationsCheckInReminderRingtoneAndVibrateEnabled, false);
+
+									//用来通知AutoCheckInService开始自动签到
+									hasNotifiedNTimes++;
+									SharedPreferences checkInStatus = getSharedPreferences("checkInStatus", MODE_PRIVATE);
+									SharedPreferences.Editor editor = checkInStatus.edit();
+									editor.putInt("has_notified_N_times", hasNotifiedNTimes);
+									editor.apply();
 								}
 								break;
 							} else {
@@ -431,9 +442,10 @@ public class LocationGettingService extends Service {
 						}
 					}
 					locationDB.saveLocation(item);
-					timesOfGettingInThisTime = 0;
 				}
+				timesOfGettingInThisTime = 0;
 				mLocationClient.stop();
+				radiusArray.clear();
 			}
 		}
 
@@ -442,5 +454,4 @@ public class LocationGettingService extends Service {
 			Log.w("onConnectHotSpotMessage", "onConnectHotSpotMessage: s: " + s + ", i: " + i);
 		}
 	}
-
 }

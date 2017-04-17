@@ -3,6 +3,7 @@ package cn.tellyouwhat.checkinsystem.activities;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -31,6 +32,7 @@ import android.widget.Toast;
 import com.yalantis.ucrop.UCrop;
 import com.yalantis.ucrop.UCropActivity;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xutils.common.Callback;
@@ -40,8 +42,12 @@ import org.xutils.x;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLEncoder;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
@@ -93,6 +99,9 @@ public class UserInfoActivity extends BaseActivity {
 			reEmail();
 		}
 	};
+	private Map<Integer, String> department = new LinkedHashMap<>();
+	private int mDepartmentID = 0;
+	private int selectedDepartmentID;
 
 
 	private void rename() {
@@ -233,6 +242,55 @@ public class UserInfoActivity extends BaseActivity {
 		setContentView(R.layout.activity_user_info);
 		setUpActionBar();
 		setUpUI();
+		getAllDepartment();
+	}
+
+	private void getAllDepartment() {
+		x.http().get(new RequestParams("http://api.checkin.tellyouwhat.cn/Department/GetAllDepartments"), new Callback.CommonCallback<JSONObject>() {
+			@Override
+			public void onSuccess(JSONObject result) {
+				Log.d(TAG, "onSuccess: 公司职位部门: " + result.toString());
+				try {
+					int resultInt = result.getInt("result");
+					switch (resultInt) {
+						case 1:
+							JSONArray jsonArray = result.getJSONArray("data");
+							for (int i = 0; i < jsonArray.length(); i++) {
+								JSONObject object = jsonArray.getJSONObject(i);
+								int departmentID = object.getInt("DepartmentID");
+								String departmentName = object.getString("DepartmentName");
+								department.put(departmentID, departmentName);
+								if (departmentName.equals(getSharedPreferences("userInfo", MODE_PRIVATE).getString("departmentName", ""))) {
+									mDepartmentID = departmentID;
+								}
+							}
+							break;
+						case -1:
+							Toast.makeText(UserInfoActivity.this, result.getString("message"), Toast.LENGTH_LONG).show();
+							break;
+						default:
+							break;
+					}
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			}
+
+			@Override
+			public void onError(Throwable ex, boolean isOnCallback) {
+				Toast.makeText(x.app(), "获取部门信息出错", Toast.LENGTH_SHORT).show();
+			}
+
+			@Override
+			public void onCancelled(CancelledException cex) {
+
+			}
+
+			@Override
+			public void onFinished() {
+				Log.d(TAG, "onFinished: department里面都有：" + department);
+			}
+		});
 	}
 
 	private void setUpUI() {
@@ -240,10 +298,11 @@ public class UserInfoActivity extends BaseActivity {
 		Bundle userInfo = intent.getBundleExtra("userInfo");
 		String jobNumber = userInfo.getString("jobNumber");
 		String name = userInfo.getString("name");
-		String departmentName = userInfo.getString("departmentName");
+		final String departmentName = userInfo.getString("departmentName");
 		String phoneNumber = userInfo.getString("phoneNumber");
 		String email = userInfo.getString("email");
 		String headImage = userInfo.getString("headImage");
+		selectedDepartmentID = 0;
 
 		nameEditPageTextView = (TextView) findViewById(R.id.edit_page_name);
 		if (!TextUtils.isEmpty(name)) {
@@ -284,12 +343,41 @@ public class UserInfoActivity extends BaseActivity {
 			}
 		});
 
-
 		nameEditPageTextView.setOnClickListener(nameListener);
 		jobNumberEditPageTextView.setOnClickListener(jobNumberListener);
 		phoneNumberEditPageTextView.setOnClickListener(phoneNumberListener);
 		emailEditPageTextView.setOnClickListener(emailListener);
-//		departmentEditPageTextView;
+
+		departmentEditPageTextView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				final String[] d = new String[department.size()];
+				int i = 0;
+				for (String value : department.values()) {
+					d[i] = value;
+					if (value.equals(departmentName)) {
+						selectedDepartmentID = i;
+					}
+					i++;
+				}
+				AlertDialog.Builder builder = new AlertDialog.Builder(UserInfoActivity.this);
+				builder.setTitle("选择新部门")
+						.setSingleChoiceItems(d, selectedDepartmentID, new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialogInterface, int i) {
+								departmentEditPageTextView.setText(d[i]);
+								mDepartmentID = i + 1;
+							}
+						})
+						.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialogInterface, int i) {
+								dialogInterface.dismiss();
+							}
+						})
+						.show();
+			}
+		});
 	}
 
 	private void setUpActionBar() {
@@ -306,19 +394,19 @@ public class UserInfoActivity extends BaseActivity {
 			return true;
 		} else if (item.getItemId() == R.id.item_finish) {
 			Log.d(TAG, "onMenuItemClick: 点击了完成");
-			String jobNumber = jobNumberEditPageTextView.getText().toString().trim();
-			String department = departmentEditPageTextView.getText().toString().trim();
-			String name = nameEditPageTextView.getText().toString().trim();
-			String phone = phoneNumberEditPageTextView.getText().toString().trim();
-			String email = emailEditPageTextView.getText().toString().trim();
-			Log.i(TAG, "onOptionsItemSelected: jobNumber: " + jobNumber + ", department: " + department + ", name:" + name + ", phone: " + phone + ", email: " + email);
+			final String jobNumber = jobNumberEditPageTextView.getText().toString().trim();
+			final String department = departmentEditPageTextView.getText().toString().trim();
+			final String name = nameEditPageTextView.getText().toString().trim();
+			final String phone = phoneNumberEditPageTextView.getText().toString().trim();
+			final String email = emailEditPageTextView.getText().toString().trim();
+//			Log.i(TAG, "onOptionsItemSelected: jobNumber: " + jobNumber + ", department: " + department + ", name:" + URLEncoder.encode(name, "UTF-8") + ", phone: " + phone + ", email: " + email);
 			CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateUserInfo");
 			requestParams.setMultipart(true);
-			File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/head.jpg");
+			final File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/head.jpg");
 			requestParams.addBodyParameter("headimage", file, null);
 			requestParams.addBodyParameter("employeeid", jobNumber);
-//			requestParams.addBodyParameter("departmentid", department);
-			requestParams.addBodyParameter("name", new String(name.getBytes(Charset.defaultCharset()), Charset.defaultCharset()));
+			requestParams.addBodyParameter("departmentid", String.valueOf(mDepartmentID));
+			requestParams.addBodyParameter("name", name);
 			requestParams.addBodyParameter("phonenumber", phone);
 			requestParams.addBodyParameter("email", email);
 
@@ -334,7 +422,8 @@ public class UserInfoActivity extends BaseActivity {
 					}
 					switch (resultInt) {
 						case 1:
-							Snackbar.make(findViewById(R.id.scroll_view_user_info), "保存成功", Snackbar.LENGTH_LONG).show();
+							setResult(RESULT_OK);
+							updateUserInfoAfterModified();
 							break;
 						case 0:
 							ReLoginUtil reLoginUtil = new ReLoginUtil(UserInfoActivity.this);
@@ -368,6 +457,67 @@ public class UserInfoActivity extends BaseActivity {
 		} else {
 			return super.onOptionsItemSelected(item);
 		}
+	}
+
+	private void updateUserInfoAfterModified() {
+		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/User/GetUserInfo");
+		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
+			private int resultInt;
+
+			@Override
+			public void onSuccess(JSONObject result) {
+				try {
+					resultInt = result.getInt("result");
+					Log.d(TAG, "onSuccess: resultInt=" + resultInt + "and result is " + result.toString());
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				switch (resultInt) {
+					case 1:
+						try {
+							String employeeID = result.getString("employeeid");
+							String name = result.getString("name");
+							String departmentName = result.getString("departmentname");
+							String phoneNumber = result.getString("phonenumber");
+							String email = result.getString("email");
+							String headImage = result.getString("headimage");
+							SharedPreferences.Editor editor = getSharedPreferences("userInfo", MODE_PRIVATE).edit();
+							editor.putString("employeeID", employeeID);
+							editor.putString("name", name);
+							editor.putString("departmentName", departmentName);
+							editor.putString("phoneNumber", phoneNumber);
+							editor.putString("email", email);
+							editor.putString("headImage", headImage);
+							editor.apply();
+							Snackbar.make(findViewById(R.id.scroll_view_user_info), "保存成功", Snackbar.LENGTH_LONG).show();
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}
+						break;
+					case 0:
+						updateSession();
+						break;
+					case -1:
+						Toast.makeText(x.app(), "发生了不可描述的错误010", Toast.LENGTH_SHORT).show();
+						break;
+					default:
+						break;
+				}
+			}
+
+			@Override
+			public void onError(Throwable ex, boolean isOnCallback) {
+			}
+
+			@Override
+			public void onCancelled(CancelledException cex) {
+			}
+
+			@Override
+			public void onFinished() {
+
+			}
+		});
 	}
 
 	private void pickFromGallery() {
@@ -467,6 +617,7 @@ public class UserInfoActivity extends BaseActivity {
 		options.setFreeStyleCropEnabled(false);
 
 		options.setAllowedGestures(UCropActivity.SCALE, UCropActivity.ROTATE, UCropActivity.ALL);
+//		options.setMaxBitmapSize(16000);
 		/*
 		If you want to configure how gestures work for all UCropActivity tabs
 

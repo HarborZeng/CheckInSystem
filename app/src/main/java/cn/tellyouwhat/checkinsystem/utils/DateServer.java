@@ -12,9 +12,9 @@ import cn.tellyouwhat.checkinsystem.db.LocationItem;
 
 public class DateServer {
 
-	public static List<LocationItem> getData(String year, String month, String day) {
+	public static List<LocationItem> getData(String year, String month, String day, String employeeID) {
 		LocationDB locationDB = new LocationDB();
-		List list = locationDB.queryLocation(year, month, day);
+		List list = locationDB.queryLocation(year, month, day, employeeID);
 		return list;
 	}
 }

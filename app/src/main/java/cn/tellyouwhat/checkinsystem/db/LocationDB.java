@@ -56,10 +56,10 @@ public class LocationDB {
 	/**
 	 * @return 返回
 	 */
-	public List queryLocation(String year, String month, String day) {
+	public List queryLocation(String year, String month, String day, String userID) {
 		List<LocationItem> list = new ArrayList<>();
 		try {
-			Cursor cursor = db.execQuery("select building_desc, location_type, time, radius from locations where time like '" + year + "-" + month + "-" + day + "%'" + "and building_id != 0");
+			Cursor cursor = db.execQuery("select building_desc, location_type, time, radius from locations where time like '" + year + "-" + month + "-" + day + "%'" + "and building_id != 0 and user_id = '" + userID + "'");
 			while (cursor.moveToNext()) {
 				LocationItem item = new LocationItem();
 				item.setBuildingDesc(cursor.getString(cursor.getColumnIndex("building_desc")));
@@ -72,6 +72,41 @@ public class LocationDB {
 			e.printStackTrace();
 		}
 		return list;
+	}
+
+	/**
+	 * 查询最后一条记录
+	 *
+	 * @param username 按照用户名查
+	 * @return 如果没找到或者出异常，返回NULL，否则返回带仅有time属性的{@link LocationItem}对象
+	 */
+	public LocationItem queryLastRecord(String username) {
+		LocationItem item = null;
+		try {
+			Cursor cursor = db.execQuery("select time from locations where user_id=" + username + "and building_id != 0 ORDER BY id DESC LIMIT 1");
+			while (cursor.moveToNext()) {
+				item = new LocationItem();
+				item.setTime(cursor.getString(cursor.getColumnIndex("time")));
+			}
+		} catch (DbException e) {
+			e.printStackTrace();
+		}
+		return item;
+	}
+
+	public LocationItem queryFirstRecordOfDay(String year, String month, String day, String userID) {
+		LocationItem item = null;
+		try {
+			Cursor cursor = db.execQuery("select time from locations where user_id=" + userID + " and building_id != 0 and time like '" + year + "-" + month + "-" + day + "%'" + " LIMIT 1");
+			while (cursor.moveToNext()) {
+				String time = cursor.getString(cursor.getColumnIndex("time"));
+				item = new LocationItem();
+				item.setTime(time);
+			}
+		} catch (DbException e) {
+			e.printStackTrace();
+		}
+		return item;
 	}
 
 	//将Person实例存进数据库

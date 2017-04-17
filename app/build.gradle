@@ -15,8 +15,8 @@ android {
 		applicationId "cn.tellyouwhat.checkinsystem"
 		minSdkVersion 14
 		targetSdkVersion 25
-		versionCode 20170409
-		versionName "0.4.0Alpha"
+		versionCode 20170416
+		versionName "0.5.2Alpha"
 		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 		vectorDrawables.useSupportLibrary = true
 	}
@@ -70,4 +70,5 @@ dependencies {
 	compile 'com.tencent.mm.opensdk:wechat-sdk-android-with-mta:1.1.6'
 	compile files('libs/option-1.3.jar')
 	compile 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.12'
+	compile 'com.afollestad.material-dialogs:core:0.9.4.3'
 }

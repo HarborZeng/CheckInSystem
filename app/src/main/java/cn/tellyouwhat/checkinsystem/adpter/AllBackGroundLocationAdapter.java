@@ -9,13 +9,13 @@ import cn.tellyouwhat.checkinsystem.utils.DateServer;
 
 /**
  * Created by HarborZeng on 2017/4/12.
- * This is a class for
+ * This is a adapter class for transforming the {@link LocationItem} to {@link BaseViewHolder} holder
  */
 
 public class AllBackGroundLocationAdapter extends BaseQuickAdapter<LocationItem, BaseViewHolder> {
 
-	public AllBackGroundLocationAdapter(String year, String month, String day) {
-		super(R.layout.item_location, DateServer.getData(year, month, day));
+	public AllBackGroundLocationAdapter(String year, String month, String day, String employeeID) {
+		super(R.layout.item_location, DateServer.getData(year, month, day, employeeID));
 	}
 
 	@Override

@@ -11,6 +11,7 @@ import android.util.Log;
 
 import java.text.SimpleDateFormat;
 
+import cn.tellyouwhat.checkinsystem.services.AutoCheckInService;
 import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 
 /**
@@ -47,6 +48,9 @@ public class BatteryReceiver extends BroadcastReceiver {
 		int temperature = intent.getIntExtra("temperature", 0);
 		String technology = intent.getStringExtra("technology");
 
+		//启动自动签到签出的service
+		context.startService(new Intent(context, AutoCheckInService.class));
+
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
 		String whenLowBattery = sharedPref.getString("when_low_battery", "0");
 		if (level < 15) {
@@ -67,6 +71,13 @@ public class BatteryReceiver extends BroadcastReceiver {
 				break;
 			case BatteryManager.BATTERY_STATUS_CHARGING:
 				statusString = "charging";
+				SharedPreferences.Editor editor = sharedPref.edit();
+				if ("0".equals(whenLowBattery)) {
+					editor.putBoolean("use_GPS", true);
+				} else if ("1".equals(whenLowBattery)) {
+					editor.putBoolean("use_background_service", true);
+				}
+				editor.apply();
 				boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
 				if (backGroundServiceEnabled) {
 					context.startService(new Intent(context, LocationGettingService.class));

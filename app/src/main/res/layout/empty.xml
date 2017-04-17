@@ -18,5 +18,5 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
-        android:text="加载失败，点击重试"/>
+        android:text="空"/>
 </LinearLayout>

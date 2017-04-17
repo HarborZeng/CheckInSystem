@@ -23,11 +23,12 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.jaeger.library.StatusBarUtil;
 
 import org.json.JSONException;
@@ -43,6 +44,7 @@ import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.fragments.CheckInFragment;
 import cn.tellyouwhat.checkinsystem.fragments.HistoryFragment;
 import cn.tellyouwhat.checkinsystem.fragments.MeFragment;
+import cn.tellyouwhat.checkinsystem.services.AutoCheckInService;
 import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
 import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
@@ -150,6 +152,9 @@ public class MainActivity extends BaseActivity {
 			startService(intent);
 		}
 
+		Intent intent = new Intent(getApplicationContext(), AutoCheckInService.class);
+		startService(intent);
+
 		BottomNavigationView mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
 		mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
@@ -213,7 +218,7 @@ public class MainActivity extends BaseActivity {
 //					Log.d(TAG, "onUpdateAvailable: 有更新版本：" + versionName);
 							askToUpgrade(versionName, versionDesc, versionCode, downloadURL, size, forceUpgrade);
 						} else if (getLocalVersionCode() > Integer.parseInt(versionCode)) {
-							Toast.makeText(MainActivity.this, R.string.you_are_using_an_Alpha_Test_application, Toast.LENGTH_LONG).show();
+							Toast.makeText(x.app(), R.string.you_are_using_an_Alpha_Test_application, Toast.LENGTH_LONG).show();
 						}
 					} catch (JSONException e) {
 						e.printStackTrace();
@@ -224,7 +229,7 @@ public class MainActivity extends BaseActivity {
 				@Override
 				public void onError(Throwable ex, boolean isOnCallback) {
 					Log.w(TAG, "run: JSON parser may occurred error or it's an IOException", ex);
-					Toast.makeText(MainActivity.this, R.string.server_error, Toast.LENGTH_SHORT).show();
+					Toast.makeText(x.app(), R.string.server_error, Toast.LENGTH_SHORT).show();
 				}
 
 				@Override
@@ -242,7 +247,7 @@ public class MainActivity extends BaseActivity {
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					Toast.makeText(MainActivity.this, R.string.not_connected_to_server, Toast.LENGTH_LONG).show();
+					Toast.makeText(x.app(), R.string.not_connected_to_server, Toast.LENGTH_LONG).show();
 				}
 			});
 		}
@@ -268,43 +273,43 @@ public class MainActivity extends BaseActivity {
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-
 				SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
 				boolean showUpgradeDialogOnlyUnderWifi = sharedPref.getBoolean("show_upgrade_dialog_only_under_wifi", true);
 
-				final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-				final AlertDialog.Builder innerBuilder = new AlertDialog.Builder(MainActivity.this);
-				builder.setIcon(R.mipmap.warning);
-				builder.setMessage(getString(R.string.newer_version_detected) + versionName + "\n" + getString(R.string.size) + size + getString(R.string.newer_version_description) + "\n\n" + versionDesc)
-						.setPositiveButton(getString(R.string.我要升级), new DialogInterface.OnClickListener() {
+				final MaterialDialog.Builder builder = new MaterialDialog.Builder(MainActivity.this);
+				final MaterialDialog.Builder innerBuilder = new MaterialDialog.Builder(MainActivity.this);
+				builder.iconRes(R.mipmap.warning);
+				builder.content(getString(R.string.newer_version_detected) + versionName + "\n" + getString(R.string.size) + size + getString(R.string.newer_version_description) + "\n\n" + versionDesc)
+						.positiveText(getString(R.string.我要升级))
+						.onPositive(new MaterialDialog.SingleButtonCallback() {
 							@Override
-							public void onClick(DialogInterface dialog, int which) {
+							public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
 								if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-									Toast.makeText(MainActivity.this, R.string.cannot_access_external_storage, Toast.LENGTH_LONG).show();
+									Toast.makeText(x.app(), R.string.cannot_access_external_storage, Toast.LENGTH_LONG).show();
 								} else {
-
 									if (NetTypeUtils.isWifiActive(MainActivity.this)) {
 										Log.d(TAG, "onClick: 连的是wifi");
 										download(downloadURL);
 									} else {
-										innerBuilder.setIcon(R.mipmap.warning);
-										innerBuilder.setCancelable(false)
-												.setMessage(R.string.you_are_using_data_now)
-												.setTitle(R.string.Are_you_sure)
-												.setNegativeButton(R.string.I_am_broken, new DialogInterface.OnClickListener() {
+										innerBuilder.iconRes(R.mipmap.warning);
+										innerBuilder.cancelable(false)
+												.content(R.string.you_are_using_data_now)
+												.title(R.string.Are_you_sure)
+												.negativeText(R.string.I_am_broken)
+												.onNegative(new MaterialDialog.SingleButtonCallback() {
 													@Override
-													public void onClick(DialogInterface dialog, int which) {
+													public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
 														Toast.makeText(MainActivity.this, R.string.update_after_WiFied, Toast.LENGTH_LONG).show();
 														dialog.dismiss();
 														MainActivity.this.finish();
 													}
 												})
-												.setPositiveButton(R.string.I_am_rich, new DialogInterface.OnClickListener() {
+												.positiveText(R.string.I_am_rich)
+												.onPositive(new MaterialDialog.SingleButtonCallback() {
 													@Override
-													public void onClick(DialogInterface dialog, int which) {
+													public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
 														dialog.dismiss();
 														download(downloadURL);
-
 													}
 												}).show();
 									}
@@ -312,16 +317,17 @@ public class MainActivity extends BaseActivity {
 							}
 						});
 				if (forceUpgrade) {
-					builder.setTitle(R.string.must_upgrade).setCancelable(false);
+					builder.title(R.string.must_upgrade).cancelable(false);
 					builder.show().setCanceledOnTouchOutside(false);
 				} else {
-					builder.setTitle(R.string.有新版本啦).setCancelable(true);
-					builder.setNegativeButton(R.string.不更新, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							dialog.dismiss();
-						}
-					});
+					builder.title(R.string.有新版本啦).cancelable(true);
+					builder.negativeText(R.string.不更新)
+							.onNegative(new MaterialDialog.SingleButtonCallback() {
+								@Override
+								public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+									dialog.dismiss();
+								}
+							});
 					if (!showUpgradeDialogOnlyUnderWifi) {
 						builder.show().setCanceledOnTouchOutside(false);
 					}

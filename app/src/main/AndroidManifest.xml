@@ -139,9 +139,13 @@
         <activity
             android:name=".activities.FeedBackActivity"
             android:screenOrientation="portrait"/>
-        <activity android:name="net.rdrei.android.dirchooser.DirectoryChooserActivity"/>
         <activity
             android:name=".activities.ModifyCheckTimeActivity"
+            android:screenOrientation="portrait"/>
+
+        <service android:name=".services.AutoCheckInService"/>
+        <activity
+            android:name=".activities.PhoneCollectionActivity"
             android:screenOrientation="portrait"/>
     </application>
 

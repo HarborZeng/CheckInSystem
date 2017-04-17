@@ -232,7 +232,7 @@ public class NotifyUtil {
 			notify_normal_singline(pendingIntent, smallIcon, ticker, title, content, sound, vibrate, lights);
 //			Toast.makeText(mContext, "您的手机低于Android 4.1.2，不支持多行通知显示！！", Toast.LENGTH_SHORT).show();
 		} else {
-			setBuilder(pendingIntent, smallIcon, ticker, true, true, false);
+			setBuilder(pendingIntent, smallIcon, ticker, sound, vibrate, lights);
 			mNotificationBuilder.setContentTitle(title);
 			mNotificationBuilder.setContentText(content);
 			mNotificationBuilder.setPriority(Notification.PRIORITY_HIGH);

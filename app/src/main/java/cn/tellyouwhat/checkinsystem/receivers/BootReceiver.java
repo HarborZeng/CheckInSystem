@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import cn.tellyouwhat.checkinsystem.services.AutoCheckInService;
 import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 
 /**
@@ -22,5 +23,7 @@ public class BootReceiver extends BroadcastReceiver {
 			intent = new Intent(context, LocationGettingService.class);
 			context.startService(intent);
 		}
+
+		context.startService(new Intent(context, AutoCheckInService.class));
 	}
 }

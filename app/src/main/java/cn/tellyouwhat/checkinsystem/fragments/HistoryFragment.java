@@ -1,14 +1,19 @@
 package cn.tellyouwhat.checkinsystem.fragments;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
+import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +23,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 import com.prolificinteractive.materialcalendarview.OnDateSelectedListener;
@@ -34,16 +41,24 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.activities.ModifyCheckTimeActivity;
+import cn.tellyouwhat.checkinsystem.adpter.AllBackGroundLocationAdapter;
 import cn.tellyouwhat.checkinsystem.bean.CheckInRecord;
+import cn.tellyouwhat.checkinsystem.db.LocationItem;
 import cn.tellyouwhat.checkinsystem.decorators.HighlightWeekendsDecorator;
 import cn.tellyouwhat.checkinsystem.decorators.OneDayDecorator;
 import cn.tellyouwhat.checkinsystem.decorators.TextDecorator;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 import cn.tellyouwhat.checkinsystem.utils.TextSpan;
+
+import static android.app.Activity.RESULT_CANCELED;
+import static android.app.Activity.RESULT_FIRST_USER;
+import static android.app.Activity.RESULT_OK;
+import static android.content.Context.MODE_PRIVATE;
 
 /**
  * Created by Harbor-Laptop on 2017/3/1.
@@ -53,6 +68,7 @@ import cn.tellyouwhat.checkinsystem.utils.TextSpan;
 
 public class HistoryFragment extends BaseFragment {
 
+	public static final int REQUEST_START_MODIFY_CHECK_TIME_CODE = 11;
 	private final String TAG = "HistoryFragment";
 	private Context mContext;
 	private MaterialCalendarView mCalendarView;
@@ -66,7 +82,6 @@ public class HistoryFragment extends BaseFragment {
 	private TextView mCheckInTimeTextView;
 	private ArrayList<CalendarDay> normalDates = new ArrayList<>();
 	private ArrayList<CalendarDay> abnormalDates = new ArrayList<>();
-	private String checkInID;
 
 
 	@Nullable
@@ -122,6 +137,7 @@ public class HistoryFragment extends BaseFragment {
 		reFreshFloatingActionBar.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				mCalendarView.removeDecorators();
 				CalendarDay currentDate = mCalendarView.getCurrentDate();
 				getThisMonthStatus(currentDate.getYear(), currentDate.getMonth());
 			}
@@ -131,39 +147,142 @@ public class HistoryFragment extends BaseFragment {
 		mCheckInTimeTextView.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				CalendarDay currentDate = mCalendarView.getSelectedDate();
-				String year = String.valueOf(currentDate.getYear());
-				int month = currentDate.getMonth();
-				int realMonth = month + 1;
-				String realMonthString;
-				if (realMonth < 10) {
-					realMonthString = "0" + realMonth;
-				} else {
-					realMonthString = String.valueOf(realMonth);
-				}
-				int day = currentDate.getDay();
-				String dayString;
-				if (day < 10) {
-					dayString = "0" + day;
-				} else {
-					dayString = String.valueOf(day);
-				}
-				Intent intent = new Intent(getActivity(), ModifyCheckTimeActivity.class);
-				intent.putExtra("year", year);
-				intent.putExtra("month", realMonthString);
-				intent.putExtra("day", dayString);
-				intent.putExtra("id", checkInID);
-				startActivityForResult(intent, 11);
+				startModifyCheckTimeActivity(true);
 			}
 		});
 		mCheckOutTimeTextView.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-
+				if (PreferenceManager.getDefaultSharedPreferences(getActivity()).getBoolean("has_check_out", false)) {
+					startModifyCheckTimeActivity(false);
+				} else {
+					Snackbar.make(v, "今日还未签出", Snackbar.LENGTH_SHORT).show();
+				}
 			}
 		});
 
 		return view;
+	}
+
+	private void startModifyCheckTimeActivity(final boolean isCheckIn) {
+		CalendarDay currentDate = mCalendarView.getSelectedDate();
+		String year = String.valueOf(currentDate.getYear());
+		int month = currentDate.getMonth();
+		int realMonth = month + 1;
+		String realMonthString;
+		if (realMonth < 10) {
+			realMonthString = "0" + realMonth;
+		} else {
+			realMonthString = String.valueOf(realMonth);
+		}
+		int day = currentDate.getDay();
+		String dayString;
+		if (day < 10) {
+			dayString = "0" + day;
+		} else {
+			dayString = String.valueOf(day);
+		}
+		CheckInRecord checkInRecord = mRecordMap.get(currentDate);
+		final String checkInID;
+		if (checkInRecord == null) {
+			Snackbar.make(getView(), "不是工作日或尚未签到", Snackbar.LENGTH_SHORT).show();
+		} else {
+			checkInID = checkInRecord.getCheckInID();
+			Log.d(TAG, "startModifyCheckTimeActivity: " + checkInID);
+			SharedPreferences sharedPreferences = getContext().getSharedPreferences("userInfo", MODE_PRIVATE);
+			final String employeeID = sharedPreferences.getString("employeeID", "");
+			Log.d("用户名debug", "initAdapter: " + employeeID);
+			AllBackGroundLocationAdapter adapter = new AllBackGroundLocationAdapter(year, realMonthString, dayString, employeeID);
+			adapter.openLoadAnimation();
+			adapter.setNotDoAnimationCount(3);
+			adapter.openLoadAnimation(BaseQuickAdapter.SCALEIN);
+			adapter.isFirstOnly(true);
+
+			adapter.setEmptyView(getLayoutInflater(null).inflate(R.layout.error_view, (ViewGroup) getView().getParent(), false));
+
+			adapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+				@Override
+				public void onItemClick(final BaseQuickAdapter adapter, final View view, final int position) {
+					AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+					builder.setTitle("确定修改为这条记录吗？")
+							.setMessage("\n修改后原记录将予以保留\n")
+							.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.dismiss();
+								}
+							})
+							.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									List data = adapter.getData();
+									LocationItem item = (LocationItem) data.get(position);
+									String time = item.getTime();
+//								Toast.makeText(ModifyCheckTimeActivity.this, time, Toast.LENGTH_SHORT).show();
+									String hour = time.substring(11, 13);
+									String minute = time.substring(14, 16);
+									String second = time.substring(17, 19);
+//								Toast.makeText(ModifyCheckTimeActivity.this, hour+minute+second, Toast.LENGTH_SHORT).show();
+									Log.d("传的api网址", "onClick: 传的api网址：" + "http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?id=" + checkInID + "&hour=" + hour + "&minute=" + minute + "&second=" + second);
+									CookiedRequestParams params;
+									if (isCheckIn) {
+										params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?checkinid=" + checkInID + "&hour=" + hour + "&minute=" + minute + "&second=" + second);
+									} else {
+										params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckOut?checkinid=" + checkInID + "&hour=" + hour + "&minute=" + minute + "&second=" + second);
+									}
+									x.http().get(params, new Callback.CommonCallback<JSONObject>() {
+										@Override
+										public void onSuccess(JSONObject result) {
+											Log.d("修改记录结果", "onSuccess: result: " + result.toString());
+											try {
+												int resultInt = result.getInt("result");
+												switch (resultInt) {
+													case 1:
+														Snackbar.make(view, "修改记录成功", Snackbar.LENGTH_LONG).show();
+														break;
+													case 0:
+														updateSession();
+														break;
+													case -1:
+														Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+														break;
+													case -2:
+														Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+														break;
+													default:
+														break;
+												}
+											} catch (JSONException e) {
+												e.printStackTrace();
+											}
+										}
+
+										@Override
+										public void onError(Throwable ex, boolean isOnCallback) {
+
+										}
+
+										@Override
+										public void onCancelled(CancelledException cex) {
+
+										}
+
+										@Override
+										public void onFinished() {
+											Calendar calendar = Calendar.getInstance();
+											getThisMonthStatus(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH));
+										}
+									});
+									dialog.dismiss();
+								}
+							}).show();
+				}
+			});
+
+			new MaterialDialog.Builder(getActivity())
+					.adapter(adapter, new LinearLayoutManager(getContext()))
+					.show();
+		}
 	}
 
 	private void showCheckTime(CalendarDay date) {
@@ -197,7 +316,7 @@ public class HistoryFragment extends BaseFragment {
 							JSONArray resultJSONArray = result.getJSONArray("data");
 							for (int i = 0; i < resultJSONArray.length(); i++) {
 								JSONObject jsonObject = resultJSONArray.getJSONObject(i);
-								checkInID = jsonObject.getString("CheckInID");
+								String checkInID = jsonObject.getString("CheckInID");
 								String checkInTime = jsonObject.getString("CheckInTime");
 								String checkOutTime = jsonObject.getString("CheckOutTime");
 								String oriCheckInTime = jsonObject.getString("OriCheckInTime");

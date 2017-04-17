@@ -13,6 +13,17 @@ public class LocationItem {
 	@Column(name = "id", isId = true, autoGen = true)
 	private int id;
 
+	public String getUserID() {
+		return userID;
+	}
+
+	public void setUserID(String userID) {
+		this.userID = userID;
+	}
+
+	@Column(name = "user_id")
+	private String userID;
+
 	@Column(name = "time")
 	private String time;
 
