@@ -13,6 +13,7 @@ import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
+import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -28,7 +29,6 @@ import org.xutils.http.RequestParams;
 import org.xutils.x;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -140,38 +140,50 @@ public class LocationGettingService extends Service {
 		intentFilter.addAction(Intent.ACTION_SCREEN_ON);
 		registerReceiver(screenReceiver, intentFilter);
 
-		RequestParams requestParams = new RequestParams("http://update.checkin.tellyouwhat.cn/company_location.json");
-		x.http().request(HttpMethod.GET, requestParams, new Callback.CommonCallback<JSONArray>() {
+		RequestParams requestParams = new RequestParams("http://api.checkin.tellyouwhat.cn/location/getalllocation");
+		x.http().request(HttpMethod.GET, requestParams, new Callback.CommonCallback<JSONObject>() {
 			@Override
-			public void onSuccess(JSONArray jsonArray) {
-				polygons = new Polygon[jsonArray.length()];
-				locationIDs = new int[jsonArray.length()];
-				locationNames = new String[jsonArray.length()];
-				for (int i = 0; i < jsonArray.length(); i++) {
-					JSONObject jsonObject;
-					try {
-						jsonObject = jsonArray.getJSONObject(i);
-						locationIDs[i] = jsonObject.getInt("locationID");
-						locationNames[i] = jsonObject.getString("name");
-						int x1 = (int) (jsonObject.getDouble("x1") * 1000000);
-						int x2 = (int) (jsonObject.getDouble("x2") * 1000000);
-						int x3 = (int) (jsonObject.getDouble("x3") * 1000000);
-						int x4 = (int) (jsonObject.getDouble("x4") * 1000000);
-						int y1 = (int) (jsonObject.getDouble("y1") * 1000000);
-						int y2 = (int) (jsonObject.getDouble("y2") * 1000000);
-						int y3 = (int) (jsonObject.getDouble("y3") * 1000000);
-						int y4 = (int) (jsonObject.getDouble("y4") * 1000000);
-						int xPoints[] = new int[]{x1, x2, x3, x4};
-						int yPoints[] = new int[]{y1, y2, y3, y4};
-						polygons[i] = new Polygon(xPoints, yPoints, 4);
-					} catch (JSONException e) {
-						e.printStackTrace();
+			public void onSuccess(JSONObject result) {
+				try {
+					int resultInt = result.getInt("result");
+					switch (resultInt) {
+						case 1:
+							JSONArray jsonArray = result.getJSONArray("data");
+							polygons = new Polygon[jsonArray.length()];
+							locationIDs = new int[jsonArray.length()];
+							locationNames = new String[jsonArray.length()];
+							for (int i = 0; i < jsonArray.length(); i++) {
+								JSONObject jsonObject;
+								jsonObject = jsonArray.getJSONObject(i);
+								locationIDs[i] = jsonObject.getInt("LocationID");
+								locationNames[i] = jsonObject.getString("LocationName");
+								int x1 = (int) (jsonObject.getDouble("X1") * 1000000);
+								int x2 = (int) (jsonObject.getDouble("X2") * 1000000);
+								int x3 = (int) (jsonObject.getDouble("X3") * 1000000);
+								int x4 = (int) (jsonObject.getDouble("X4") * 1000000);
+								int y1 = (int) (jsonObject.getDouble("Y1") * 1000000);
+								int y2 = (int) (jsonObject.getDouble("Y2") * 1000000);
+								int y3 = (int) (jsonObject.getDouble("Y3") * 1000000);
+								int y4 = (int) (jsonObject.getDouble("Y4") * 1000000);
+								int xPoints[] = new int[]{x1, x2, x3, x4};
+								int yPoints[] = new int[]{y1, y2, y3, y4};
+								polygons[i] = new Polygon(xPoints, yPoints, 4);
+
+							}
+							break;
+						default:
+							Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+							break;
 					}
+				} catch (JSONException e) {
+					e.printStackTrace();
 				}
+
 			}
 
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
+				Toast.makeText(x.app(), "获取公司位置出错", Toast.LENGTH_SHORT).show();
 			}
 
 			@Override
@@ -214,8 +226,9 @@ public class LocationGettingService extends Service {
 		};
 
 		boolean useBackgroundService = sharedPref.getBoolean("use_background_service", true);
+		boolean useBackgroundServiceReceiver = sharedPref.getBoolean("use_background_service_receiver", true);
 		sharedPref.registerOnSharedPreferenceChangeListener(listener);
-		if (useBackgroundService) {
+		if (useBackgroundService && useBackgroundServiceReceiver) {
 			timer.schedule(task, DELAY * 50, PERIOD);
 		}
 	}
@@ -223,7 +236,8 @@ public class LocationGettingService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
-		if (backGroundServiceEnabled) {
+		boolean useBackgroundServiceReceiver = sharedPref.getBoolean("use_background_service_receiver", true);
+		if (backGroundServiceEnabled && useBackgroundServiceReceiver) {
 			return START_STICKY_COMPATIBILITY;
 		} else {
 			return super.onStartCommand(intent, flags, startId);
@@ -233,7 +247,8 @@ public class LocationGettingService extends Service {
 	@Override
 	public void onDestroy() {
 		boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
-		if (backGroundServiceEnabled) {
+		boolean useBackgroundServiceReceiver = sharedPref.getBoolean("use_background_service_receiver", true);
+		if (backGroundServiceEnabled && useBackgroundServiceReceiver) {
 			Intent localIntent = new Intent();
 			localIntent.setClass(this, LocationGettingService.class); // 销毁时重新启动Service
 			this.startService(localIntent);
@@ -246,13 +261,14 @@ public class LocationGettingService extends Service {
 	private void initLocation() {
 		LocationClientOption option = new LocationClientOption();
 		boolean useGps = sharedPref.getBoolean("use_GPS", true);
-		if (useGps) {
-//			Toast.makeText(this, "using GPS", Toast.LENGTH_SHORT).show();
+		boolean useGpsReceiver = sharedPref.getBoolean("use_GPS_receiver", true);
+		if (useGps && useGpsReceiver) {
+//			Toast.makeText(this, "using gps", Toast.LENGTH_SHORT).show();
 			option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
 			option.setOpenGps(true);
 			//可选，默认false,设置是否使用gps
 		} else {
-//			Toast.makeText(this, "not using GPS", Toast.LENGTH_SHORT).show();
+//			Toast.makeText(this, "not using gps", Toast.LENGTH_SHORT).show();
 			option.setLocationMode(LocationClientOption.LocationMode.Battery_Saving);
 		}
 		//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
@@ -414,6 +430,14 @@ public class LocationGettingService extends Service {
 								boolean showNotifications = sharedPref.getBoolean("notifications_check_in_reminder_enabled", true);
 								boolean notificationsCheckInReminderRingtoneAndVibrateEnabled = sharedPref.getBoolean("notifications_check_in_reminder_ringtone_and_vibrate_enabled", true);
 								boolean hasCheckIn = sharedPref.getBoolean("has_check_in", false);
+								if (!hasCheckIn) {
+									//用来通知AutoCheckInService开始自动签到
+									hasNotifiedNTimes++;
+									SharedPreferences checkInStatus = getSharedPreferences("checkInStatus", MODE_PRIVATE);
+									SharedPreferences.Editor editor = checkInStatus.edit();
+									editor.putInt("has_notified_N_times", hasNotifiedNTimes);
+									editor.apply();
+								}
 								if (showNotifications && !hasCheckIn) {
 									Intent intent = new Intent(getApplicationContext(), MainActivity.class);
 									intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -422,22 +446,19 @@ public class LocationGettingService extends Service {
 
 									String ticker = "您已进入签到范围";
 									String title = "您已进入签到范围";
-									String content = "点击签到\n您在" + locationNames[i] + "，位于" + bdLocation.getAddrStr();
+									String content = "点击签到\n您在" + locationNames[i] + "\n位于" + bdLocation.getAddrStr();
 
 									NotifyUtil notificationSucceededCheckIn = new NotifyUtil(getApplicationContext(), IN_RANGE_NOTIFICATION);
 									notificationSucceededCheckIn.setOnGoing(false);
-									notificationSucceededCheckIn.notifyNormailMmoreline(pIntent, R.mipmap.ic_launcher, ticker, title, content, notificationsCheckInReminderRingtoneAndVibrateEnabled, notificationsCheckInReminderRingtoneAndVibrateEnabled, false);
-
-									//用来通知AutoCheckInService开始自动签到
-									hasNotifiedNTimes++;
-									SharedPreferences checkInStatus = getSharedPreferences("checkInStatus", MODE_PRIVATE);
-									SharedPreferences.Editor editor = checkInStatus.edit();
-									editor.putInt("has_notified_N_times", hasNotifiedNTimes);
-									editor.apply();
+									notificationSucceededCheckIn.notifyNormailMmoreline(pIntent, R.drawable.ic_nature_people, ticker, title, content, notificationsCheckInReminderRingtoneAndVibrateEnabled, notificationsCheckInReminderRingtoneAndVibrateEnabled, false);
 								}
 								break;
 							} else {
 								item.setBuildingID(0);
+								SharedPreferences checkInStatus = getSharedPreferences("checkInStatus", MODE_PRIVATE);
+								SharedPreferences.Editor editor = checkInStatus.edit();
+								editor.putInt("has_notified_N_times", 0);
+								editor.apply();
 							}
 						}
 					}

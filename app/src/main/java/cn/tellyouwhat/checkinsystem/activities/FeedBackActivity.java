@@ -2,6 +2,7 @@ package cn.tellyouwhat.checkinsystem.activities;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.CardView;
 import android.text.TextUtils;
@@ -16,6 +17,7 @@ import android.widget.Toast;
 
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
+import com.jaeger.library.StatusBarUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -53,6 +55,10 @@ public class FeedBackActivity extends BaseActivity {
 		super.onCreate(arg0);
 		setContentView(R.layout.activity_feedback);
 		setUpActionBar();
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
+			StatusBarUtil.setColor(FeedBackActivity.this, getResources().getColor(R.color.colorPrimary), 0);
+		}
 		mContactInformationEditText = (EditText) findViewById(R.id.contact_information_edit_text);
 		mFeedBackEditText = (EditText) findViewById(R.id.feedback_edit_text);
 		mFeedBackProgressBar = (ProgressBar) findViewById(R.id.feedback_summit_progress);
@@ -87,7 +93,7 @@ public class FeedBackActivity extends BaseActivity {
 				SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
 				String userName = sharedPreferences.getString("USER_NAME", "");
 				if (!TextUtils.isEmpty(feedbackText)) {
-					Log.i(TAG, "onOptionsItemSelected: contactInfo: " + contactInfo + ", feedbackText: " + feedbackText);
+//					Log.i(TAG, "onOptionsItemSelected: contactInfo: " + contactInfo + ", feedbackText: " + feedbackText);
 					RequestParams requestParams = null;
 					try {
 						requestParams = new RequestParams("http://sc.ftqq.com/SCU6693Tdfc142ce95a8a9fcfbbb14f587cbdf4258c9c7a088af6.send?text=" + (TextUtils.isEmpty(contactInfo) ? URLEncoder.encode("匿名", "UTF-8") : contactInfo) + URLEncoder.encode(", 真实信息: " + userName, "UTF-8") + "&desp=" + feedbackText);

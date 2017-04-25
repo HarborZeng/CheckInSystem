@@ -33,55 +33,55 @@ public class BatteryReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(final Context context, Intent intent) {
 		mContext = context;
-		Log.i(TAG, "BatteryReceiver--------------");
-		String action = intent.getAction();
-		Log.i(TAG, " 0 action:" + action);
+/*		Log.i(TAG, "BatteryReceiver--------------");
+		String action = intent.getAction();*/
+/*		Log.i(TAG, " 0 action:" + action);
 		Log.i(TAG, "ACTION_BATTERY_CHANGED");
 		int status = intent.getIntExtra("status", 0);
 		int health = intent.getIntExtra("health", 0);
-		boolean present = intent.getBooleanExtra("present", false);
+		boolean present = intent.getBooleanExtra("present", false);*/
 		int level = intent.getIntExtra("level", 0);
-		int scale = intent.getIntExtra("scale", 0);
+/*		int scale = intent.getIntExtra("scale", 0);
 		int icon_small = intent.getIntExtra("icon-small", 0);
 		int plugged = intent.getIntExtra("plugged", 0);
 		int voltage = intent.getIntExtra("voltage", 0);
 		int temperature = intent.getIntExtra("temperature", 0);
-		String technology = intent.getStringExtra("technology");
+		String technology = intent.getStringExtra("technology");*/
 
 		//启动自动签到签出的service
 		context.startService(new Intent(context, AutoCheckInService.class));
 
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
 		String whenLowBattery = sharedPref.getString("when_low_battery", "0");
+		SharedPreferences.Editor editor = sharedPref.edit();
 		if (level < 15) {
-			SharedPreferences.Editor editor = sharedPref.edit();
 			if ("0".equals(whenLowBattery)) {
-				editor.putBoolean("use_GPS", false);
+				editor.putBoolean("use_GPS_receiver", false);
 			} else if ("1".equals(whenLowBattery)) {
-				editor.putBoolean("use_background_service", false);
+				editor.putBoolean("use_background_service_receiver", false);
 			}
-			editor.apply();
+		} else {
+			if ("0".equals(whenLowBattery)) {
+				editor.putBoolean("use_GPS_receiver", true);
+			} else if ("1".equals(whenLowBattery)) {
+				editor.putBoolean("use_background_service_receiver", true);
+			}
+		}
+		editor.apply();
+		boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
+		boolean useBackgroundServiceReceiver = sharedPref.getBoolean("use_background_service_receiver", true);
+		if (backGroundServiceEnabled && useBackgroundServiceReceiver) {
+			context.startService(new Intent(context, LocationGettingService.class));
 		}
 		sharedPref.registerOnSharedPreferenceChangeListener(listener);
 
-		String statusString = "";
+		/*String statusString = "";
 		switch (status) {
 			case BatteryManager.BATTERY_STATUS_UNKNOWN:
 				statusString = "unknown";
 				break;
 			case BatteryManager.BATTERY_STATUS_CHARGING:
 				statusString = "charging";
-				SharedPreferences.Editor editor = sharedPref.edit();
-				if ("0".equals(whenLowBattery)) {
-					editor.putBoolean("use_GPS", true);
-				} else if ("1".equals(whenLowBattery)) {
-					editor.putBoolean("use_background_service", true);
-				}
-				editor.apply();
-				boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
-				if (backGroundServiceEnabled) {
-					context.startService(new Intent(context, LocationGettingService.class));
-				}
 				break;
 			case BatteryManager.BATTERY_STATUS_DISCHARGING:
 				statusString = "discharging";
@@ -110,7 +110,7 @@ public class BatteryReceiver extends BroadcastReceiver {
 
 		Log.i(TAG, "battery: date=" + date + ",status " + statusString
 				+ ",level=" + level + ",scale=" + scale
-				+ ",voltage=" + voltage + ",acString=" + acString);
+				+ ",voltage=" + voltage + ",acString=" + acString);*/
 
 	}
 }

@@ -147,6 +147,49 @@
 
         </FrameLayout>
 
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/check_status_text_view"
+            android:layout_centerHorizontal="true">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Wi-Fi"/>
+
+                <ToggleButton
+                    android:id="@+id/toggle_button_enable_wifi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Wi-Fi"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GPS"/>
+
+                <ToggleButton
+                    android:id="@+id/toggle_button_enable_GPS"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GPS"/>
+            </LinearLayout>
+        </LinearLayout>
+
         <android.support.v7.widget.CardView
             android:id="@+id/card_view_location"
             android:layout_width="wrap_content"
@@ -157,9 +200,9 @@
             android:visibility="visible">
 
             <LinearLayout
-                android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/text_view_location"
@@ -170,27 +213,41 @@
                     android:textColor="#000"/>
 
                 <LinearLayout
-                    android:orientation="horizontal"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
 
                     <Button
-                        android:layout_weight="1"
                         android:id="@+id/copy_button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:text="复制"/>
 
                     <Button
-                        android:layout_weight="1"
                         android:id="@+id/share_location_to_friends_button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:text="分享给朋友"/>
                 </LinearLayout>
             </LinearLayout>
 
         </android.support.v7.widget.CardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            android:layout_alignParentBottom="true"
+            android:background="#cc888888"/>
+
+        <com.sunfusheng.marqueeview.MarqueeView
+            android:id="@+id/marqueeView"
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            android:layout_alignParentBottom="true"
+            android:paddingLeft="18dp"
+            android:paddingStart="18dp"/>
 
         <com.getbase.floatingactionbutton.FloatingActionsMenu
             android:id="@+id/multiple_actions"
@@ -236,6 +293,7 @@
             android:text="正在获取今日状态\n点击或下拉刷新"
             android:textAlignment="center"
             android:textColor="#222"/>
+
     </RelativeLayout>
 
 </android.support.v4.widget.SwipeRefreshLayout>

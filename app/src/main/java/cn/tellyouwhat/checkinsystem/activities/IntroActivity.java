@@ -20,14 +20,15 @@ public class IntroActivity extends AppIntro2 {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		StatusBarUtil.setColor(this, Color.parseColor("#0277BD"), 0);
+//		StatusBarUtil.setColor(this, Color.parseColor("#0277BD"), 0);
 
 		addSlide(IntroOne.newInstance());
 		addSlide(IntroTwo.newInstance());
 		addSlide(IntroThree.newInstance());
 		addSlide(IntroAskForThirdPartPermission.newInstance());
-		addSlide(AppIntroFragment.newInstance("", "内容", R.drawable.funny, Color.parseColor("#124874")));
+//		addSlide(AppIntroFragment.newInstance("", "内容", R.drawable.funny, Color.parseColor("#124874")));
 //		setFadeAnimation();
+		setImmersiveMode(true);
 //		setDepthAnimation();
 //		setFlowAnimation();
 //		setZoomAnimation();

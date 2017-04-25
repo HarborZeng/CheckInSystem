@@ -22,7 +22,6 @@ import android.view.animation.AlphaAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -75,7 +74,7 @@ public class LoginActivity extends BaseActivity {
 		String phoneNumberTOBE = mNumberView.getText().toString();
 		if (!TextUtils.isEmpty(phoneNumberTOBE) && phoneNumberTOBE.length() == 11)
 			intent.putExtra("PhoneNumber", phoneNumberTOBE);
-		Log.i(TAG, "forgetPassword: " + phoneNumberTOBE);
+//		Log.i(TAG, "forgetPassword: " + phoneNumberTOBE);
 		startActivity(intent);
 	}
 
@@ -122,7 +121,7 @@ public class LoginActivity extends BaseActivity {
 					x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 						@Override
 						public void onSuccess(JSONObject result) {
-							Log.d(TAG, "onSuccess: 获取头像的结果是：" + result);
+//							Log.d(TAG, "onSuccess: 获取头像的结果是：" + result);
 							try {
 								int resultInt = result.getInt("result");
 								switch (resultInt) {
@@ -324,7 +323,7 @@ public class LoginActivity extends BaseActivity {
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
-				Log.i(TAG, "onSuccess: " + result);
+//				Log.i(TAG, "onSuccess: " + result);
 				if (loginResponseCode == -2) {
 					showProgress(false);
 					Log.d(TAG, "login: Failed");
@@ -443,7 +442,7 @@ public class LoginActivity extends BaseActivity {
 			public void onSuccess(JSONObject result) {
 				try {
 					resultInt = result.getInt("result");
-					Log.d(TAG, "onSuccess: resultInt=" + resultInt + "and result is " + result.toString());
+//					Log.d(TAG, "onSuccess: resultInt=" + resultInt + "and result is " + result.toString());
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}

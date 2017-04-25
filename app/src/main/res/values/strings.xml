@@ -152,4 +152,5 @@
     <string name="conntent"><![CDATA[Let Google help apps determine location. <b>This means sending anonymous location data to Google</b>, even when no apps are running.]]></string>
     <string name="agree">agree</string>
     <string name="disagree">disagree</string>
+
 </resources>

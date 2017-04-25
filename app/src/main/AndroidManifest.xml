@@ -139,13 +139,15 @@
         <activity
             android:name=".activities.FeedBackActivity"
             android:screenOrientation="portrait"/>
-        <activity
-            android:name=".activities.ModifyCheckTimeActivity"
-            android:screenOrientation="portrait"/>
 
         <service android:name=".services.AutoCheckInService"/>
+
         <activity
             android:name=".activities.PhoneCollectionActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".activities.BoardActivity"
+            android:theme="@style/AppTheme.NoActionBar"
             android:screenOrientation="portrait"/>
     </application>
 

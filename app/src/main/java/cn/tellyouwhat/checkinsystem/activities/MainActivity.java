@@ -1,6 +1,7 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
 import android.Manifest;
+import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -50,6 +51,7 @@ import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
 import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 
+import static android.content.Intent.ACTION_VIEW;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 public class MainActivity extends BaseActivity {
@@ -109,6 +111,12 @@ public class MainActivity extends BaseActivity {
 		}
 
 	};
+	private String mVersionName;
+	private String mVersionDesc;
+	private String mVersionCode;
+	private String mDownloadURL;
+	private boolean mForceUpgrade;
+	private String mSize;
 
 	@Override
 	protected void onResume() {
@@ -117,16 +125,19 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		Log.i(TAG, "onCreate: in MainActivity");
+//		Log.i(TAG, "onCreate: in MainActivity");
 		super.onCreate(savedInstanceState);
 		setBackEnable(false);
 		setContentView(R.layout.activity_main);
-		StatusBarUtil.setColor(this, Color.parseColor("#2D0081"), 0);
 
 		Intent checkIntent = getIntent();
 		boolean beginCheckIn = checkIntent.getBooleanExtra("BEGIN_CHECK_IN", false);
+		boolean beginCheckOut = checkIntent.getBooleanExtra("BEGIN_CHECK_OUT", false);
 		Bundle bundle = new Bundle();
+//		Log.d(TAG, "onCreate: BEGIN_CHECK_IN:"+beginCheckIn);
+//		Log.d(TAG, "onCreate: BEGIN_CHECK_OUT:"+beginCheckOut);
 		bundle.putBoolean("BEGIN_CHECK_IN", beginCheckIn);
+		bundle.putBoolean("BEGIN_CHECK_OUT", beginCheckOut);
 
 		//解决Fragment可能出现的重叠问题
 		if (savedInstanceState == null) {
@@ -134,7 +145,6 @@ public class MainActivity extends BaseActivity {
 			ActionBar supportActionBar = getSupportActionBar();
 			if (supportActionBar != null) {
 				supportActionBar.setDisplayHomeAsUpEnabled(false);
-				supportActionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#2D0081")));
 			}
 			CheckInFragment checkInFragment = CheckInFragment.newInstance();
 			checkInFragment.setArguments(bundle);
@@ -146,6 +156,9 @@ public class MainActivity extends BaseActivity {
 
 		//开启获取位置的后台服务
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		if (sharedPref.getBoolean("immersed_status_bar_enabled", true)) {
+			StatusBarUtil.setColor(MainActivity.this, getResources().getColor(R.color.colorPrimary), 0);
+		}
 		boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
 		if (backGroundServiceEnabled) {
 			Intent intent = new Intent(getApplicationContext(), LocationGettingService.class);
@@ -169,7 +182,7 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onDestroy() {
-		Log.i(TAG, "onDestroy: in MainActivity");
+//		Log.i(TAG, "onDestroy: in MainActivity");
 		super.onDestroy();
 		ReLoginUtil.removeAllDialog();
 	}
@@ -207,17 +220,17 @@ public class MainActivity extends BaseActivity {
 				@Override
 				public void onSuccess(JSONObject object) {
 					try {
-						String versionName = object.getString("versionName");
-						String versionDesc = object.getString("versionDesc");
-						String versionCode = object.getString("versionCode");
-						String downloadURL = object.getString("downloadURL");
-						boolean forceUpgrade = object.getBoolean("forceUpgrade");
-						String size = object.getString("size");
+						mVersionName = object.getString("versionName");
+						mVersionDesc = object.getString("versionDesc");
+						mVersionCode = object.getString("versionCode");
+						mDownloadURL = object.getString("downloadURL");
+						mForceUpgrade = object.getBoolean("forceUpgrade");
+						mSize = object.getString("size");
 
-						if (getLocalVersionCode() < Integer.parseInt(versionCode)) {
+						if (getLocalVersionCode() < Integer.parseInt(mVersionCode)) {
 //					Log.d(TAG, "onUpdateAvailable: 有更新版本：" + versionName);
-							askToUpgrade(versionName, versionDesc, versionCode, downloadURL, size, forceUpgrade);
-						} else if (getLocalVersionCode() > Integer.parseInt(versionCode)) {
+							askToUpgrade();
+						} else if (getLocalVersionCode() > Integer.parseInt(mVersionCode)) {
 							Toast.makeText(x.app(), R.string.you_are_using_an_Alpha_Test_application, Toast.LENGTH_LONG).show();
 						}
 					} catch (JSONException e) {
@@ -247,7 +260,7 @@ public class MainActivity extends BaseActivity {
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					Toast.makeText(x.app(), R.string.not_connected_to_server, Toast.LENGTH_LONG).show();
+					Toast.makeText(getApplicationContext(), R.string.not_connected_to_server, Toast.LENGTH_LONG).show();
 				}
 			});
 		}
@@ -265,7 +278,7 @@ public class MainActivity extends BaseActivity {
 		return packageInfo.versionCode;
 	}
 
-	private void askToUpgrade(final String versionName, final String versionDesc, String versionCode, final String downloadURL, final String size, final boolean forceUpgrade) {
+	private void askToUpgrade() {
 		if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
 			String[] perms = {"android.permission.WRITE_EXTERNAL_STORAGE"};
 			ActivityCompat.requestPermissions(MainActivity.this, perms, 1);
@@ -279,7 +292,7 @@ public class MainActivity extends BaseActivity {
 				final MaterialDialog.Builder builder = new MaterialDialog.Builder(MainActivity.this);
 				final MaterialDialog.Builder innerBuilder = new MaterialDialog.Builder(MainActivity.this);
 				builder.iconRes(R.mipmap.warning);
-				builder.content(getString(R.string.newer_version_detected) + versionName + "\n" + getString(R.string.size) + size + getString(R.string.newer_version_description) + "\n\n" + versionDesc)
+				builder.content(getString(R.string.newer_version_detected) + mVersionName + "\n" + getString(R.string.size) + mSize + getString(R.string.newer_version_description) + "\n\n" + mVersionDesc)
 						.positiveText(getString(R.string.我要升级))
 						.onPositive(new MaterialDialog.SingleButtonCallback() {
 							@Override
@@ -289,7 +302,7 @@ public class MainActivity extends BaseActivity {
 								} else {
 									if (NetTypeUtils.isWifiActive(MainActivity.this)) {
 										Log.d(TAG, "onClick: 连的是wifi");
-										download(downloadURL);
+										download();
 									} else {
 										innerBuilder.iconRes(R.mipmap.warning);
 										innerBuilder.cancelable(false)
@@ -299,7 +312,7 @@ public class MainActivity extends BaseActivity {
 												.onNegative(new MaterialDialog.SingleButtonCallback() {
 													@Override
 													public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-														Toast.makeText(MainActivity.this, R.string.update_after_WiFied, Toast.LENGTH_LONG).show();
+														Toast.makeText(x.app(), R.string.update_after_WiFied, Toast.LENGTH_LONG).show();
 														dialog.dismiss();
 														MainActivity.this.finish();
 													}
@@ -309,14 +322,14 @@ public class MainActivity extends BaseActivity {
 													@Override
 													public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
 														dialog.dismiss();
-														download(downloadURL);
+														download();
 													}
 												}).show();
 									}
 								}
 							}
 						});
-				if (forceUpgrade) {
+				if (mForceUpgrade) {
 					builder.title(R.string.must_upgrade).cancelable(false);
 					builder.show().setCanceledOnTouchOutside(false);
 				} else {
@@ -336,15 +349,15 @@ public class MainActivity extends BaseActivity {
 		});
 	}
 
-	private void download(String downloadURL) {
-		RequestParams params = new RequestParams(downloadURL);
+	private void download() {
+		RequestParams params = new RequestParams(mDownloadURL);
 //		Log.d(TAG, "download link: " + downloadURL);
 		params.setAutoRename(true);
 		params.setCacheSize(1024 * 1024 * 8);
 		params.setCancelFast(true);
 
 		params.setCacheDirName(Environment.getDownloadCacheDirectory().getPath());
-		String newVersionFileName = downloadURL.substring(downloadURL.lastIndexOf("/") + 1, downloadURL.length());
+		String newVersionFileName = mDownloadURL.substring(mDownloadURL.lastIndexOf("/") + 1, mDownloadURL.length());
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		String customDownloadDirectory = sharedPref.getString("custom_download_directory", Environment.getExternalStorageDirectory().getPath() + "/" + Environment.DIRECTORY_DOWNLOADS);
 
@@ -359,13 +372,13 @@ public class MainActivity extends BaseActivity {
 			@Override
 			public void onWaiting() {
 //				Toast.makeText(SplashActivity.this, "正在等待下载开始", Toast.LENGTH_SHORT).show();
-				Log.d(TAG, "onWaiting: 正在等待下载开始");
+//				Log.d(TAG, "onWaiting: 正在等待下载开始");
 			}
 
 			@Override
 			public void onStarted() {
-				Toast.makeText(MainActivity.this, R.string.download_begins, Toast.LENGTH_SHORT).show();
-				Log.d(TAG, "onStarted: 下载开始");
+				Toast.makeText(x.app(), R.string.download_begins, Toast.LENGTH_SHORT).show();
+//				Log.d(TAG, "onStarted: 下载开始");
 				builder.setIcon(R.mipmap.downloading);
 				builder.setTitle(getString(R.string.downloading));
 				builder.setCancelable(true);
@@ -381,30 +394,55 @@ public class MainActivity extends BaseActivity {
 //					progressBar.setMax((int) total);
 //					progressBar.setProgress((int) current);
 //                Toast.makeText(SplashActivity.this, "下载中。。。", Toast.LENGTH_SHORT).show();
-				Log.d(TAG, "onLoading: 下载中");
+//				Log.d(TAG, "onLoading: 下载中");
 			}
 
 			@Override
 			public void onSuccess(File result) {
 				builder.dismiss();
 //				Toast.makeText(x.app(), "下载成功", Toast.LENGTH_SHORT).show();
-				Log.d(TAG, "onSuccess: The File is: " + result);
+//				Log.d(TAG, "onSuccess: The File is: " + result);
 				installAPK(result);
 				MainActivity.this.finish();
-				Log.d(TAG, "onSuccess: 下载成功");
+//				Log.d(TAG, "onSuccess: 下载成功");
 			}
 
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
 //				ex.printStackTrace();
-				Toast.makeText(MainActivity.this, R.string.error_in_downloading, Toast.LENGTH_SHORT).show();
+				Toast.makeText(x.app(), R.string.error_in_downloading, Toast.LENGTH_SHORT).show();
 //				enterHome();
-				Log.d(TAG, "onError: 下载出错啦");
+//				Log.d(TAG, "onError: 下载出错啦");
+				new MaterialDialog.Builder(MainActivity.this)
+						.title("下载遇到问题？")
+						.content("注意：调用系统下载器，不能在状态栏暂停或取消下载，且没有“正在使用流量”的警告！")
+						.positiveText("去浏览器下载")
+						.onPositive(new MaterialDialog.SingleButtonCallback() {
+							@Override
+							public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+								Intent intent = new Intent(ACTION_VIEW, Uri.parse(mDownloadURL));
+								startActivity(intent);
+							}
+						})
+						.neutralText("调用系统下载器")
+						.onNeutral(new MaterialDialog.SingleButtonCallback() {
+							@Override
+							public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+								DownloadManager downloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+								DownloadManager.Request request = new DownloadManager.Request(
+										Uri.parse(mDownloadURL));
+								request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
+								long enqueue = downloadManager.enqueue(request);
+								//TODO 下载逻辑
+
+							}
+						})
+						.show();
 			}
 
 			@Override
 			public void onCancelled(CancelledException cex) {
-				Log.d(TAG, "onCancelled: 下载已取消");
+//				Log.d(TAG, "onCancelled: 下载已取消");
 //				Toast.makeText(x.app(), "cancelled", Toast.LENGTH_SHORT).show();
 //				enterLogin();
 				builder.dismiss();
@@ -413,7 +451,7 @@ public class MainActivity extends BaseActivity {
 			@Override
 			public void onFinished() {
 //				Toast.makeText(x.app(), "下载完成", Toast.LENGTH_SHORT).show();
-				Log.d(TAG, "onFinished: 下载完成");
+//				Log.d(TAG, "onFinished: 下载完成");
 				builder.dismiss();
 			}
 		});
@@ -430,12 +468,12 @@ public class MainActivity extends BaseActivity {
 	}
 
 	private void installAPK(File result) {
-		Log.i(TAG, "installAPK: 刚刚进入安装apk的方法");
+//		Log.i(TAG, "installAPK: 刚刚进入安装apk的方法");
 		Intent intent = new Intent(Intent.ACTION_VIEW);
 		intent.addCategory("android.intent.category.DEFAULT");
 		intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
 		intent.setDataAndType(Uri.fromFile(result), "application/vnd.android.package-archive");
-		Log.i(TAG, "installAPK: 准备好了数据，马上开启下一个activity");
+//		Log.i(TAG, "installAPK: 准备好了数据，马上开启下一个activity");
 		startActivity(intent);
 	}
 }

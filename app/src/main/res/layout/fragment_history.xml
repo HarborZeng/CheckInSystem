@@ -34,9 +34,9 @@
     </android.support.v7.widget.CardView>
 
     <LinearLayout
-        android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
         android:layout_below="@+id/card_view_calendar"
         android:layout_marginLeft="5dp"
         android:layout_marginStart="5dp"
@@ -44,47 +44,65 @@
         android:orientation="vertical"
         android:padding="5dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="签到时间"
-            android:textColor="#000"
-            android:textSize="18sp"
-            android:textStyle="bold"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:text="签到时间"
+                android:textColor="#000"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/text_view_original_check_in_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/check_in_time_text_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="10dp"
-            />
+            android:padding="10dp"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="签出时间"
-            android:textColor="#000"
-            android:textSize="18sp"
-            android:textStyle="bold"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:text="签出时间"
+                android:textColor="#000"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/text_view_original_check_out_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/check_out_time_text_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="10dp"
-            />
+            android:padding="10dp"/>
     </LinearLayout>
 
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="16dp"
-        android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true">
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:elevation="16dp">
 
         <android.support.v7.widget.CardView
             android:id="@+id/get_month_record_bg"
@@ -128,9 +146,9 @@
         android:layout_alignParentRight="true"
         android:layout_margin="27dp"
         android:clickable="true"
+        android:translationZ="5dp"
         app:backgroundTint="@color/white"
         app:elevation="8dp"
         app:fabSize="normal"
-        app:srcCompat="@drawable/ic_refresh_accent_24dp"
-        android:translationZ="5dp"/>
+        app:srcCompat="@drawable/ic_refresh_accent_24dp"/>
 </RelativeLayout>

@@ -1,6 +1,7 @@
 package cn.tellyouwhat.checkinsystem.utils;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -12,7 +13,6 @@ import android.os.Build;
 import android.os.SystemClock;
 import android.support.v7.app.NotificationCompat;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -66,11 +66,11 @@ public class NotifyUtil {
 		 * 将AutoCancel设为true后，当你点击通知栏的notification后，它会自动被取消消失,
 		 * 不设置的话点击消息后也不清除，但可以滑动删除
 		 */
-		mNotificationCompatBuilder.setAutoCancel(true);
+		mNotificationCompatBuilder.setAutoCancel(false);
 		// 将Ongoing设为true 那么notification将不能滑动删除
 		// notifyBuilder.setOngoing(true);
-        /*
-         * 从Android4.1开始，可以通过以下方法，设置notification的优先级，
+		/*
+	     * 从Android4.1开始，可以通过以下方法，设置notification的优先级，
 		 * 优先级越高的，通知排的越靠前，优先级低的，不会在手机最顶部的状态栏显示图标
 		 */
 		mNotificationCompatBuilder.setPriority(NotificationCompat.PRIORITY_MAX);
@@ -146,6 +146,7 @@ public class NotifyUtil {
 	                                   String ticker, String title, String content, boolean sound, boolean vibrate, boolean lights) {
 
 		setCompatBuilder(pendingIntent, smallIcon, ticker, title, content, sound, vibrate, lights);
+//		mNotificationBuilder.setAutoCancel(true);
 		sent();
 	}
 
@@ -236,7 +237,9 @@ public class NotifyUtil {
 			mNotificationBuilder.setContentTitle(title);
 			mNotificationBuilder.setContentText(content);
 			mNotificationBuilder.setPriority(Notification.PRIORITY_HIGH);
+			mNotificationBuilder.setAutoCancel(true);
 			mNotification = new Notification.BigTextStyle(mNotificationBuilder).bigText(content).build();
+
 			// 发送该通知
 			mNotificationManager.notify(NOTIFICATION_ID, mNotification);
 		}
@@ -322,15 +325,17 @@ public class NotifyUtil {
 	 * @param title
 	 * @param content
 	 */
-	public void notifyTwoButton(int smallIcon, int leftbtnicon, String lefttext, PendingIntent leftPendIntent, int rightbtnicon, String righttext, PendingIntent rightPendIntent, String ticker,
+	@TargetApi(Build.VERSION_CODES.KITKAT)
+	public void notifyTwoButton(PendingIntent pendIntent, int smallIcon, int leftbtnicon, String lefttext, PendingIntent leftPendIntent, int rightbtnicon, String righttext, PendingIntent rightPendIntent, String ticker,
 	                            String title, String content, boolean sound, boolean vibrate, boolean lights) {
 
 		requestCode = (int) SystemClock.uptimeMillis();
-		setCompatBuilder(rightPendIntent, smallIcon, ticker, title, content, sound, vibrate, lights);
+		setCompatBuilder(pendIntent, smallIcon, ticker, title, content, sound, vibrate, lights);
 		mNotificationCompatBuilder.addAction(leftbtnicon,
 				lefttext, leftPendIntent);
 		mNotificationCompatBuilder.addAction(rightbtnicon,
 				righttext, rightPendIntent);
+
 		sent();
 	}
 
@@ -355,8 +360,6 @@ public class NotifyUtil {
 					lefttext, leftPendingIntent);
 			mNotificationCompatBuilder.addAction(rightbtnicon,
 					righttext, rightPendingIntent);
-		} else {
-			Toast.makeText(mContext, "版本低于Android5.0，无法体验HeadUp样式通知", Toast.LENGTH_SHORT).show();
 		}
 		sent();
 	}

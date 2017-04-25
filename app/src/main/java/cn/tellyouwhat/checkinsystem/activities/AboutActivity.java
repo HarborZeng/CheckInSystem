@@ -36,6 +36,7 @@ import com.daimajia.androidanimations.library.YoYo;
 import com.github.ksoichiro.android.observablescrollview.ObservableListView;
 import com.github.ksoichiro.android.observablescrollview.ObservableScrollViewCallbacks;
 import com.github.ksoichiro.android.observablescrollview.ScrollState;
+import com.jaeger.library.StatusBarUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -58,7 +59,7 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
  * About Activity
  */
 
-public class AboutActivity extends BaseActivity implements ObservableScrollViewCallbacks {
+public class AboutActivity extends BaseActivity {
 	private static final String TAG = "AboutActivity";
 	private ActionBar supportActionBar;
 
@@ -67,10 +68,14 @@ public class AboutActivity extends BaseActivity implements ObservableScrollViewC
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_about);
 
-		ObservableListView listView = (ObservableListView) findViewById(R.id.list);
-		listView.setScrollViewCallbacks(this);
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
+			StatusBarUtil.setColor(AboutActivity.this, getResources().getColor(R.color.colorPrimary), 0);
+		}
 
-		listView.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new String[]{"主要开发者", "合作开发者", "艺术设计", "翻译", "联系我们", "给个赞", "使用的库文件", "版本更新", "功能介绍"}));
+		ObservableListView listView = (ObservableListView) findViewById(R.id.list);
+
+		listView.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new String[]{"主要开发者", "合作开发者", "艺术设计", "联系我们", "给个赞", "使用的库文件", "版本更新", "功能介绍"}));
 		listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -85,12 +90,9 @@ public class AboutActivity extends BaseActivity implements ObservableScrollViewC
 						Snackbar.make(view, "Kekeemay、杜皓璠", Snackbar.LENGTH_LONG).show();
 						break;
 					case 3:
-						Snackbar.make(view, "xxx", Snackbar.LENGTH_LONG).show();
-						break;
-					case 4:
 						Snackbar.make(view, "QQ757772438\nWeChat: xiaoyao1682c", Snackbar.LENGTH_LONG).show();
 						break;
-					case 5:
+					case 4:
 						Uri uri = Uri.parse("market://details?id=" + getPackageName());
 						Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
 						try {
@@ -100,16 +102,16 @@ public class AboutActivity extends BaseActivity implements ObservableScrollViewC
 							Toast.makeText(AboutActivity.this, "您的手机并没有任何应用市场", Toast.LENGTH_LONG).show();
 						}
 						break;
-					case 6:
+					case 5:
 						new LicensesDialog.Builder(AboutActivity.this)
 								.setNotices(R.raw.notices)
 								.build()
 								.showAppCompat();
 						break;
-					case 7:
+					case 6:
 						checkUpdate();
 						break;
-					case 8:
+					case 7:
 						startActivity(new Intent(AboutActivity.this, IntroActivity.class));
 						break;
 					default:
@@ -172,30 +174,6 @@ public class AboutActivity extends BaseActivity implements ObservableScrollViewC
 	public boolean onOptionsItemSelected(MenuItem item) {
 		finish();
 		return super.onOptionsItemSelected(item);
-	}
-
-	@Override
-	public void onScrollChanged(int scrollY, boolean firstScroll, boolean dragging) {
-
-	}
-
-	@Override
-	public void onDownMotionEvent() {
-
-	}
-
-	@Override
-	public void onUpOrCancelMotionEvent(ScrollState scrollState) {
-
-		if (scrollState == ScrollState.UP) {
-			if (supportActionBar.isShowing()) {
-				supportActionBar.hide();
-			}
-		} else if (scrollState == ScrollState.DOWN) {
-			if (!supportActionBar.isShowing()) {
-				supportActionBar.show();
-			}
-		}
 	}
 
 	public void checkUpdate() {
@@ -361,13 +339,13 @@ public class AboutActivity extends BaseActivity implements ObservableScrollViewC
 			@Override
 			public void onWaiting() {
 //				Toast.makeText(SplashActivity.this, "正在等待下载开始", Toast.LENGTH_SHORT).show();
-				Log.d(TAG, "onWaiting: 正在等待下载开始");
+//				Log.d(TAG, "onWaiting: 正在等待下载开始");
 			}
 
 			@Override
 			public void onStarted() {
 				Toast.makeText(AboutActivity.this, R.string.download_begins, Toast.LENGTH_SHORT).show();
-				Log.d(TAG, "onStarted: 下载开始");
+//				Log.d(TAG, "onStarted: 下载开始");
 				builder.setIcon(R.mipmap.downloading);
 				builder.setTitle(getString(R.string.downloading));
 				builder.setCancelable(true);
@@ -383,7 +361,7 @@ public class AboutActivity extends BaseActivity implements ObservableScrollViewC
 //					progressBar.setMax((int) total);
 //					progressBar.setProgress((int) current);
 //                Toast.makeText(SplashActivity.this, "下载中。。。", Toast.LENGTH_SHORT).show();
-				Log.d(TAG, "onLoading: 下载中");
+//				Log.d(TAG, "onLoading: 下载中");
 			}
 
 			@Override
@@ -393,7 +371,7 @@ public class AboutActivity extends BaseActivity implements ObservableScrollViewC
 				Log.d(TAG, "onSuccess: The File is: " + result);
 				installAPK(result);
 				AboutActivity.this.finish();
-				Log.d(TAG, "onSuccess: 下载成功");
+//				Log.d(TAG, "onSuccess: 下载成功");
 			}
 
 			@Override
@@ -401,12 +379,12 @@ public class AboutActivity extends BaseActivity implements ObservableScrollViewC
 //				ex.printStackTrace();
 				Toast.makeText(AboutActivity.this, R.string.error_in_downloading, Toast.LENGTH_SHORT).show();
 //				enterHome();
-				Log.d(TAG, "onError: 下载出错啦");
+//				Log.d(TAG, "onError: 下载出错啦");
 			}
 
 			@Override
 			public void onCancelled(CancelledException cex) {
-				Log.d(TAG, "onCancelled: 下载已取消");
+//				Log.d(TAG, "onCancelled: 下载已取消");
 //				Toast.makeText(x.app(), "cancelled", Toast.LENGTH_SHORT).show();
 //				enterLogin();
 				builder.dismiss();
@@ -415,7 +393,7 @@ public class AboutActivity extends BaseActivity implements ObservableScrollViewC
 			@Override
 			public void onFinished() {
 //				Toast.makeText(x.app(), "下载完成", Toast.LENGTH_SHORT).show();
-				Log.d(TAG, "onFinished: 下载完成");
+//				Log.d(TAG, "onFinished: 下载完成");
 				builder.dismiss();
 			}
 		});
@@ -432,12 +410,12 @@ public class AboutActivity extends BaseActivity implements ObservableScrollViewC
 	}
 
 	private void installAPK(File result) {
-		Log.i(TAG, "installAPK: 刚刚进入安装apk的方法");
+//		Log.i(TAG, "installAPK: 刚刚进入安装apk的方法");
 		Intent intent = new Intent(Intent.ACTION_VIEW);
 		intent.addCategory("android.intent.category.DEFAULT");
 		intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
 		intent.setDataAndType(Uri.fromFile(result), "application/vnd.android.package-archive");
-		Log.i(TAG, "installAPK: 准备好了数据，马上开启下一个activity");
+//		Log.i(TAG, "installAPK: 准备好了数据，马上开启下一个activity");
 		startActivity(intent);
 	}
 }

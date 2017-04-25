@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -21,14 +22,16 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
+import android.view.animation.AlphaAnimation;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.jaeger.library.StatusBarUtil;
 import com.yalantis.ucrop.UCrop;
 import com.yalantis.ucrop.UCropActivity;
 
@@ -42,9 +45,6 @@ import org.xutils.x;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URLEncoder;
 import java.nio.channels.FileChannel;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -71,175 +71,94 @@ public class UserInfoActivity extends BaseActivity {
 	private TextView phoneNumberEditPageTextView;
 	private TextView emailEditPageTextView;
 	private TextView departmentEditPageTextView;
-	public String newName;
+	private AlphaAnimation mAnimationIn = new AlphaAnimation(0f, 1f);
+	private AlphaAnimation mAnimationOut = new AlphaAnimation(1f, 0f);
 	private View.OnClickListener nameListener = new View.OnClickListener() {
 		@Override
 		public void onClick(View v) {
-			rename();
+			new MaterialDialog.Builder(UserInfoActivity.this)
+					.title("输入新的名字")
+					.inputType(InputType.TYPE_CLASS_TEXT)
+					.input("请输入名字", nameEditPageTextView.getText(), new MaterialDialog.InputCallback() {
+						@Override
+						public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+							if (input != null) {
+								nameEditPageTextView.setText(input);
+							}
+						}
+					})
+					.inputRange(2, 15, getResources().getColor(R.color.theme_red_primary))
+					.show();
 		}
 	};
-	private String newJobNumber;
 	private View.OnClickListener jobNumberListener = new View.OnClickListener() {
 		@Override
 		public void onClick(View v) {
-			reJobNumber();
+			new MaterialDialog.Builder(UserInfoActivity.this)
+					.title("输入新的工号")
+					.inputType(InputType.TYPE_CLASS_NUMBER)
+					.input("请输入10位数字", jobNumberEditPageTextView.getText(), new MaterialDialog.InputCallback() {
+						@Override
+						public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+							if (input != null) {
+								jobNumberEditPageTextView.setText(input);
+							}
+						}
+					})
+					.inputRange(10, 10, getResources().getColor(R.color.theme_red_primary))
+					.show();
 		}
 	};
-	private String newPhoneNumber;
 	private View.OnClickListener phoneNumberListener = new View.OnClickListener() {
 		@Override
 		public void onClick(View v) {
-			rePhoneNumber();
+			new MaterialDialog.Builder(UserInfoActivity.this)
+					.title("输入新的手机号")
+					.inputType(InputType.TYPE_CLASS_PHONE)
+					.input("请输入11位手机号码", phoneNumberEditPageTextView.getText(), new MaterialDialog.InputCallback() {
+						@Override
+						public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+							if (input != null) {
+								phoneNumberEditPageTextView.setText(input);
+							}
+						}
+					})
+					.inputRange(11, 11, getResources().getColor(R.color.theme_red_primary))
+					.show();
 		}
 	};
-	private String newEmail;
 	private View.OnClickListener emailListener = new View.OnClickListener() {
 		@Override
 		public void onClick(View v) {
-			reEmail();
+			new MaterialDialog.Builder(UserInfoActivity.this)
+					.title("输入新的邮箱")
+					.inputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
+					.input("请输邮箱", emailEditPageTextView.getText(), new MaterialDialog.InputCallback() {
+						@Override
+						public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+							if (input != null) {
+								emailEditPageTextView.setText(input);
+							}
+						}
+					})
+					.inputRange(5, 30, getResources().getColor(R.color.theme_red_primary))
+					.show();
 		}
 	};
 	private Map<Integer, String> department = new LinkedHashMap<>();
 	private int mDepartmentID = 0;
 	private int selectedDepartmentID;
-
-
-	private void rename() {
-		LayoutInflater factory = LayoutInflater.from(this);
-		View textEntryView = factory.inflate(R.layout.myedit, null);
-		final EditText mname_edit = (EditText) textEntryView.findViewById(R.id.rename_edit);
-		mname_edit.setText(nameEditPageTextView.getText());
-		mname_edit.setInputType(InputType.TYPE_TEXT_VARIATION_PERSON_NAME);
-		new AlertDialog.Builder(UserInfoActivity.this)
-				.setTitle("输入新的名字")
-				.setView(textEntryView)
-				.setNegativeButton("取消",
-						new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog,
-							                    int which) {
-
-							}
-
-						})
-				.setPositiveButton("确定",
-						new DialogInterface.OnClickListener() {
-
-							@Override
-							public void onClick(DialogInterface dialog,
-							                    int which) {
-								if (!mname_edit.getText().toString().equals("")) {
-									newName = mname_edit.getText().toString();
-								}
-								nameEditPageTextView.setText(newName);
-							}
-
-						}).show();
-	}
-
-	private void reJobNumber() {
-		LayoutInflater factory = LayoutInflater.from(this);
-		View textEntryView = factory.inflate(R.layout.myedit, null);
-		final EditText mname_edit = (EditText) textEntryView.findViewById(R.id.rename_edit);
-		mname_edit.setText(jobNumberEditPageTextView.getText());
-		mname_edit.setInputType(InputType.TYPE_CLASS_PHONE);
-		new AlertDialog.Builder(UserInfoActivity.this)
-				.setTitle("输入新的工号")
-				.setView(textEntryView)
-				.setNegativeButton("取消",
-						new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog,
-							                    int which) {
-
-							}
-
-						})
-				.setPositiveButton("确定",
-						new DialogInterface.OnClickListener() {
-
-							@Override
-							public void onClick(DialogInterface dialog,
-							                    int which) {
-								if (!mname_edit.getText().toString().equals("")) {
-									newJobNumber = mname_edit.getText().toString();
-								}
-								jobNumberEditPageTextView.setText(newJobNumber);
-							}
-
-						}).show();
-	}
-
-	private void rePhoneNumber() {
-		LayoutInflater factory = LayoutInflater.from(this);
-		View textEntryView = factory.inflate(R.layout.myedit, null);
-		final EditText mname_edit = (EditText) textEntryView.findViewById(R.id.rename_edit);
-		mname_edit.setText(phoneNumberEditPageTextView.getText());
-		mname_edit.setInputType(InputType.TYPE_CLASS_PHONE);
-		new AlertDialog.Builder(UserInfoActivity.this)
-				.setTitle("输入新的手机号")
-				.setView(textEntryView)
-				.setNegativeButton("取消",
-						new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog,
-							                    int which) {
-
-							}
-
-						})
-				.setPositiveButton("确定",
-						new DialogInterface.OnClickListener() {
-
-							@Override
-							public void onClick(DialogInterface dialog,
-							                    int which) {
-								if (!mname_edit.getText().toString().equals("")) {
-									newPhoneNumber = mname_edit.getText().toString();
-								}
-								phoneNumberEditPageTextView.setText(newPhoneNumber);
-							}
-
-						}).show();
-	}
-
-	private void reEmail() {
-		LayoutInflater factory = LayoutInflater.from(this);
-		View textEntryView = factory.inflate(R.layout.myedit, null);
-		final EditText mname_edit = (EditText) textEntryView.findViewById(R.id.rename_edit);
-		mname_edit.setText(emailEditPageTextView.getText());
-		mname_edit.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-		new AlertDialog.Builder(UserInfoActivity.this)
-				.setTitle("输入新的邮箱")
-				.setView(textEntryView)
-				.setNegativeButton("取消",
-						new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog,
-							                    int which) {
-
-							}
-
-						})
-				.setPositiveButton("确定",
-						new DialogInterface.OnClickListener() {
-
-							@Override
-							public void onClick(DialogInterface dialog,
-							                    int which) {
-								if (!mname_edit.getText().toString().equals("")) {
-									newEmail = mname_edit.getText().toString();
-								}
-								emailEditPageTextView.setText(newEmail);
-							}
-
-						}).show();
-	}
+	private ProgressBar mUserInfoSummitProgressBar;
+	private CardView mUserInfoSummitGB;
 
 	@Override
 	protected void onCreate(Bundle arg0) {
 		super.onCreate(arg0);
 		setContentView(R.layout.activity_user_info);
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
+			StatusBarUtil.setColor(UserInfoActivity.this, getResources().getColor(R.color.colorPrimary), 0);
+		}
 		setUpActionBar();
 		setUpUI();
 		getAllDepartment();
@@ -304,6 +223,9 @@ public class UserInfoActivity extends BaseActivity {
 		String headImage = userInfo.getString("headImage");
 		selectedDepartmentID = 0;
 
+		mUserInfoSummitGB = (CardView) findViewById(R.id.userinfo_summit_bg);
+		mUserInfoSummitProgressBar = (ProgressBar) findViewById(R.id.userinfo_summit_progress);
+
 		nameEditPageTextView = (TextView) findViewById(R.id.edit_page_name);
 		if (!TextUtils.isEmpty(name)) {
 			nameEditPageTextView.setText(name);
@@ -343,12 +265,12 @@ public class UserInfoActivity extends BaseActivity {
 			}
 		});
 
-		nameEditPageTextView.setOnClickListener(nameListener);
-		jobNumberEditPageTextView.setOnClickListener(jobNumberListener);
-		phoneNumberEditPageTextView.setOnClickListener(phoneNumberListener);
-		emailEditPageTextView.setOnClickListener(emailListener);
+		findViewById(R.id.card_view_edit_page_name).setOnClickListener(nameListener);
+		findViewById(R.id.card_view_edit_page_job_number).setOnClickListener(jobNumberListener);
+		findViewById(R.id.card_view_edit_page_phone_number).setOnClickListener(phoneNumberListener);
+		findViewById(R.id.card_view_edit_page_email).setOnClickListener(emailListener);
 
-		departmentEditPageTextView.setOnClickListener(new View.OnClickListener() {
+		findViewById(R.id.card_view_edit_page_department).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				final String[] d = new String[department.size()];
@@ -387,6 +309,15 @@ public class UserInfoActivity extends BaseActivity {
 		}
 	}
 
+	private void showProgress(boolean show) {
+		mAnimationIn.setDuration(500);
+		mAnimationOut.setDuration(500);
+		mUserInfoSummitProgressBar.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+		mUserInfoSummitGB.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+		mUserInfoSummitProgressBar.startAnimation(show ? mAnimationIn : mAnimationOut);
+		mUserInfoSummitGB.startAnimation(show ? mAnimationIn : mAnimationOut);
+	}
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		if (item.getItemId() == android.R.id.home) {
@@ -394,6 +325,7 @@ public class UserInfoActivity extends BaseActivity {
 			return true;
 		} else if (item.getItemId() == R.id.item_finish) {
 			Log.d(TAG, "onMenuItemClick: 点击了完成");
+			showProgress(true);
 			final String jobNumber = jobNumberEditPageTextView.getText().toString().trim();
 			final String department = departmentEditPageTextView.getText().toString().trim();
 			final String name = nameEditPageTextView.getText().toString().trim();
@@ -403,7 +335,9 @@ public class UserInfoActivity extends BaseActivity {
 			CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateUserInfo");
 			requestParams.setMultipart(true);
 			final File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/head.jpg");
-			requestParams.addBodyParameter("headimage", file, null);
+			if (file.exists()) {
+				requestParams.addBodyParameter("headimage", file, null);
+			}
 			requestParams.addBodyParameter("employeeid", jobNumber);
 			requestParams.addBodyParameter("departmentid", String.valueOf(mDepartmentID));
 			requestParams.addBodyParameter("name", name);
@@ -440,6 +374,7 @@ public class UserInfoActivity extends BaseActivity {
 
 				@Override
 				public void onError(Throwable ex, boolean isOnCallback) {
+					showProgress(false);
 					ex.printStackTrace();
 				}
 
@@ -489,6 +424,7 @@ public class UserInfoActivity extends BaseActivity {
 							editor.putString("email", email);
 							editor.putString("headImage", headImage);
 							editor.apply();
+							showProgress(false);
 							Snackbar.make(findViewById(R.id.scroll_view_user_info), "保存成功", Snackbar.LENGTH_LONG).show();
 						} catch (JSONException e) {
 							e.printStackTrace();

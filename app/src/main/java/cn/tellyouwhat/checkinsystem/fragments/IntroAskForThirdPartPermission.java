@@ -3,6 +3,7 @@ package cn.tellyouwhat.checkinsystem.fragments;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -10,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.github.paolorotolo.appintro.ISlideBackgroundColorHolder;
 import com.github.paolorotolo.appintro.ISlidePolicy;
 
 import cn.tellyouwhat.checkinsystem.R;
@@ -20,7 +22,7 @@ import cn.tellyouwhat.checkinsystem.utils.MIUIUtil;
  * Created by Harbor-Laptop on 2017/3/31.
  */
 
-public class IntroAskForThirdPartPermission extends Fragment implements ISlidePolicy {
+public class IntroAskForThirdPartPermission extends Fragment implements ISlidePolicy, ISlideBackgroundColorHolder {
 	private boolean buttonClicked = false;
 
 	@Nullable
@@ -65,4 +67,13 @@ public class IntroAskForThirdPartPermission extends Fragment implements ISlidePo
 		return fragment;
 	}
 
+	@Override
+	public int getDefaultBackgroundColor() {
+		return 0;
+	}
+
+	@Override
+	public void setBackgroundColor(@ColorInt int backgroundColor) {
+
+	}
 }

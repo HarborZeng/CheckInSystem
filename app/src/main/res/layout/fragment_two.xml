@@ -1,13 +1,156 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="#0277BD">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/relative_layout_intro2"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/theme_yellow_primary_dark"
+                android:orientation="vertical">
+
+    <ImageView
+        android:id="@+id/imageView6"
+        android:layout_width="150dp"
+        android:layout_height="170dp"
+        android:layout_below="@+id/imageView5"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/location_fail"/>
+
+    <ImageView
+        android:layout_width="110dp"
+        android:layout_height="90dp"
+        android:src="@drawable/gps2"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="34dp"
+        android:layout_marginEnd="34dp"
+        android:id="@+id/imageView8"/>
+
+    <ImageView
+        android:layout_width="180dp"
+        android:layout_height="100dp"
+        android:src="@drawable/clouds"
+        android:id="@+id/imageView7"
+        android:layout_marginRight="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="15dp"
+        android:layout_alignBottom="@+id/imageView8"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"/>
+
+    <ImageView
+        android:id="@+id/imageView5"
+        android:layout_width="230dp"
+        android:layout_height="160dp"
+        android:src="@drawable/building"
+        android:layout_marginBottom="11dp"
+        android:layout_alignBottom="@+id/imageView15"
+        android:layout_alignLeft="@+id/imageView12"
+        android:layout_alignStart="@+id/imageView12"
+        android:layout_marginLeft="7dp"
+        android:layout_marginStart="7dp"/>
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="130dp"
+        android:src="@drawable/base_station_2"
+        android:layout_marginTop="6dp"
+        android:id="@+id/imageView10"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_alignTop="@+id/imageView18"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
+
+    <ImageView
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:src="@drawable/wifi"
+        android:layout_below="@+id/imageView8"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="91dp"
+        android:id="@+id/imageView11"/>
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:rotation="-20"
+        android:src="@drawable/signal"
+        android:layout_marginLeft="33dp"
+        android:layout_marginStart="33dp"
+        android:layout_alignTop="@+id/imageView11"
+        android:layout_alignLeft="@+id/imageView10"
+        android:layout_alignStart="@+id/imageView10"
+        android:id="@+id/imageView9"/>
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="200dp"
+        android:rotation="50"
+        android:src="@drawable/signal"
+        android:layout_marginTop="7dp"
+        android:layout_alignTop="@+id/imageView5"
+        android:layout_alignRight="@+id/imageView5"
+        android:layout_alignEnd="@+id/imageView5"
+        android:id="@+id/imageView18"/>
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:rotation="95"
+        android:src="@drawable/signal"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_below="@+id/imageView5"
+        android:layout_toRightOf="@+id/imageView6"
+        android:layout_toEndOf="@+id/imageView6"/>
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        app:srcCompat="@drawable/ic_clear_pink_24dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginStart="30dp"
+        android:id="@+id/imageView12"
+        android:layout_below="@+id/imageView5"
+        android:layout_alignLeft="@+id/imageView9"
+        android:layout_alignStart="@+id/imageView9"/>
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        app:srcCompat="@drawable/ic_clear_pink_24dp"
+        android:layout_below="@+id/imageView11"
+        android:layout_toLeftOf="@+id/imageView11"
+        android:layout_toStartOf="@+id/imageView11"
+        android:layout_marginRight="12dp"
+        android:layout_marginEnd="12dp"
+        android:id="@+id/imageView13"/>
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        app:srcCompat="@drawable/ic_clear_pink_24dp"
+        android:layout_marginBottom="11dp"
+        android:layout_alignBottom="@+id/imageView11"
+        android:layout_alignLeft="@+id/imageView7"
+        android:layout_alignStart="@+id/imageView7"
+        android:id="@+id/imageView15"/>
+
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/textView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="hahaha"/>
-</LinearLayout>
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="73dp"
+        android:lineSpacingExtra="8sp"
+        android:text="天气和建筑物遮挡可能导致\n信号被阻拦削弱"
+        android:textAlignment="center"
+        android:textColor="#fff"/>
+</RelativeLayout>

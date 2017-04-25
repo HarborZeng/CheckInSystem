@@ -55,7 +55,7 @@ public class SplashActivity extends BaseActivity {
 	}
 
 	private void askForPermission() {
-		Log.i(TAG, "askForPermission: 获取中ing");
+//		Log.i(TAG, "askForPermission: 获取中ing");
 		if (
 				(PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE))
 						||
@@ -63,7 +63,7 @@ public class SplashActivity extends BaseActivity {
 						||
 						(PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION))
 				) {
-			Log.i(TAG, "askForPermission: 没权限");
+//			Log.i(TAG, "askForPermission: 没权限");
 			String[] perms = {"android.permission.WRITE_EXTERNAL_STORAGE", "android.permission.READ_PHONE_STATE", "android.permission.ACCESS_FINE_LOCATION"};
 			ActivityCompat.requestPermissions(this, perms, 1);
 		} else {

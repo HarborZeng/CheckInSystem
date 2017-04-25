@@ -83,7 +83,7 @@ public class LocationDB {
 	public LocationItem queryLastRecord(String username) {
 		LocationItem item = null;
 		try {
-			Cursor cursor = db.execQuery("select time from locations where user_id=" + username + "and building_id != 0 ORDER BY id DESC LIMIT 1");
+			Cursor cursor = db.execQuery("select time from locations where user_id = " + username + " and building_id != 0 ORDER BY id DESC LIMIT 1");
 			while (cursor.moveToNext()) {
 				item = new LocationItem();
 				item.setTime(cursor.getString(cursor.getColumnIndex("time")));

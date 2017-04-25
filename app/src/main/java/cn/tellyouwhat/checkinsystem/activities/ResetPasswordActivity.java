@@ -1,8 +1,10 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
@@ -12,7 +14,9 @@ import android.view.View;
 import com.github.anzewei.parallaxbacklayout.ParallaxBackActivityHelper;
 import com.github.anzewei.parallaxbacklayout.ParallaxBackLayout;
 import com.github.paolorotolo.appintro.AppIntro;
+import com.jaeger.library.StatusBarUtil;
 
+import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.fragments.GetCheckCodeFragment;
 import cn.tellyouwhat.checkinsystem.fragments.UpdatePasswordFragment;
 
@@ -67,7 +71,10 @@ public class ResetPasswordActivity extends AppIntro {
 		super.onCreate(savedInstanceState);
 		mHelper = new ParallaxBackActivityHelper(this);
 		setBackEnable(true);
-
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
+			StatusBarUtil.setColor(ResetPasswordActivity.this, getResources().getColor(R.color.colorPrimary), 0);
+		}
 		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) {
 			actionBar.setDisplayHomeAsUpEnabled(true);

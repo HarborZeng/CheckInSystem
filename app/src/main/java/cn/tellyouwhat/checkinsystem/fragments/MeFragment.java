@@ -47,8 +47,7 @@ public class MeFragment extends BaseFragment {
 	private String mPhoneNumber;
 	private String mEmail;
 	private String mHeadImage;
-	private ProgressBar mGetUserInfoProgressBar;
-	private CardView mGetUserInfoBGCharView;
+
 	AlphaAnimation mAlphaAnimationOut = new AlphaAnimation(1f, 0f);
 	AlphaAnimation mAlphaAnimationIn = new AlphaAnimation(0f, 1f);
 
@@ -77,8 +76,6 @@ public class MeFragment extends BaseFragment {
 	public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
 		Log.i(TAG, "onCreateView: in MeFragment");
 		final View view = inflater.inflate(R.layout.fragment_me, container, false);
-		mGetUserInfoBGCharView = (CardView) view.findViewById(R.id.get_userinfo_bg);
-		mGetUserInfoProgressBar = (ProgressBar) view.findViewById(R.id.get_userinfo_progress);
 		//set up UserInfo
 		setUpUserInfo(view);
 

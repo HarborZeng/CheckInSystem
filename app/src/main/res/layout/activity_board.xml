@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.github.ksoichiro.android.observablescrollview.ObservableScrollView
+            android:id="@+id/scroll_notice"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    android:minHeight="?attr/actionBarSize"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    android:minHeight="?attr/actionBarSize"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_10"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/content_board"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/dp_10"
+                        android:layout_marginLeft="18dp"
+                        android:layout_marginRight="18dp"
+                        android:layout_marginTop="@dimen/dp_10"
+                        android:autoLink="all"
+                        android:elevation="4dp"
+                        android:lineSpacingExtra="8sp"
+                        android:text="content"
+                        android:textColor="#333"
+                        android:textIsSelectable="true"
+                        android:textSize="15sp"/>
+
+                    <TextView
+                        android:id="@+id/author_board"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:paddingEnd="20dp"
+                        android:paddingRight="20dp"
+                        android:paddingTop="20dp"
+                        android:text="author"
+                        android:textAlignment="textEnd"
+                        android:textColor="#333"
+                        android:textIsSelectable="true"
+                        android:textSize="13sp"/>
+
+                    <TextView
+                        android:id="@+id/time_board"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:paddingBottom="20dp"
+                        android:paddingEnd="20dp"
+                        android:paddingRight="20dp"
+                        android:paddingTop="10dp"
+                        android:text="time"
+                        android:textAlignment="textEnd"
+                        android:textColor="#333"
+                        android:textIsSelectable="true"
+                        android:textSize="13sp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </com.github.ksoichiro.android.observablescrollview.ObservableScrollView>
+
+        <LinearLayout
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimary"
+            android:orientation="vertical">
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar_notice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/colorPrimary"
+                android:minHeight="?attr/actionBarSize"
+                android:titleTextColor="@color/true_white"
+                app:popupTheme="@style/AppTheme"/>
+
+            <TextView
+                android:id="@+id/title_board"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:gravity="center_vertical"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:text="title"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="@android:color/white"/>
+        </LinearLayout>
+
+    </FrameLayout>
+</RelativeLayout>

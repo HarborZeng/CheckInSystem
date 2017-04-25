@@ -1,10 +1,11 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,6 +16,7 @@ import com.chad.library.adapter.base.entity.MultiItemEntity;
 import com.github.ksoichiro.android.observablescrollview.ObservableRecyclerView;
 import com.github.ksoichiro.android.observablescrollview.ObservableScrollViewCallbacks;
 import com.github.ksoichiro.android.observablescrollview.ScrollState;
+import com.jaeger.library.StatusBarUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,7 +51,10 @@ public class PhoneCollectionActivity extends BaseActivity implements ObservableS
 		super.onCreate(arg0);
 		setContentView(R.layout.activity_phone_collection);
 		setUpActionBar();
-
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
+			StatusBarUtil.setColor(PhoneCollectionActivity.this, getResources().getColor(R.color.colorPrimary), 0);
+		}
 		mRecyclerView = (ObservableRecyclerView) findViewById(R.id.recycler_view_phone_collection);
 		mRecyclerView.setScrollViewCallbacks(this);
 		mRecyclerView.setHasFixedSize(true);
@@ -88,7 +93,7 @@ public class PhoneCollectionActivity extends BaseActivity implements ObservableS
 				new Callback.CommonCallback<JSONObject>() {
 					@Override
 					public void onSuccess(JSONObject result) {
-						Log.d("电话大全", "onSuccess: 电话大全有：" + result.toString());
+//						Log.d("电话大全", "onSuccess: 电话大全有：" + result.toString());
 						try {
 							int resultInt = result.getInt("result");
 							switch (resultInt) {

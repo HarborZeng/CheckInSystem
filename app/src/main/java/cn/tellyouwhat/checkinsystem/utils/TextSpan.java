@@ -11,8 +11,10 @@ import android.text.style.LineBackgroundSpan;
 public class TextSpan implements LineBackgroundSpan {
 	private int color;
 	private String mText;
-	public static int EXCEPTION = 1;
-	public static int NORMAL = 0;
+	public final static int NOT_CHECK_OUT = 3;
+	public final static int LEAVE_EARILY = 2;
+	public final static int OVER_TIME = 1;
+	public final static int NORMAL = 0;
 	private int mode = -1;
 
 	public TextSpan(int color, String text) {
@@ -27,12 +29,23 @@ public class TextSpan implements LineBackgroundSpan {
 
 	public TextSpan(int mode) {
 		this.mode = mode;
-		if (this.mode == EXCEPTION) {
-			this.color = Color.RED;
-			this.mText = "异常";
-		} else if (this.mode == NORMAL) {
-			this.color = Color.BLACK;
-			this.mText = "正常";
+		switch (this.mode) {
+			case NORMAL:
+				mText = "正常";
+				color = Color.GREEN;
+				break;
+			case OVER_TIME:
+				mText = "加班";
+				color = Color.parseColor("#8E44AD");
+				break;
+			case LEAVE_EARILY:
+				mText = "早退";
+				color = Color.parseColor("#E9D460");
+				break;
+			case NOT_CHECK_OUT:
+				mText = "未签出";
+				color = Color.parseColor("#5C97BF");
+				break;
 		}
 	}
 

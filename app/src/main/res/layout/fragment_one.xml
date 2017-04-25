@@ -1,23 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="#0277BD">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/relative_layout_intro1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#0277BD"
+                android:orientation="vertical">
+
+    <ImageView
+        android:id="@+id/imageView4"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignTop="@+id/imageView3"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="55dp"
+        android:layout_toLeftOf="@+id/imageView3"
+        android:layout_toStartOf="@+id/imageView3"
+        android:src="@drawable/base_station"/>
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="100dp"
+        android:layout_height="88dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="34dp"
+        android:layout_marginRight="34dp"
+        android:src="@drawable/gps"/>
+
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/imageView4"
+        android:layout_marginEnd="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="42dp"
+        android:src="@drawable/wifi"/>
+
+    <ImageView
+        android:id="@+id/imageView3"
+        android:layout_width="210dp"
+        android:layout_height="240dp"
+        android:layout_below="@+id/imageView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="9dp"
+        android:src="@drawable/location"/>
+
+    <ImageView
+        android:layout_width="60dp"
+        android:layout_height="90dp"
+        android:rotation="60"
+        android:src="@drawable/signal"
+        android:layout_marginBottom="14dp"
+        android:layout_alignBottom="@+id/textView5"
+        android:layout_alignRight="@+id/imageView3"
+        android:layout_alignEnd="@+id/imageView3"/>
+
+    <ImageView
+        android:layout_width="60dp"
+        android:layout_height="90dp"
+        android:rotation="100"
+        android:src="@drawable/signal"
+        android:layout_marginRight="45dp"
+        android:layout_marginEnd="45dp"
+        android:layout_alignTop="@+id/imageView4"
+        android:layout_toLeftOf="@+id/textView5"
+        android:layout_toStartOf="@+id/textView5"/>
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="130dp"
+        android:rotation="-10"
+        android:src="@drawable/signal"
+        android:layout_marginBottom="7dp"
+        android:layout_alignBottom="@+id/imageView3"
+        android:layout_toLeftOf="@+id/imageView2"
+        android:layout_toStartOf="@+id/imageView2"
+        android:layout_marginRight="8dp"
+        android:layout_marginEnd="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/imageView4"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="11dp"
+        android:textColor="#fff"
+        android:text="50米"
+        android:id="@+id/textView5"/>
 
     <TextView
         android:id="@+id/textView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="听说签到分三步 \n1\n2\n3 "/>
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="73dp"
+        android:lineSpacingExtra="8sp"
+        android:text="通过基站、WI-FI、GPS三种方式精确定位\n误差50米之内"
+        android:textAlignment="center"
+        android:textColor="#fff"/>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="哈哈"/>
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="lalalalallal"/>
-</LinearLayout>
+</RelativeLayout>

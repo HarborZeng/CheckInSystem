@@ -9,13 +9,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.CardView;
@@ -27,10 +29,13 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
@@ -40,6 +45,7 @@ import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
+import com.sunfusheng.marqueeview.MarqueeView;
 import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
 import com.tencent.mm.opensdk.modelmsg.WXMediaMessage;
 import com.tencent.mm.opensdk.modelmsg.WXTextObject;
@@ -53,11 +59,14 @@ import org.xutils.http.RequestParams;
 import org.xutils.x;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.activities.BoardActivity;
 import cn.tellyouwhat.checkinsystem.activities.MainActivity;
+import cn.tellyouwhat.checkinsystem.bean.Notice;
 import cn.tellyouwhat.checkinsystem.db.LocationDB;
 import cn.tellyouwhat.checkinsystem.db.LocationItem;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
@@ -74,12 +83,15 @@ import static cn.tellyouwhat.checkinsystem.bases.BaseApplication.api;
  */
 
 public class CheckInFragment extends BaseFragment {
+	public static final int CHECK_IN_STATUS = 60;
+	private static final int CHECK_OUT_STATUS = 61;
+	private static final int CHECK_STATUS = 62;
 	private final String TAG = "CheckInFragment";
 	public LocationClient mLocationClient = null;
 	public LocationClient mGetLocationClient = null;
 	public BDLocationListener mCheckInLocationListener = new CheckInLocationListener();
 	public BDLocationListener mGetLocationLocationListener = new GetLocationLocationListener();
-	AlphaAnimation alphaAnimation = new AlphaAnimation(0f, 1f);
+	private AlphaAnimation alphaAnimation = new AlphaAnimation(0f, 1f);
 	private Polygon polygons[];
 	private ImageView imageView2_cover_in50;
 	private ImageView imageView2_cover_out50;
@@ -111,30 +123,16 @@ public class CheckInFragment extends BaseFragment {
 					@Override
 					public void onClick(View v) {
 						mLocationClient.stop();
-						new Thread(new Runnable() {
-							@Override
-							public void run() {
-								//睡100毫秒是为了防止当执行setVisibility INVISIBLE时不至于 服务器对于是否在设定区域内的结果还未返回
-								//就已经执行了findViewById(R.id.out_of_range).setVisibility(View.INVISIBLE);
-								//类似的代码从而导致取消定位之后有残留的图片
-								SystemClock.sleep(300);
-								getActivity().runOnUiThread(new Runnable() {
-									@Override
-									public void run() {
-										imageView_cover_out_company.setVisibility(View.INVISIBLE);
-										imageView_cover_in_company.setVisibility(View.INVISIBLE);
-										succeed.setVisibility(View.INVISIBLE);
-										imageView_cover_finally_success.setVisibility(View.INVISIBLE);
-										out_of_range.setVisibility(View.INVISIBLE);
-										in_range.setVisibility(View.INVISIBLE);
-										imageView2_cover_in50.setVisibility(View.INVISIBLE);
-										imageView2_cover_out50.setVisibility(View.INVISIBLE);
-										enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
-										enough_accuracy_text_view.setVisibility(View.INVISIBLE);
-									}
-								});
-							}
-						}).start();
+						imageView_cover_out_company.setVisibility(View.INVISIBLE);
+						imageView_cover_in_company.setVisibility(View.INVISIBLE);
+						succeed.setVisibility(View.INVISIBLE);
+						imageView_cover_finally_success.setVisibility(View.INVISIBLE);
+						out_of_range.setVisibility(View.INVISIBLE);
+						in_range.setVisibility(View.INVISIBLE);
+						imageView2_cover_in50.setVisibility(View.INVISIBLE);
+						imageView2_cover_out50.setVisibility(View.INVISIBLE);
+						enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
+						enough_accuracy_text_view.setVisibility(View.INVISIBLE);
 					}
 				}).show();
 			} else {
@@ -207,6 +205,13 @@ public class CheckInFragment extends BaseFragment {
 	private TextView mCheckStatusTextView;
 	private TextView mLocationTextView;
 	private CardView mLocationCardView;
+	private SharedPreferences sharedPref;
+	private MarqueeView marqueeView;
+	private ArrayList<Notice> mNotices;
+	private ToggleButton mEnableGPSToggleButton;
+	private LocationManager mLocationManager;
+	private ToggleButton mEnableWiFiToggleButton;
+	private WifiManager mWifiManager;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -219,6 +224,8 @@ public class CheckInFragment extends BaseFragment {
 	public void onResume() {
 		Log.i(TAG, "onResume: in CheckInFragment");
 		super.onResume();
+		mEnableWiFiToggleButton.setChecked(mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLED);
+		mEnableGPSToggleButton.setChecked(mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER));
 		getTodayStatus();
 	}
 
@@ -256,6 +263,10 @@ public class CheckInFragment extends BaseFragment {
 							mHasCheckIn = result.getBoolean("hascheckin");
 							mHasCheckOut = result.getBoolean("hascheckout");
 							saveTodayStatus();
+							boolean useOngoingNotification = sharedPref.getBoolean("use_ongoing_notification", true);
+							if (useOngoingNotification) {
+								makeNotification();
+							}
 							SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 							mCheckStatusTextView.setText(formatter.format(new Date()) + "\n今日 ");
 							mCheckStatusTextView.append(mHasCheckIn ? "已签到" : "未签到");
@@ -273,7 +284,7 @@ public class CheckInFragment extends BaseFragment {
 						updateSession();
 						break;
 					case -1:
-						Toast.makeText(getActivity(), "不得了的错误代码012", Toast.LENGTH_LONG).show();
+						Toast.makeText(x.app(), "不得了的错误代码012", Toast.LENGTH_LONG).show();
 						break;
 					default:
 						break;
@@ -282,12 +293,7 @@ public class CheckInFragment extends BaseFragment {
 
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
-				//极小可能性出现以下情况： at org.xutils.http.HttpTask.onError(HttpTask.java:455)
-				//activity提前被销毁，getActivity()返回空值导致java.lang.NullPointerException的出现应用崩溃
-				FragmentActivity activity = getActivity();
-				if (activity != null) {
-					Toast.makeText(activity, "获取今日状态出错", Toast.LENGTH_LONG).show();
-				}
+				Toast.makeText(x.app(), "获取今日状态出错", Toast.LENGTH_LONG).show();
 			}
 
 			@Override
@@ -302,8 +308,33 @@ public class CheckInFragment extends BaseFragment {
 		});
 	}
 
+	private void makeNotification() {
+		NotifyUtil notifyUtil = new NotifyUtil(getContext(), CHECK_IN_STATUS);
+		Intent leftIntent = new Intent(getContext(), MainActivity.class);
+		leftIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		leftIntent.putExtra("BEGIN_CHECK_IN", true);
+		PendingIntent leftPendingIntent = PendingIntent.getActivity(getContext(), CHECK_IN_STATUS, leftIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		Intent rightIntent = new Intent(getContext(), MainActivity.class);
+		rightIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		rightIntent.putExtra("BEGIN_CHECK_OUT", true);
+		PendingIntent rightPendingIntent = PendingIntent.getActivity(getContext(), CHECK_OUT_STATUS, rightIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		Intent intent = new Intent(getContext(), MainActivity.class);
+		PendingIntent pendingIntent = PendingIntent.getActivity(getContext(), CHECK_STATUS, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+		notifyUtil.setOnGoing(true);
+
+		notifyUtil.notifyTwoButton(pendingIntent, R.drawable.ic_golf_course,
+				R.drawable.locate, "签到", leftPendingIntent,
+				R.drawable.check_out, "签出", rightPendingIntent,
+				"今日签到",
+				"今日签到情况",
+				"今日 " + (sharedPref.getBoolean("has_check_in", false) ? "已签到" : "未签到") + "    " + (sharedPref.getBoolean("has_check_out", false) ? "已签出" : "未签出"),
+				false, false, false);
+
+	}
+
 	private void saveTodayStatus() {
-		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
 		SharedPreferences.Editor editor = sharedPref.edit();
 		editor.putBoolean("has_check_in", mHasCheckIn);
 		editor.putBoolean("has_check_out", mHasCheckOut);
@@ -311,39 +342,50 @@ public class CheckInFragment extends BaseFragment {
 	}
 
 	private void getLocationGPSDetail() {
-		RequestParams requestParams = new RequestParams("http://update.checkin.tellyouwhat.cn/company_location.json");
-		x.http().request(HttpMethod.GET, requestParams, new Callback.CommonCallback<JSONArray>() {
+		RequestParams requestParams = new RequestParams("http://api.checkin.tellyouwhat.cn/location/getalllocation");
+		x.http().request(HttpMethod.GET, requestParams, new Callback.CommonCallback<JSONObject>() {
 			@Override
-			public void onSuccess(JSONArray jsonArray) {
-				polygons = new Polygon[jsonArray.length()];
-				locationIDs = new int[jsonArray.length()];
-				locationNames = new String[jsonArray.length()];
-				for (int i = 0; i < jsonArray.length(); i++) {
-					JSONObject jsonObject;
-					try {
-						jsonObject = jsonArray.getJSONObject(i);
-						locationNames[i] = jsonObject.getString("name");
-						locationIDs[i] = jsonObject.getInt("locationID");
-						int x1 = (int) (jsonObject.getDouble("x1") * 1000000);
-						int x2 = (int) (jsonObject.getDouble("x2") * 1000000);
-						int x3 = (int) (jsonObject.getDouble("x3") * 1000000);
-						int x4 = (int) (jsonObject.getDouble("x4") * 1000000);
-						int y1 = (int) (jsonObject.getDouble("y1") * 1000000);
-						int y2 = (int) (jsonObject.getDouble("y2") * 1000000);
-						int y3 = (int) (jsonObject.getDouble("y3") * 1000000);
-						int y4 = (int) (jsonObject.getDouble("y4") * 1000000);
-						int xPoints[] = new int[]{x1, x2, x3, x4};
-						int yPoints[] = new int[]{y1, y2, y3, y4};
-						polygons[i] = new Polygon(xPoints, yPoints, 4);
-					} catch (JSONException e) {
-						e.printStackTrace();
+			public void onSuccess(JSONObject result) {
+				try {
+					int resultInt = result.getInt("result");
+					switch (resultInt) {
+						case 1:
+							JSONArray jsonArray = result.getJSONArray("data");
+							polygons = new Polygon[jsonArray.length()];
+							locationIDs = new int[jsonArray.length()];
+							locationNames = new String[jsonArray.length()];
+							for (int i = 0; i < jsonArray.length(); i++) {
+								JSONObject jsonObject;
+								jsonObject = jsonArray.getJSONObject(i);
+								locationIDs[i] = jsonObject.getInt("LocationID");
+								locationNames[i] = jsonObject.getString("LocationName");
+								int x1 = (int) (jsonObject.getDouble("X1") * 1000000);
+								int x2 = (int) (jsonObject.getDouble("X2") * 1000000);
+								int x3 = (int) (jsonObject.getDouble("X3") * 1000000);
+								int x4 = (int) (jsonObject.getDouble("X4") * 1000000);
+								int y1 = (int) (jsonObject.getDouble("Y1") * 1000000);
+								int y2 = (int) (jsonObject.getDouble("Y2") * 1000000);
+								int y3 = (int) (jsonObject.getDouble("Y3") * 1000000);
+								int y4 = (int) (jsonObject.getDouble("Y4") * 1000000);
+								int xPoints[] = new int[]{x1, x2, x3, x4};
+								int yPoints[] = new int[]{y1, y2, y3, y4};
+								polygons[i] = new Polygon(xPoints, yPoints, 4);
+
+							}
+							break;
+						default:
+							Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+							break;
 					}
+				} catch (JSONException e) {
+					e.printStackTrace();
 				}
+
 			}
 
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
-				Toast.makeText(x.app(), "获取公司位置出错", Toast.LENGTH_LONG).show();
+				Toast.makeText(x.app(), "获取公司位置出错", Toast.LENGTH_SHORT).show();
 			}
 
 			@Override
@@ -395,10 +437,22 @@ public class CheckInFragment extends BaseFragment {
 		shareLocationToFriendsButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				String text = mLocationTextView.getText().toString();
-				//TODO 继续添加分享的逻辑
-//				shareToSystemDialog(text);
-				shareToWeChatFriend(text);
+				new MaterialDialog.Builder(getContext())
+						.title("分享到...")
+						.items("微信", "其他...")
+						.itemsCallback(new MaterialDialog.ListCallback() {
+							@Override
+							public void onSelection(MaterialDialog dialog, View itemView, int position, CharSequence text) {
+								String sharedMessage = mLocationTextView.getText().toString();
+								switch (position) {
+									case 0:
+										shareToWeChatFriend(sharedMessage);
+										break;
+									case 1:
+										shareToSystemDialog(sharedMessage);
+								}
+							}
+						}).show();
 			}
 
 			private void shareToWeChatFriend(String text) {
@@ -486,6 +540,8 @@ public class CheckInFragment extends BaseFragment {
 			@Override
 			public void onRefresh() {
 				getTodayStatus();
+				prepareBoard();
+				getLocationGPSDetail();
 				imageView2_cover_in50.setVisibility(View.INVISIBLE);
 				imageView2_cover_out50.setVisibility(View.INVISIBLE);
 				imageView_cover_in_company.setVisibility(View.INVISIBLE);
@@ -510,9 +566,6 @@ public class CheckInFragment extends BaseFragment {
 		imageView_cover_out_company = (ImageView) view.findViewById(R.id.imageView_cover_out_company);
 		enough_accuracy_text_view = (TextView) view.findViewById(R.id.enough_accuracy_text_view);
 
-//    LayoutInflater inflater2 = (LayoutInflater)getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-//    groupPollingAddress = (LinearLayout)inflater2.inflate(R.layout.three_state, null);
-
 		mMenuMultipleActions = (FloatingActionsMenu) view.findViewById(R.id.multiple_actions);
 		x.task().postDelayed(new Runnable() {
 			@Override
@@ -533,15 +586,17 @@ public class CheckInFragment extends BaseFragment {
 		//声明LocationClient类
 		mLocationClient.registerLocationListener(mCheckInLocationListener);
 		//注册监听函数
-		initCheckinLocation();
+		initCheckInLocation();
 
 		Bundle arguments = getArguments();
-		final boolean beginCheckIn = arguments.getBoolean("BEGIN_CHECK_IN");
-		x.task().postDelayed(new Runnable() {
+		final boolean beginCheckIn = arguments.getBoolean("BEGIN_CHECK_IN", false);
+		final boolean beginCheckOut = arguments.getBoolean("BEGIN_CHECK_OUT", false);
+		x.task().post(new Runnable() {
 			@Override
 			public void run() {
-				if (beginCheckIn) {
-					isCheckingIn = true;
+				if (beginCheckIn || beginCheckOut) {
+					isCheckingIn = beginCheckIn;
+//					Log.d(TAG, "run: isCheckIn????" + isCheckingIn);
 					if (PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
 						//开始定位
 						mLocationClient.start();
@@ -591,9 +646,104 @@ public class CheckInFragment extends BaseFragment {
 
 				}
 			}
-		}, 500);
+		});
+
+		marqueeView = (MarqueeView) view.findViewById(R.id.marqueeView);
+		prepareBoard();
+		marqueeView.setOnItemClickListener(new MarqueeView.OnItemClickListener() {
+			@Override
+			public void onItemClick(int position, TextView textView) {
+				Intent intent = new Intent(getContext(), BoardActivity.class);
+				Notice notice = mNotices.get(position);
+				intent.putExtra("notice", notice);
+				startActivity(intent);
+			}
+		});
+
+		mWifiManager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+		mEnableWiFiToggleButton = (ToggleButton) view.findViewById(R.id.toggle_button_enable_wifi);
+		mEnableWiFiToggleButton.setChecked(mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLED);
+		mEnableWiFiToggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				if (isChecked) {
+					boolean wifiEnabled = mWifiManager.setWifiEnabled(true);
+					if (wifiEnabled) {
+						Toast.makeText(getContext(), "Wi-Fi已启用", Toast.LENGTH_SHORT).show();
+					} else {
+						Toast.makeText(getContext(), "启用Wi-Fi出错，是否没有权限？", Toast.LENGTH_SHORT).show();
+					}
+				} else {
+					boolean wifiEnabled = mWifiManager.setWifiEnabled(false);
+					if (wifiEnabled) {
+						Toast.makeText(getContext(), "Wi-Fi已关闭", Toast.LENGTH_SHORT).show();
+					} else {
+						Toast.makeText(getContext(), "关闭Wi-Fi出错，是否没有权限？", Toast.LENGTH_SHORT).show();
+					}
+				}
+			}
+		});
+
+		mLocationManager = (LocationManager) getActivity().getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
+		mEnableGPSToggleButton = (ToggleButton) view.findViewById(R.id.toggle_button_enable_GPS);
+		mEnableGPSToggleButton.setChecked(mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER));
+		mEnableGPSToggleButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+				startActivity(intent);
+			}
+		});
 
 		return view;
+	}
+
+	private void prepareBoard() {
+		x.http().get(new RequestParams("http://update.checkin.tellyouwhat.cn/board.json"), new Callback.CommonCallback<JSONArray>() {
+			@Override
+			public void onSuccess(JSONArray result) {
+//				Log.d(TAG, "onSuccess: 板子上要写的东西有："+result);
+				mNotices = new ArrayList<>();
+				for (int i = 0; i < result.length(); i++) {
+					try {
+						JSONObject jsonObject = result.getJSONObject(i);
+						String title = jsonObject.getString("title");
+						String content = jsonObject.getString("content");
+						String time = jsonObject.getString("time");
+						String author = jsonObject.getString("author");
+						Notice notice = new Notice();
+						notice.setContent(content);
+						notice.setTitle(title);
+						notice.setTime(time);
+						notice.setAuthor(author);
+						mNotices.add(notice);
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
+				}
+				List<String> noticeTitles = new ArrayList<>();
+				for (Notice noticeTitle :
+						mNotices) {
+					noticeTitles.add(noticeTitle.getTitle());
+				}
+				marqueeView.startWithList(noticeTitles);
+			}
+
+			@Override
+			public void onError(Throwable ex, boolean isOnCallback) {
+				Toast.makeText(x.app(), "加载通知出错", Toast.LENGTH_SHORT).show();
+			}
+
+			@Override
+			public void onCancelled(CancelledException cex) {
+
+			}
+
+			@Override
+			public void onFinished() {
+
+			}
+		});
 	}
 
 	@Override
@@ -602,7 +752,19 @@ public class CheckInFragment extends BaseFragment {
 		super.onDestroy();
 	}
 
-	private void initCheckinLocation() {
+	@Override
+	public void onStart() {
+		super.onStart();
+		marqueeView.startFlipping();
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		marqueeView.stopFlipping();
+	}
+
+	private void initCheckInLocation() {
 		LocationClientOption option = new LocationClientOption();
 		option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
 		//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
@@ -1034,7 +1196,7 @@ public class CheckInFragment extends BaseFragment {
 			builder.append("\n位置信息描述: ");
 			builder.append(location.getLocationDescribe() == null || "null".equals(location.getLocationDescribe()) ? "离线定位，位置未知" : location.getLocationDescribe());    //位置语义化信息
 			if (polygons == null) {
-				Toast.makeText(getContext(), "还在初始化数据", Toast.LENGTH_SHORT).show();
+				Toast.makeText(x.app(), "还在初始化数据", Toast.LENGTH_SHORT).show();
 			} else {
 				for (int i = 0; i < polygons.length; i++) {
 					Log.d(TAG, "onReceiveLocation: 测验: " + locationNames[i]);
@@ -1102,13 +1264,13 @@ public class CheckInFragment extends BaseFragment {
 							if (showNotifications) {
 								Intent intent = new Intent(getActivity(), MainActivity.class);
 								intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-								PendingIntent pIntent = PendingIntent.getActivity(x.app(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+								PendingIntent pIntent = PendingIntent.getActivity(x.app(), 16, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 								String ticker = "您有一条新通知";
-								String title = "签到成功";
+								String title = "签出成功";
 								String content = "恭喜您，今日签出成功";
-								NotifyUtil notificationSucceededCheckIn = new NotifyUtil(x.app(), 1);
+								NotifyUtil notificationSucceededCheckIn = new NotifyUtil(x.app(), 16);
 								notificationSucceededCheckIn.setOnGoing(false);
-								notificationSucceededCheckIn.notify_normal_singline(pIntent, R.mipmap.ic_launcher, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, false);
+								notificationSucceededCheckIn.notify_normal_singline(pIntent, R.drawable.ic_stat_name, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, false);
 							}
 							break;
 						case 0:
@@ -1166,7 +1328,6 @@ public class CheckInFragment extends BaseFragment {
 			}
 		});
 	}
-
 
 	private void beginCheckingIn(float radius, double longitude, double latitude, String time) {
 		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/checkin");
@@ -1206,20 +1367,20 @@ public class CheckInFragment extends BaseFragment {
 							if (showNotifications) {
 								Intent intent = new Intent(getActivity(), MainActivity.class);
 								intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-								PendingIntent pIntent = PendingIntent.getActivity(x.app(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+								PendingIntent pIntent = PendingIntent.getActivity(x.app(), 15, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 								String ticker = "您有一条新通知";
 								String title = "签到成功";
 								String content = "恭喜您，今日签到成功";
-								NotifyUtil notificationSucceededCheckIn = new NotifyUtil(x.app(), 1);
+								NotifyUtil notificationSucceededCheckIn = new NotifyUtil(x.app(), 15);
 								notificationSucceededCheckIn.setOnGoing(false);
-								notificationSucceededCheckIn.notify_normal_singline(pIntent, R.mipmap.ic_launcher, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, true);
+								notificationSucceededCheckIn.notify_normal_singline(pIntent, R.drawable.ic_stat_name, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, true);
 							}
 							break;
 						case 0:
 							updateSession();
 							break;
 						case -1:
-							Toast.makeText(x.app(), "发生了可怕的错误，代码：008，我们正在抢修", Toast.LENGTH_SHORT).show();
+							Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
 							break;
 						case -2:
 							imageView_cover_finally_success.setVisibility(View.VISIBLE);
@@ -1253,6 +1414,7 @@ public class CheckInFragment extends BaseFragment {
 
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
+				ex.printStackTrace();
 				view = getView();
 				if (view != null) {
 					Snackbar.make(view, "网络开小差了~~", Snackbar.LENGTH_LONG).show();
@@ -1277,4 +1439,3 @@ public class CheckInFragment extends BaseFragment {
 		return fragment;
 	}
 }
-

@@ -1,13 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="#0277BD">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/green">
 
+    <ImageView
+        android:layout_width="70dp"
+        android:layout_height="80dp"
+        android:src="@drawable/location_3"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="118dp"
+        android:layout_marginEnd="118dp"
+        android:layout_marginTop="25dp"
+        android:id="@+id/imageView14"/>
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/history"
+        android:layout_below="@+id/imageView14"
+        android:layout_toLeftOf="@+id/imageView14"
+        android:layout_toStartOf="@+id/imageView14"
+        android:layout_marginRight="80dp"
+        android:layout_marginEnd="80dp"
+        android:layout_marginTop="47dp"
+        android:id="@+id/imageView16"/>
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/statistic"
+        android:layout_marginTop="6dp"
+        android:id="@+id/imageView17"
+        android:layout_below="@+id/imageView16"
+        android:layout_toRightOf="@+id/imageView16"
+        android:layout_toEndOf="@+id/imageView16"
+        android:layout_marginLeft="34dp"
+        android:layout_marginStart="34dp"/>
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/flag"
+        android:layout_below="@+id/imageView17"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="53dp"
+        android:layout_marginStart="53dp"/>
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/textView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="lalala"/>
-</LinearLayout>
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="73dp"
+        android:lineSpacingExtra="8sp"
+        android:text="每隔5分钟定位一次，签到状态、签到报表、历史记录\n找到签到的乐趣"
+        android:textAlignment="center"
+        android:textColor="#fff"/>
+</RelativeLayout>

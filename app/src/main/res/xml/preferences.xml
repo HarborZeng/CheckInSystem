@@ -54,6 +54,11 @@
         android:title="通知">
         <CheckBoxPreference
             android:defaultValue="true"
+            android:key="use_ongoing_notification"
+            android:title="常驻通知栏"
+            android:summary="开启后显示一条通知显示今日是否已签出签入"/>
+        <CheckBoxPreference
+            android:defaultValue="true"
             android:key="show_notifications"
             android:summary="启用后，将在签到成功等场景发送一条通知"
             android:title="启用签到成功通知"/>
@@ -79,8 +84,17 @@
             android:title="使用沉浸式状态栏"/>
 
     </PreferenceCategory>
-    <Preference
+    <PreferenceCategory
         android:title="关于">
-        <intent android:action="cn.tellyouwhat.checkinsystem.about"/>
-    </Preference>
+        <Preference
+            android:title="查看应用信息">
+            <intent
+                android:action="android.settings.APPLICATION_DETAILS_SETTINGS"
+                android:data="package:cn.tellyouwhat.checkinsystem"/>
+        </Preference>
+        <Preference
+            android:title="关于">
+            <intent android:action="cn.tellyouwhat.checkinsystem.about"/>
+        </Preference>
+    </PreferenceCategory>
 </PreferenceScreen>

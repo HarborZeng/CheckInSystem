@@ -1,13 +1,17 @@
 package cn.tellyouwhat.checkinsystem.services;
 
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -15,26 +19,34 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xutils.common.Callback;
+import org.xutils.http.RequestParams;
+import org.xutils.http.cookie.DbCookieStore;
 import org.xutils.x;
 
+import java.net.HttpCookie;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.activities.MainActivity;
 import cn.tellyouwhat.checkinsystem.db.LocationDB;
 import cn.tellyouwhat.checkinsystem.db.LocationItem;
 import cn.tellyouwhat.checkinsystem.receivers.BatteryReceiver;
+import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
+import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
+import cn.tellyouwhat.checkinsystem.utils.NotifyUtil;
 
 /**
  * Created by HarborZeng on 2017/4/14.
- * This is a class for
+ * This is a class for auto check in
  */
 
 public class AutoCheckInService extends Service {
@@ -45,7 +57,6 @@ public class AutoCheckInService extends Service {
 	}
 
 	private static final int CHECK_OUT = 1;
-	private static final int NOTHING_TODO = 0;
 	private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
 	private BatteryReceiver batteryReceiver;
 	private Handler handler = new Handler(new Handler.Callback() {
@@ -54,7 +65,8 @@ public class AutoCheckInService extends Service {
 			switch (msg.what) {
 				case CHECK_OUT:
 					//查数据库最后一条在公司的记录
-					getThisMonthStatusTnenCheckOut();
+					Log.d(TAG, "handleMessage: getThisMonthStatusThenCheckOut方法执行之前");
+					getThisMonthStatusThenCheckOut();
 					return true;
 			}
 			return false;
@@ -70,6 +82,7 @@ public class AutoCheckInService extends Service {
 					int hasNotifiedNTimes = sharedPreferences.getInt("has_notified_N_times", 0);
 					//5次就是25min的时间
 					if (hasNotifiedNTimes == 5) {
+						updateSession();
 						LocationDB locationDB = new LocationDB();
 						Calendar calendar = Calendar.getInstance();
 						int year = calendar.get(Calendar.YEAR);
@@ -88,6 +101,10 @@ public class AutoCheckInService extends Service {
 						} else {
 							dayString = String.valueOf(day);
 						}
+						if (TextUtils.isEmpty(employeeID)) {
+							SharedPreferences infoSharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
+							employeeID = infoSharedPreferences.getString("employeeID", "");
+						}
 						LocationItem item = locationDB.queryFirstRecordOfDay(yearString, monthString, dayString, employeeID);
 						String time = item.getTime();
 						Log.d(TAG, "onSharedPreferenceChanged: 从数据库查来的time:" + time);
@@ -103,11 +120,27 @@ public class AutoCheckInService extends Service {
 									int resultInt = result.getInt("result");
 									switch (resultInt) {
 										case 1:
-											//TODO 自动签到成功，发送一条通知
+											SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+											boolean showNotifications = sharedPref.getBoolean("show_notifications", true);
+											boolean notificationsRingEnabled = sharedPref.getBoolean("notifications_ring_enabled", false);
+											boolean notificationsVibrateEnabled = sharedPref.getBoolean("notifications_vibrate_enabled", true);
+											if (showNotifications) {
+												Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+												intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+												PendingIntent pIntent = PendingIntent.getActivity(x.app(), 3, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+												String ticker = "您有一条新通知";
+												String title = "签到成功";
+												String content = "恭喜您，今日自动签到成功";
+												NotifyUtil notificationSucceededCheckIn = new NotifyUtil(x.app(), 3);
+												notificationSucceededCheckIn.setOnGoing(false);
+												notificationSucceededCheckIn.notify_normal_singline(pIntent, R.drawable.ic_stat_name, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, true);
+											}
 											Toast.makeText(x.app(), "自动签到成功", Toast.LENGTH_SHORT).show();
+											updateTodayStatus();
 											break;
 										case 0:
 											//session失效，重新登录
+											updateSession();
 											Toast.makeText(getApplicationContext(), result.getString("message"), Toast.LENGTH_LONG).show();
 											Intent intent = new Intent(getApplicationContext(), MainActivity.class);
 											intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -148,6 +181,129 @@ public class AutoCheckInService extends Service {
 			}
 		}
 	};
+
+	private void updateTodayStatus() {
+		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/GetTodayStatus");
+		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
+			@Override
+			public void onSuccess(JSONObject result) {
+				Log.i(TAG, "onSuccess: 今日状态是：" + result.toString());
+				int resultInt = -1;
+				try {
+					resultInt = result.getInt("result");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				switch (resultInt) {
+					case 1:
+						try {
+							Boolean hasCheckIn = result.getBoolean("hascheckin");
+							Boolean hasCheckOut = result.getBoolean("hascheckout");
+							SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+							SharedPreferences.Editor editor = sharedPref.edit();
+							editor.putBoolean("has_check_in", hasCheckIn);
+							editor.putBoolean("has_check_out", hasCheckOut);
+							editor.apply();
+							Log.i(TAG, "onSuccess: 今日状态已更新");
+						} catch (JSONException e) {
+							e.printStackTrace();
+							Log.i(TAG, "onSuccess: 今日状态更新出错，json解析异常");
+						}
+						break;
+					case 0:
+						updateSession();
+						break;
+					case -1:
+						Toast.makeText(x.app(), "不得了的错误代码012", Toast.LENGTH_LONG).show();
+						break;
+					default:
+						break;
+				}
+			}
+
+			@Override
+			public void onError(Throwable ex, boolean isOnCallback) {
+				Toast.makeText(x.app(), "获取今日状态出错", Toast.LENGTH_LONG).show();
+			}
+
+			@Override
+			public void onCancelled(CancelledException cex) {
+
+			}
+
+			@Override
+			public void onFinished() {
+
+			}
+		});
+	}
+
+	private void updateSession() {
+		SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
+		String userName = sharedPreferences.getString("USER_NAME", "");
+		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");
+		String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
+		if (!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(token)) {
+			RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+			x.http().get(p, new Callback.CommonCallback<JSONObject>() {
+				private int resultInt;
+
+				@Override
+				public void onSuccess(JSONObject result) {
+					try {
+						resultInt = result.getInt("result");
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
+					switch (resultInt) {
+						case 1:
+							DbCookieStore instance = DbCookieStore.INSTANCE;
+							List<HttpCookie> cookies = instance.getCookies();
+							for (HttpCookie cookie : cookies) {
+								String name = cookie.getName();
+								String value = cookie.getValue();
+								if (ConstantValues.COOKIE_NAME.equals(name)) {
+									SharedPreferences preferences = x.app().getSharedPreferences(ConstantValues.COOIKE_SHARED_PREFERENCE_NAME, MODE_PRIVATE);
+									SharedPreferences.Editor editor = preferences.edit();
+									editor.putString(ConstantValues.cookie, value);
+									editor.apply();
+									break;
+								}
+							}
+							break;
+						case 0:
+							try {
+								Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+							} catch (JSONException e) {
+								e.printStackTrace();
+							}
+							break;
+						case -1:
+							Toast.makeText(x.app(), "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
+							break;
+						default:
+							break;
+					}
+				}
+
+				@Override
+				public void onError(Throwable ex, boolean isOnCallback) {
+
+				}
+
+				@Override
+				public void onCancelled(CancelledException cex) {
+
+				}
+
+				@Override
+				public void onFinished() {
+
+				}
+			});
+		}
+	}
+
 	private String employeeID;
 
 	@Nullable
@@ -172,14 +328,16 @@ public class AutoCheckInService extends Service {
 		batteryfilter.addAction(Intent.ACTION_BATTERY_CHANGED);
 		registerReceiver(batteryReceiver, batteryfilter);
 
-		Calendar calendar = Calendar.getInstance();
+		Date date = new Date();
+		Log.d(TAG, "onCreate: 年份是：" + date.getYear());
 		Date time = null;
 		try {
-			time = formatter.parse(calendar.get(Calendar.YEAR) + "-" + calendar.get(Calendar.MONTH) + 1 + "-" + calendar.get(Calendar.DAY_OF_MONTH) + " 23:59:00");
+			time = formatter.parse((date.getYear() + 1900) + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " 23:59:00");
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
 		long DAY_MILLIS = 86400000;
+		Log.d(TAG, "onCreate: time is " + time);
 		new Timer(true).schedule(new TimerTask() {
 			@Override
 			public void run() {
@@ -202,11 +360,11 @@ public class AutoCheckInService extends Service {
 		super.onDestroy();
 	}
 
-	private void getThisMonthStatusTnenCheckOut() {
+	private void getThisMonthStatusThenCheckOut() {
 		Calendar calendar = Calendar.getInstance();
 		int year = calendar.get(Calendar.YEAR);
 		int month = calendar.get(Calendar.MONTH);
-		Log.i(TAG, "getThisMonthStatusTnenCheckOut: year is " + year + ", and month is " + month);
+		Log.i(TAG, "getThisMonthStatusThenCheckOut: year is " + year + ", and month is " + month);
 		int realMonth = month + 1;
 		CookiedRequestParams params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/GetMonthData?year=" + year + "&month=" + realMonth);
 		x.http().get(params, new Callback.CommonCallback<JSONObject>() {
@@ -220,20 +378,19 @@ public class AutoCheckInService extends Service {
 							LocationDB db = new LocationDB();
 							LocationItem item = db.queryLastRecord(employeeID);
 							String timeString = item.getTime();
-							Date time = formatter.parse(timeString, new ParsePosition(0));
-							int timeYear = time.getYear();
-							int timeMonth = time.getMonth();
-							int timeDay = time.getDate();
-							int hour = time.getHours();
-							int minute = time.getMinutes();
-							int second = time.getSeconds();
+							String timeYear = timeString.substring(0, 4);
+							String timeMonth = timeString.substring(5, 7);
+							String timeDay = timeString.substring(8, 10);
+							String hour = timeString.substring(11, 13);
+							String minute = timeString.substring(14, 16);
+							String second = timeString.substring(17, 19);
 							JSONArray resultJSONArray = result.getJSONArray("data");
 							for (int i = 0; i < resultJSONArray.length(); i++) {
 								JSONObject jsonObject = resultJSONArray.getJSONObject(i);
 								String checkInID = jsonObject.getString("CheckInID");
 								String checkInTime = jsonObject.getString("CheckInTime");
 								if (checkInTime.startsWith(timeYear + "-" + timeMonth + "-" + timeDay)) {
-									x.http().get(new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/AutoCheckOut?id="
+									x.http().get(new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/AutoCheckOut?checkinid="
 													+ checkInID + "&hour=" + hour + "&minute=" + minute + "&second=" + second),
 											new CommonCallback<JSONObject>() {
 												@Override
@@ -243,7 +400,21 @@ public class AutoCheckInService extends Service {
 														int resultAutoCheckOut = result.getInt("result");
 														switch (resultAutoCheckOut) {
 															case 1:
-																//TODO 自动签出成功的通知
+																SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+																boolean showNotifications = sharedPref.getBoolean("show_notifications", true);
+																boolean notificationsRingEnabled = sharedPref.getBoolean("notifications_ring_enabled", false);
+																boolean notificationsVibrateEnabled = sharedPref.getBoolean("notifications_vibrate_enabled", true);
+																if (showNotifications) {
+																	Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+																	intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+																	PendingIntent pIntent = PendingIntent.getActivity(x.app(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+																	String ticker = "您有一条新通知";
+																	String title = "签出成功";
+																	String content = "恭喜您，今日自动签出成功";
+																	NotifyUtil notificationSucceededCheckIn = new NotifyUtil(x.app(), 1);
+																	notificationSucceededCheckIn.setOnGoing(false);
+																	notificationSucceededCheckIn.notify_normal_singline(pIntent, R.drawable.ic_stat_name, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, true);
+																}
 																Toast.makeText(x.app(), "自动签出成功", Toast.LENGTH_LONG).show();
 																break;
 															case 0:
@@ -254,10 +425,10 @@ public class AutoCheckInService extends Service {
 																startActivity(intent);
 																break;
 															case -1:
-																Toast.makeText(getApplicationContext(), result.getString("message"), Toast.LENGTH_LONG).show();
+																Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_LONG).show();
 																break;
 															case -2:
-																Toast.makeText(getApplicationContext(), result.getString("message"), Toast.LENGTH_LONG).show();
+																Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_LONG).show();
 																break;
 															default:
 																break;
@@ -282,8 +453,6 @@ public class AutoCheckInService extends Service {
 
 												}
 											});
-								} else {
-									Toast.makeText(getApplicationContext(), "今日还未签到\n自动签出失败", Toast.LENGTH_LONG).show();
 								}
 							}
 							break;

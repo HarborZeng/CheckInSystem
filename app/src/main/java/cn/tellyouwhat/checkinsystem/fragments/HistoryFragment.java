@@ -2,7 +2,6 @@ package cn.tellyouwhat.checkinsystem.fragments;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -14,6 +13,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,6 +36,9 @@ import org.json.JSONObject;
 import org.xutils.common.Callback;
 import org.xutils.x;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -45,7 +48,6 @@ import java.util.List;
 import java.util.Map;
 
 import cn.tellyouwhat.checkinsystem.R;
-import cn.tellyouwhat.checkinsystem.activities.ModifyCheckTimeActivity;
 import cn.tellyouwhat.checkinsystem.adpter.AllBackGroundLocationAdapter;
 import cn.tellyouwhat.checkinsystem.bean.CheckInRecord;
 import cn.tellyouwhat.checkinsystem.db.LocationItem;
@@ -53,11 +55,9 @@ import cn.tellyouwhat.checkinsystem.decorators.HighlightWeekendsDecorator;
 import cn.tellyouwhat.checkinsystem.decorators.OneDayDecorator;
 import cn.tellyouwhat.checkinsystem.decorators.TextDecorator;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
+import cn.tellyouwhat.checkinsystem.utils.DateUtils;
 import cn.tellyouwhat.checkinsystem.utils.TextSpan;
 
-import static android.app.Activity.RESULT_CANCELED;
-import static android.app.Activity.RESULT_FIRST_USER;
-import static android.app.Activity.RESULT_OK;
 import static android.content.Context.MODE_PRIVATE;
 
 /**
@@ -78,11 +78,14 @@ public class HistoryFragment extends BaseFragment {
 	private ProgressBar mHistoryProgressBar;
 	private CardView mHistoryCardView;
 	private Map<CalendarDay, CheckInRecord> mRecordMap = new HashMap<>();
+	private TextView mOriginalCheckInTime;
+	private TextView mOriginalCheckOutTime;
 	private TextView mCheckOutTimeTextView;
 	private TextView mCheckInTimeTextView;
-	private ArrayList<CalendarDay> normalDates = new ArrayList<>();
-	private ArrayList<CalendarDay> abnormalDates = new ArrayList<>();
-
+	private List<CalendarDay> normalDates = new ArrayList<>();
+	private List<CalendarDay> overTimeDates = new ArrayList<>();
+	private List<CalendarDay> leaveEarilyDates = new ArrayList<>();
+	private List<CalendarDay> notCheckOutDates = new ArrayList<>();
 
 	@Nullable
 	@Override
@@ -97,6 +100,8 @@ public class HistoryFragment extends BaseFragment {
 
 		mCheckInTimeTextView = (TextView) view.findViewById(R.id.check_in_time_text_view);
 		mCheckOutTimeTextView = (TextView) view.findViewById(R.id.check_out_time_text_view);
+		mOriginalCheckInTime = (TextView) view.findViewById(R.id.text_view_original_check_in_time);
+		mOriginalCheckOutTime = (TextView) view.findViewById(R.id.text_view_original_check_out_time);
 
 		mCalendarView = (MaterialCalendarView) view.findViewById(R.id.calendar_view);
 		mCalendarView.setShowOtherDates(MaterialCalendarView.SHOW_ALL);
@@ -147,16 +152,18 @@ public class HistoryFragment extends BaseFragment {
 		mCheckInTimeTextView.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				startModifyCheckTimeActivity(true);
+				startModifyCheckTime(true);
 			}
 		});
 		mCheckOutTimeTextView.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if (PreferenceManager.getDefaultSharedPreferences(getActivity()).getBoolean("has_check_out", false)) {
-					startModifyCheckTimeActivity(false);
+				//只有签到了的，才能更改签出时间
+				if (PreferenceManager.getDefaultSharedPreferences(getActivity()).getBoolean("has_check_in", false) ||
+						mCalendarView.getSelectedDate().isBefore(CalendarDay.today())) {
+					startModifyCheckTime(false);
 				} else {
-					Snackbar.make(v, "今日还未签出", Snackbar.LENGTH_SHORT).show();
+					Snackbar.make(v, "还未签出", Snackbar.LENGTH_SHORT).show();
 				}
 			}
 		});
@@ -164,7 +171,7 @@ public class HistoryFragment extends BaseFragment {
 		return view;
 	}
 
-	private void startModifyCheckTimeActivity(final boolean isCheckIn) {
+	private void startModifyCheckTime(final boolean isCheckIn) {
 		CalendarDay currentDate = mCalendarView.getSelectedDate();
 		String year = String.valueOf(currentDate.getYear());
 		int month = currentDate.getMonth();
@@ -188,17 +195,17 @@ public class HistoryFragment extends BaseFragment {
 			Snackbar.make(getView(), "不是工作日或尚未签到", Snackbar.LENGTH_SHORT).show();
 		} else {
 			checkInID = checkInRecord.getCheckInID();
-			Log.d(TAG, "startModifyCheckTimeActivity: " + checkInID);
+//			Log.d(TAG, "startModifyCheckTime: " + checkInID);
 			SharedPreferences sharedPreferences = getContext().getSharedPreferences("userInfo", MODE_PRIVATE);
 			final String employeeID = sharedPreferences.getString("employeeID", "");
-			Log.d("用户名debug", "initAdapter: " + employeeID);
+//			Log.d("用户名debug", "initAdapter: " + employeeID);
 			AllBackGroundLocationAdapter adapter = new AllBackGroundLocationAdapter(year, realMonthString, dayString, employeeID);
 			adapter.openLoadAnimation();
 			adapter.setNotDoAnimationCount(3);
 			adapter.openLoadAnimation(BaseQuickAdapter.SCALEIN);
 			adapter.isFirstOnly(true);
 
-			adapter.setEmptyView(getLayoutInflater(null).inflate(R.layout.error_view, (ViewGroup) getView().getParent(), false));
+			adapter.setEmptyView(getLayoutInflater(null).inflate(R.layout.empty, (ViewGroup) getView().getParent(), false));
 
 			adapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
 				@Override
@@ -215,64 +222,99 @@ public class HistoryFragment extends BaseFragment {
 							.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 								@Override
 								public void onClick(DialogInterface dialog, int which) {
-									List data = adapter.getData();
-									LocationItem item = (LocationItem) data.get(position);
-									String time = item.getTime();
+									new MaterialDialog.Builder(getContext())
+											.title("输入备注")
+											.inputType(InputType.TYPE_TEXT_FLAG_AUTO_CORRECT)
+											.input("请输入备注", null, false, new MaterialDialog.InputCallback() {
+												@Override
+												public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+													if (input != null) {
+														String comment = input.toString();
+														String encodedComment = "";
+														try {
+															encodedComment = URLEncoder.encode(comment, "UTF-8");
+														} catch (UnsupportedEncodingException e) {
+															e.printStackTrace();
+														}
+														dialog.dismiss();
+														List data = adapter.getData();
+														LocationItem item = (LocationItem) data.get(position);
+														String time = item.getTime();
 //								Toast.makeText(ModifyCheckTimeActivity.this, time, Toast.LENGTH_SHORT).show();
-									String hour = time.substring(11, 13);
-									String minute = time.substring(14, 16);
-									String second = time.substring(17, 19);
+														String hour = time.substring(11, 13);
+														String minute = time.substring(14, 16);
+														String second = time.substring(17, 19);
 //								Toast.makeText(ModifyCheckTimeActivity.this, hour+minute+second, Toast.LENGTH_SHORT).show();
-									Log.d("传的api网址", "onClick: 传的api网址：" + "http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?id=" + checkInID + "&hour=" + hour + "&minute=" + minute + "&second=" + second);
-									CookiedRequestParams params;
-									if (isCheckIn) {
-										params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?checkinid=" + checkInID + "&hour=" + hour + "&minute=" + minute + "&second=" + second);
-									} else {
-										params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckOut?checkinid=" + checkInID + "&hour=" + hour + "&minute=" + minute + "&second=" + second);
-									}
-									x.http().get(params, new Callback.CommonCallback<JSONObject>() {
-										@Override
-										public void onSuccess(JSONObject result) {
-											Log.d("修改记录结果", "onSuccess: result: " + result.toString());
-											try {
-												int resultInt = result.getInt("result");
-												switch (resultInt) {
-													case 1:
-														Snackbar.make(view, "修改记录成功", Snackbar.LENGTH_LONG).show();
-														break;
-													case 0:
-														updateSession();
-														break;
-													case -1:
-														Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
-														break;
-													case -2:
-														Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
-														break;
-													default:
-														break;
+														Log.d("传的api网址", "onClick: 传的api网址：" +
+																"http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?checkinid=" +
+																checkInID +
+																"&hour=" + hour +
+																"&minute=" + minute +
+																"&second=" + second +
+																"&reason=" + encodedComment);
+														CookiedRequestParams params;
+														if (isCheckIn) {
+															params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?checkinid=" + checkInID +
+																	"&hour=" + hour +
+																	"&minute=" + minute +
+																	"&second=" + second +
+																	"&reason=" + encodedComment);
+														} else {
+															params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckOut?checkinid=" + checkInID +
+																	"&hour=" + hour +
+																	"&minute=" + minute +
+																	"&second=" + second +
+																	"&reason=" + encodedComment);
+														}
+														x.http().get(params, new Callback.CommonCallback<JSONObject>() {
+															@Override
+															public void onSuccess(JSONObject result) {
+																Log.d("修改记录结果", "onSuccess: result: " + result.toString());
+																try {
+																	int resultInt = result.getInt("result");
+																	switch (resultInt) {
+																		case 1:
+																			Snackbar.make(view, "修改记录成功", Snackbar.LENGTH_LONG).show();
+																			break;
+																		case 0:
+																			updateSession();
+																			break;
+																		case -1:
+																			Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+																			break;
+																		case -2:
+																			Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+																			break;
+																		default:
+																			break;
+																	}
+																} catch (JSONException e) {
+																	e.printStackTrace();
+																}
+															}
+
+															@Override
+															public void onError(Throwable ex, boolean isOnCallback) {
+																Snackbar.make(view, "修改失败，请重试", Snackbar.LENGTH_SHORT).show();
+																ex.printStackTrace();
+															}
+
+															@Override
+															public void onCancelled(CancelledException cex) {
+
+															}
+
+															@Override
+															public void onFinished() {
+																Calendar calendar = Calendar.getInstance();
+																getThisMonthStatus(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH));
+															}
+														});
+													}
 												}
-											} catch (JSONException e) {
-												e.printStackTrace();
-											}
-										}
-
-										@Override
-										public void onError(Throwable ex, boolean isOnCallback) {
-
-										}
-
-										@Override
-										public void onCancelled(CancelledException cex) {
-
-										}
-
-										@Override
-										public void onFinished() {
-											Calendar calendar = Calendar.getInstance();
-											getThisMonthStatus(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH));
-										}
-									});
+											})
+											.inputRange(3, 55, getResources().getColor(R.color.theme_red_primary))
+											.show();
 									dialog.dismiss();
 								}
 							}).show();
@@ -286,13 +328,23 @@ public class HistoryFragment extends BaseFragment {
 	}
 
 	private void showCheckTime(CalendarDay date) {
+		mOriginalCheckInTime.setText("");
+		mOriginalCheckOutTime.setText("");
 		Calendar calendar = date.getCalendar();
 		CheckInRecord record = mRecordMap.get(CalendarDay.from(calendar));
 		if (record != null) {
 			String checkInTime = record.getCheckInTime();
 			String checkOutTime = record.getCheckOutTime();
+			String oriCheckInTime = record.getOriCheckInTime();
+			String oriCheckOutTime = record.getOriCheckOutTime();
 			mCheckInTimeTextView.setText(checkInTime.replace("T", " "));
 			mCheckOutTimeTextView.setText(checkOutTime.replace("T", " ").replace("0001-01-01 00:00:00", "未签出"));
+			if (!checkInTime.equals(oriCheckInTime)) {
+				mOriginalCheckInTime.setText("原始签入时间：" + oriCheckInTime.substring(11));
+			}
+			if (!checkOutTime.equals(oriCheckOutTime)) {
+				mOriginalCheckOutTime.setText("原始签出时间：" + oriCheckOutTime.substring(11));
+			}
 		} else {
 			mCheckInTimeTextView.setText("未签到");
 			mCheckOutTimeTextView.setText("未签出");
@@ -345,7 +397,7 @@ public class HistoryFragment extends BaseFragment {
 							updateSession();
 							break;
 						case -1:
-							Toast.makeText(getActivity(), "内部错误, 重启app再试试", Toast.LENGTH_LONG).show();
+							Toast.makeText(x.app(), "内部错误, 重启app再试试", Toast.LENGTH_LONG).show();
 							break;
 						default:
 							break;
@@ -392,30 +444,51 @@ public class HistoryFragment extends BaseFragment {
 
 	private void showCheckInStatusOnCalendar(Map<CalendarDay, CheckInRecord> recordMap) {
 		normalDates.clear();
-		abnormalDates.clear();
+		overTimeDates.clear();
+		leaveEarilyDates.clear();
+		notCheckOutDates.clear();
 		Collection<CheckInRecord> values = recordMap.values();
 		for (CheckInRecord record :
 				values) {
-			String checkInID = record.getCheckInID();
 			String checkInTime = record.getCheckInTime();
 			String checkOutTime = record.getCheckOutTime();
-			String oriCheckInTime = record.getOriCheckInTime();
-			String oriCheckOutTime = record.getOriCheckOutTime();
 			boolean hasCheckOut = record.isHasCheckOut();
-			Log.d(TAG, "showCheckInStatusOnCalendar: checkInID: " + checkInID + ", checkInTime: " + checkInTime + ", checkOutTime: " + checkOutTime + ", hasCheckOut: " + hasCheckOut);
-			String date = checkInTime.substring(0, checkInTime.indexOf("T"));
-			String[] dateFlags = date.split("-");
+
+			Date checkInDateAndTime = null;
+			Date checkOutDateAndTime = null;
+			try {
+				checkInDateAndTime = DateUtils.parse(checkInTime.replace("T", " "), "yy-MM-dd HH:mm:ss");
+				checkOutDateAndTime = DateUtils.parse(checkOutTime.replace("T", " "), "yy-MM-dd HH:mm:ss");
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+
+			String checkInDate = checkInTime.substring(0, checkInTime.indexOf("T"));
+			String[] dateFlags = checkInDate.split("-");
 			int year = Integer.valueOf(dateFlags[0]);
 			int month = Integer.valueOf(dateFlags[1]);
 			int day = Integer.valueOf(dateFlags[2]);
+
+			long timeDifference = checkOutDateAndTime.getTime() - checkInDateAndTime.getTime();
+			int workHour = (int) (timeDifference % (1000 * 24 * 60 * 60) / (1000 * 60 * 60));
+
 			if (hasCheckOut) {
-				normalDates.add(CalendarDay.from(new Date(year - 1900, month - 1, day)));
+				if (workHour == 8) {
+					normalDates.add(CalendarDay.from(new Date(year - 1900, month - 1, day)));
+				} else if (workHour > 8) {
+					overTimeDates.add(CalendarDay.from(new Date(year - 1900, month - 1, day)));
+				} else {
+					leaveEarilyDates.add(CalendarDay.from(new Date(year - 1900, month - 1, day)));
+				}
 			} else {
-				abnormalDates.add(CalendarDay.from(new Date(year - 1900, month - 1, day)));
+				notCheckOutDates.add(CalendarDay.from(new Date(year - 1900, month - 1, day)));
 			}
 		}
 //		mCalendarView.removeDecorators();
-		mCalendarView.addDecorators(new TextDecorator(normalDates, TextSpan.NORMAL), new TextDecorator(abnormalDates, TextSpan.EXCEPTION));
+		mCalendarView.addDecorators(new TextDecorator(normalDates, TextSpan.NORMAL),
+				new TextDecorator(overTimeDates, TextSpan.OVER_TIME),
+				new TextDecorator(leaveEarilyDates, TextSpan.LEAVE_EARILY),
+				new TextDecorator(notCheckOutDates, TextSpan.NOT_CHECK_OUT));
 	}
 
 	public static HistoryFragment newInstance() {

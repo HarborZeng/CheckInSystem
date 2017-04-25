@@ -2,8 +2,10 @@ package cn.tellyouwhat.checkinsystem.activities;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -20,15 +22,20 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.github.anzewei.parallaxbacklayout.ParallaxBackActivityHelper;
 import com.github.anzewei.parallaxbacklayout.ParallaxBackLayout;
+import com.jaeger.library.StatusBarUtil;
 
 import net.rdrei.android.dirchooser.DirectoryChooserConfig;
 import net.rdrei.android.dirchooser.DirectoryChooserFragment;
 
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.fragments.CheckInFragment;
+import cn.tellyouwhat.checkinsystem.utils.NotifyUtil;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -46,6 +53,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 	private Preference batteryOptimizing;
 	private String mDirectory;
 	private DirectoryChooserFragment mDialog;
+	private Preference useOngoingNotification;
 
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
@@ -100,10 +108,36 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 				@Override
 				public boolean onPreferenceClick(Preference preference) {
 					new MaterialDialog.Builder(SettingsActivity.this)
-							.title(R.string.shareLocationPrompt)
-							.content(R.string.conntent)
-							.positiveText(R.string.agree)
-							.negativeText(R.string.disagree)
+							.title("什么是电池优化？")
+							.content("如果用户离开设备一段时间，没有插上电源，屏幕会关闭，设备会进入Doze（打盹）模式。在这种模式下，系统会限制app的网络和CPU的服务来节省电量。系统也会阻止app访问网络，延迟它要做的任务、同步工作以及标准闹钟。 \n" +
+									"系统会定期的退出Doze模式一小会儿，让app完成他们的延迟活动。在这个窗口期（Maintenance Window），系统运行所有的同步工作、任务以及闹钟，允许app访问网络。 \n" +
+									"在每个Maintenance Window结束后，系统会再次进入Doze模式，挂起网络操作等。随着时间的推移，这个窗口期会出现的越来越不频繁，这样帮助设备省电。")
+							.positiveText("加入")
+							.negativeText("设置")
+							.neutralText("了解更多...")
+							.onPositive(new MaterialDialog.SingleButtonCallback() {
+								@Override
+								public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+									Intent intent = new Intent("android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS");
+									intent.setData(Uri.parse("package:cn.tellyouwhat.checkinsystem"));
+									startActivity(intent);
+								}
+							})
+							.onNegative(new MaterialDialog.SingleButtonCallback() {
+								@Override
+								public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+									Intent intent = new Intent("android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS");
+									startActivity(intent);
+								}
+							})
+							.onNeutral(new MaterialDialog.SingleButtonCallback() {
+								@Override
+								public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+									Uri uri = Uri.parse("http://blog.csdn.net/ada_dengpan/article/details/51108641");
+									Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+									startActivity(intent);
+								}
+							})
 							.show();
 					return true;
 				}
@@ -116,9 +150,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 			}
 			//  判断当前APP是否有加入电池优化的白名单，如果没有，弹出加入电池优化的白名单的设置对话框。
 			if (hasIgnored) {
-				batteryOptimizing.setSummary("已加入。关闭请前往系统电池优化设置");
+				batteryOptimizing.setSummary("已加入，关闭请前往系统电池优化设置");
 			} else {
-				batteryOptimizing.setSummary("未加入。长时间静止息屏时暂停后台服务");
+				batteryOptimizing.setSummary("未加入，长时间静止息屏时将暂停后台服务");
 			}
 		}
 
@@ -136,6 +170,13 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 				return true;
 			}
 		});
+
+		useOngoingNotification = findPreference("use_ongoing_notification");
+
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
+			StatusBarUtil.setColor(SettingsActivity.this, getResources().getColor(R.color.colorPrimary), 0);
+		}
 	}
 
 	/**
@@ -268,9 +309,21 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		switch (key) {
-			case "b":
+			case "use_ongoing_notification":
+				if (!sharedPreferences.getBoolean("use_ongoing_notification", true)) {
+					new NotifyUtil(getApplicationContext(), CheckInFragment.CHECK_IN_STATUS).clear();
+					useOngoingNotification.setSummary("已关闭，可能错过签到时间");
+				} else {
+					useOngoingNotification.setSummary("已开启，返回即可显示通知");
+				}
 				break;
-			case "n":
+			case "immersed_status_bar_enabled":
+				if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
+					StatusBarUtil.setColor(SettingsActivity.this, getResources().getColor(R.color.colorPrimary), 0);
+				} else {
+					StatusBarUtil.setColor(SettingsActivity.this, Color.BLACK);
+				}
+				Toast.makeText(getApplicationContext(), "可能要重启才能生效", Toast.LENGTH_SHORT).show();
 				break;
 			case "m":
 				break;

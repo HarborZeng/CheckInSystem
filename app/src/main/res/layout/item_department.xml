@@ -28,5 +28,5 @@
         android:layout_gravity="end|center"
         android:layout_marginEnd="10dp"
         android:layout_marginRight="10dp"
-        app:srcCompat="@drawable/ic_arrow_downward_black_24dp"/>
+        app:srcCompat="@drawable/ic_keyboard_arrow_down_black_24dp"/>
 </RelativeLayout>

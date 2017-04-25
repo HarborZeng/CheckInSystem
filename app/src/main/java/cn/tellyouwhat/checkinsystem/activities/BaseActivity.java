@@ -129,7 +129,7 @@ public class BaseActivity extends ParallaxActivityBase {
 									SharedPreferences.Editor editor = preferences.edit();
 									editor.putString(ConstantValues.cookie, value);
 									editor.apply();
-									Log.i("在BaseFragment里面", "onSuccess: session 已经更新");
+//									Log.i("在BaseFragment里面", "onSuccess: session 已经更新");
 									break;
 								}
 							}

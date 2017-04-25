@@ -114,7 +114,7 @@ public class BaseFragment extends Fragment {
 							reLoginUtil.reLoginWithAlertDialog();
 							break;
 						case -1:
-							Toast.makeText(getActivity().getApplicationContext(), "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
+							Toast.makeText(x.app(), "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
 							break;
 						default:
 							break;

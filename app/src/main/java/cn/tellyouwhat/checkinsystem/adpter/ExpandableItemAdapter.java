@@ -46,14 +46,13 @@ public class ExpandableItemAdapter extends BaseMultiItemQuickAdapter<MultiItemEn
 		addItemType(TYPE_PHONE, R.layout.item_phone);
 	}
 
-
 	@Override
 	protected void convert(final BaseViewHolder holder, final MultiItemEntity item) {
 		switch (holder.getItemViewType()) {
 			case TYPE_DEPARTMENT:
 				final Department department = (Department) item;
 				holder.setText(R.id.department_name_text_view, department.departmentName)
-						.setImageResource(R.id.expand_image_view, department.isExpanded() ? R.drawable.ic_arrow_forward_black_24dp : R.drawable.ic_arrow_downward_black_24dp);
+						.setImageResource(R.id.expand_image_view, department.isExpanded() ? R.drawable.ic_keyboard_arrow_right_black_24dp : R.drawable.ic_keyboard_arrow_down_black_24dp);
 //	            Log.d(TAG, "convert: department.departmentName是："+department.departmentName);
 				holder.itemView.setOnClickListener(new View.OnClickListener() {
 					@Override

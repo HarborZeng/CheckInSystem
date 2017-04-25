@@ -156,13 +156,12 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 			x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 				@Override
 				public void onSuccess(JSONObject result) {
+					Log.d(TAG, "onSuccess: 申请验证码的返回是：" + result.toString());
 					try {
-						int successCode = result.getInt("result");
-						if (successCode == 1) {
+						int success = result.getInt("result");
+						if (success == 1) {
 							isCorrectCode = true;
 							Toast.makeText(getActivity(), "验证码正确，再次点击前进按钮继续", Toast.LENGTH_SHORT).show();
-						} else if (successCode == -1) {
-							Toast.makeText(getActivity(), "发生了可怕的错误，代码：003，我们正在抢修", Toast.LENGTH_SHORT).show();
 						} else {
 							isCorrectCode = false;
 							Toast.makeText(getActivity(), result.getString("message"), Toast.LENGTH_SHORT).show();
