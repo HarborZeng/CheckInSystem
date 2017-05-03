@@ -2,18 +2,21 @@ package cn.tellyouwhat.checkinsystem.bases;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.os.UserManager;
 import android.util.Log;
 
 import com.squareup.leakcanary.LeakCanary;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
+import com.xdandroid.hellodaemon.DaemonEnv;
 
 import org.xutils.x;
 
 import java.lang.reflect.Method;
 
 import cn.tellyouwhat.checkinsystem.BuildConfig;
+import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 
 public class BaseApplication extends Application {
@@ -33,7 +36,7 @@ public class BaseApplication extends Application {
 
 		x.Ext.init(this);
 //		x.Ext.setDebug(true);
-		Log.d("ChatApplication", "init");
+//		Log.d("ChatApplication", "init");
 		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
 			//fix android leak fix which is caused by UserManager holding on to a activity ctx
 			try {
@@ -54,6 +57,7 @@ public class BaseApplication extends Application {
 				}
 			}
 		}
+		DaemonEnv.initialize(this, LocationGettingService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
 	}
 
 	private void registerToWeChat() {

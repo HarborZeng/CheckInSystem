@@ -66,9 +66,9 @@ import java.util.List;
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.activities.BoardActivity;
 import cn.tellyouwhat.checkinsystem.activities.MainActivity;
+import cn.tellyouwhat.checkinsystem.bean.LocationItem;
 import cn.tellyouwhat.checkinsystem.bean.Notice;
 import cn.tellyouwhat.checkinsystem.db.LocationDB;
-import cn.tellyouwhat.checkinsystem.db.LocationItem;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 import cn.tellyouwhat.checkinsystem.utils.NotifyUtil;
 import cn.tellyouwhat.checkinsystem.utils.Polygon;
@@ -245,12 +245,12 @@ public class CheckInFragment extends BaseFragment {
 	}
 
 	private void getTodayStatus() {
-		Log.i(TAG, "getTodayStatus: 获取今日状态中ing");
+//		Log.i(TAG, "getTodayStatus: 获取今日状态中ing");
 		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/GetTodayStatus");
 		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 			@Override
 			public void onSuccess(JSONObject result) {
-				Log.i(TAG, "onSuccess: 今日状态是：" + result.toString());
+//				Log.i(TAG, "onSuccess: 今日状态是：" + result.toString());
 				int resultInt = -1;
 				try {
 					resultInt = result.getInt("result");
@@ -271,10 +271,10 @@ public class CheckInFragment extends BaseFragment {
 							mCheckStatusTextView.setText(formatter.format(new Date()) + "\n今日 ");
 							mCheckStatusTextView.append(mHasCheckIn ? "已签到" : "未签到");
 							mCheckStatusTextView.append(" " + (mHasCheckOut ? "已签出" : "未签出"));
-							Log.i(TAG, "onSuccess: 今日状态已更新");
+//							Log.i(TAG, "onSuccess: 今日状态已更新");
 						} catch (JSONException e) {
 							e.printStackTrace();
-							Log.i(TAG, "onSuccess: 今日状态更新出错，json解析异常");
+//							Log.i(TAG, "onSuccess: 今日状态更新出错，json解析异常");
 						}
 						if (checkInSwipeRefreshLayout.isRefreshing()) {
 							checkInSwipeRefreshLayout.setRefreshing(false);
@@ -284,7 +284,11 @@ public class CheckInFragment extends BaseFragment {
 						updateSession();
 						break;
 					case -1:
-						Toast.makeText(x.app(), "不得了的错误代码012", Toast.LENGTH_LONG).show();
+						try {
+							Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_LONG).show();
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}
 						break;
 					default:
 						break;
@@ -371,6 +375,31 @@ public class CheckInFragment extends BaseFragment {
 								int yPoints[] = new int[]{y1, y2, y3, y4};
 								polygons[i] = new Polygon(xPoints, yPoints, 4);
 
+								/*CompanyDB companyDB = new CompanyDB();
+								CompanyLocationItem item = new CompanyLocationItem();
+								item.setLocationID(locationIDs[i]);
+								item.setLocationName(locationNames[i]);
+								item.setX1(String.valueOf(x1));
+								item.setX2(String.valueOf(x2));
+								item.setX3(String.valueOf(x3));
+								item.setX4(String.valueOf(x4));
+								item.setY1(String.valueOf(y1));
+								item.setY2(String.valueOf(y2));
+								item.setY3(String.valueOf(y3));
+								item.setY4(String.valueOf(y4));
+								try {
+									companyDB.saveCompany(item);
+								} catch (DbException e) {
+									e.printStackTrace();
+									try {
+										companyDB.updateCompany(item);
+									} catch (DbException e1) {
+										e1.printStackTrace();
+									}
+								}*/
+								SharedPreferences.Editor editor = getActivity().getSharedPreferences("companies_location", MODE_PRIVATE).edit();
+								editor.putString("companies_info_all", result.toString());
+								editor.apply();
 							}
 							break;
 						default:
@@ -386,6 +415,7 @@ public class CheckInFragment extends BaseFragment {
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
 				Toast.makeText(x.app(), "获取公司位置出错", Toast.LENGTH_SHORT).show();
+				ex.printStackTrace();
 			}
 
 			@Override
@@ -990,7 +1020,7 @@ public class CheckInFragment extends BaseFragment {
 									item.setTime(time);
 									item.setBuildingID(locationIDs[i]);
 									item.setLatitude(Double.toString(location.getLatitude()));
-									item.setLongitide(Double.toString(location.getLongitude()));
+									item.setLongitude(Double.toString(location.getLongitude()));
 									item.setAddress(location.getAddrStr());
 									item.setLocationDescription(location.getLocationDescribe());
 									item.setBuildingDesc(locationNames[i]);

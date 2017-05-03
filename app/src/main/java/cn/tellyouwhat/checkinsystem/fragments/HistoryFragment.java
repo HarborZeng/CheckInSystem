@@ -50,7 +50,7 @@ import java.util.Map;
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.adpter.AllBackGroundLocationAdapter;
 import cn.tellyouwhat.checkinsystem.bean.CheckInRecord;
-import cn.tellyouwhat.checkinsystem.db.LocationItem;
+import cn.tellyouwhat.checkinsystem.bean.LocationItem;
 import cn.tellyouwhat.checkinsystem.decorators.HighlightWeekendsDecorator;
 import cn.tellyouwhat.checkinsystem.decorators.OneDayDecorator;
 import cn.tellyouwhat.checkinsystem.decorators.TextDecorator;
@@ -163,7 +163,7 @@ public class HistoryFragment extends BaseFragment {
 						mCalendarView.getSelectedDate().isBefore(CalendarDay.today())) {
 					startModifyCheckTime(false);
 				} else {
-					Snackbar.make(v, "还未签出", Snackbar.LENGTH_SHORT).show();
+					Snackbar.make(v, "还未签到", Snackbar.LENGTH_SHORT).show();
 				}
 			}
 		});
@@ -189,7 +189,7 @@ public class HistoryFragment extends BaseFragment {
 		} else {
 			dayString = String.valueOf(day);
 		}
-		CheckInRecord checkInRecord = mRecordMap.get(currentDate);
+		final CheckInRecord checkInRecord = mRecordMap.get(currentDate);
 		final String checkInID;
 		if (checkInRecord == null) {
 			Snackbar.make(getView(), "不是工作日或尚未签到", Snackbar.LENGTH_SHORT).show();
@@ -224,7 +224,7 @@ public class HistoryFragment extends BaseFragment {
 								public void onClick(DialogInterface dialog, int which) {
 									new MaterialDialog.Builder(getContext())
 											.title("输入备注")
-											.inputType(InputType.TYPE_TEXT_FLAG_AUTO_CORRECT)
+											.inputType(InputType.TYPE_CLASS_TEXT)
 											.input("请输入备注", null, false, new MaterialDialog.InputCallback() {
 												@Override
 												public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
@@ -265,51 +265,106 @@ public class HistoryFragment extends BaseFragment {
 																	"&minute=" + minute +
 																	"&second=" + second +
 																	"&reason=" + encodedComment);
+															Log.d(TAG, "onInput: " + "http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckOut?checkinid=" + checkInID +
+																	"&hour=" + hour +
+																	"&minute=" + minute +
+																	"&second=" + second +
+																	"&reason=" + encodedComment);
 														}
-														x.http().get(params, new Callback.CommonCallback<JSONObject>() {
-															@Override
-															public void onSuccess(JSONObject result) {
-																Log.d("修改记录结果", "onSuccess: result: " + result.toString());
-																try {
-																	int resultInt = result.getInt("result");
-																	switch (resultInt) {
-																		case 1:
-																			Snackbar.make(view, "修改记录成功", Snackbar.LENGTH_LONG).show();
-																			break;
-																		case 0:
-																			updateSession();
-																			break;
-																		case -1:
-																			Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
-																			break;
-																		case -2:
-																			Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
-																			break;
-																		default:
-																			break;
+														if (!checkInRecord.isHasCheckOut()) {
+															x.http().get(new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/AutoCheckOut?checkinid="
+																			+ checkInID + "&hour=" + hour + "&minute=" + minute + "&second=" + second),
+																	new Callback.CommonCallback<JSONObject>() {
+
+																		@Override
+																		public void onSuccess(JSONObject result) {
+																			Log.d("修改记录结果", "onSuccess: result: " + result.toString());
+																			try {
+																				int resultInt = result.getInt("result");
+																				switch (resultInt) {
+																					case 1:
+																						Snackbar.make(view, "补签成功", Snackbar.LENGTH_LONG).show();
+																						break;
+																					case 0:
+																						updateSession();
+																						break;
+																					case -1:
+																						Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+																						break;
+																					case -2:
+																						Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+																						break;
+																					default:
+																						break;
+																				}
+																			} catch (JSONException e) {
+																				e.printStackTrace();
+																			}
+																		}
+
+																		@Override
+																		public void onError(Throwable ex, boolean isOnCallback) {
+																			Snackbar.make(view, "补签失败，请重试", Snackbar.LENGTH_SHORT).show();
+																			ex.printStackTrace();
+																		}
+
+																		@Override
+																		public void onCancelled(CancelledException cex) {
+
+																		}
+
+																		@Override
+																		public void onFinished() {
+																			Calendar calendar = Calendar.getInstance();
+																			getThisMonthStatus(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH));
+																		}
+																	});
+														}else{
+															x.http().get(params, new Callback.CommonCallback<JSONObject>() {
+																@Override
+																public void onSuccess(JSONObject result) {
+																	Log.d("修改记录结果", "onSuccess: result: " + result.toString());
+																	try {
+																		int resultInt = result.getInt("result");
+																		switch (resultInt) {
+																			case 1:
+																				Snackbar.make(view, "修改成功", Snackbar.LENGTH_LONG).show();
+																				break;
+																			case 0:
+																				updateSession();
+																				break;
+																			case -1:
+																				Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+																				break;
+																			case -2:
+																				Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+																				break;
+																			default:
+																				break;
+																		}
+																	} catch (JSONException e) {
+																		e.printStackTrace();
 																	}
-																} catch (JSONException e) {
-																	e.printStackTrace();
 																}
-															}
 
-															@Override
-															public void onError(Throwable ex, boolean isOnCallback) {
-																Snackbar.make(view, "修改失败，请重试", Snackbar.LENGTH_SHORT).show();
-																ex.printStackTrace();
-															}
+																@Override
+																public void onError(Throwable ex, boolean isOnCallback) {
+																	Snackbar.make(view, "修改失败，请重试", Snackbar.LENGTH_SHORT).show();
+																	ex.printStackTrace();
+																}
 
-															@Override
-															public void onCancelled(CancelledException cex) {
+																@Override
+																public void onCancelled(CancelledException cex) {
 
-															}
+																}
 
-															@Override
-															public void onFinished() {
-																Calendar calendar = Calendar.getInstance();
-																getThisMonthStatus(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH));
-															}
-														});
+																@Override
+																public void onFinished() {
+																	Calendar calendar = Calendar.getInstance();
+																	getThisMonthStatus(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH));
+																}
+															});
+														}
 													}
 												}
 											})

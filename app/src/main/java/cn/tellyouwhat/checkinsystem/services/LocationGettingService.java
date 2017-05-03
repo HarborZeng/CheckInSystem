@@ -1,7 +1,6 @@
 package cn.tellyouwhat.checkinsystem.services;
 
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -19,6 +18,7 @@ import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
+import com.xdandroid.hellodaemon.AbsWorkService;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,8 +34,8 @@ import java.util.TimerTask;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.activities.MainActivity;
+import cn.tellyouwhat.checkinsystem.bean.LocationItem;
 import cn.tellyouwhat.checkinsystem.db.LocationDB;
-import cn.tellyouwhat.checkinsystem.db.LocationItem;
 import cn.tellyouwhat.checkinsystem.receivers.BatteryReceiver;
 import cn.tellyouwhat.checkinsystem.receivers.ScreenReceiver;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
@@ -47,11 +47,11 @@ import cn.tellyouwhat.checkinsystem.utils.Polygon;
  * 后台获取位置的服务
  */
 
-public class LocationGettingService extends Service {
+public class LocationGettingService extends AbsWorkService {
 
 	public static final int PERIOD = 1000 * 5 * 60;
 	private static final int IN_RANGE_NOTIFICATION = 200;
-	private static final int DELAY = 100;
+	private static final int DELAY = 1000 * 10;
 
 //	public static final int PERIOD = 1000 * 60;
 
@@ -72,9 +72,9 @@ public class LocationGettingService extends Service {
 	private SharedPreferences.OnSharedPreferenceChangeListener listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-			Log.d(TAG, "onSharedPreferenceChanged: 设置发生了变化");
+//			Log.d(TAG, "onSharedPreferenceChanged: 设置发生了变化");
 			if ("use_background_service".equals(key)) {
-				Log.d(TAG, "onSharedPreferenceChanged: “使用后台服务”发生了变化");
+//				Log.d(TAG, "onSharedPreferenceChanged: “使用后台服务”发生了变化");
 				if (sharedPreferences.getBoolean("use_background_service", true)) {
 					task = new TimerTask() {
 						@Override
@@ -183,7 +183,35 @@ public class LocationGettingService extends Service {
 
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
-				Toast.makeText(x.app(), "获取公司位置出错", Toast.LENGTH_SHORT).show();
+				Toast.makeText(x.app(), "后台服务获取公司位置出错", Toast.LENGTH_SHORT).show();
+				SharedPreferences companiesInfoAll = getSharedPreferences("companies_location", MODE_PRIVATE);
+				String companiesInfoAll1 = companiesInfoAll.getString("companies_info_all", "");
+				try {
+					JSONObject result = new JSONObject(companiesInfoAll1);
+					JSONArray jsonArray = result.getJSONArray("data");
+					polygons = new Polygon[jsonArray.length()];
+					locationIDs = new int[jsonArray.length()];
+					locationNames = new String[jsonArray.length()];
+					for (int i = 0; i < jsonArray.length(); i++) {
+						JSONObject jsonObject;
+						jsonObject = jsonArray.getJSONObject(i);
+						locationIDs[i] = jsonObject.getInt("LocationID");
+						locationNames[i] = jsonObject.getString("LocationName");
+						int x1 = (int) (jsonObject.getDouble("X1") * 1000000);
+						int x2 = (int) (jsonObject.getDouble("X2") * 1000000);
+						int x3 = (int) (jsonObject.getDouble("X3") * 1000000);
+						int x4 = (int) (jsonObject.getDouble("X4") * 1000000);
+						int y1 = (int) (jsonObject.getDouble("Y1") * 1000000);
+						int y2 = (int) (jsonObject.getDouble("Y2") * 1000000);
+						int y3 = (int) (jsonObject.getDouble("Y3") * 1000000);
+						int y4 = (int) (jsonObject.getDouble("Y4") * 1000000);
+						int xPoints[] = new int[]{x1, x2, x3, x4};
+						int yPoints[] = new int[]{y1, y2, y3, y4};
+						polygons[i] = new Polygon(xPoints, yPoints, 4);
+					}
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
 			}
 
 			@Override
@@ -231,6 +259,37 @@ public class LocationGettingService extends Service {
 		if (useBackgroundService && useBackgroundServiceReceiver) {
 			timer.schedule(task, DELAY * 50, PERIOD);
 		}
+	}
+
+	@Override
+	public Boolean shouldStopService(Intent intent, int flags, int startId) {
+		return false;
+	}
+
+	@Override
+	public void startWork(Intent intent, int flags, int startId) {
+
+	}
+
+	@Override
+	public void stopWork(Intent intent, int flags, int startId) {
+		stopService(intent);
+	}
+
+	@Override
+	public Boolean isWorkRunning(Intent intent, int flags, int startId) {
+		return null;
+	}
+
+	@Nullable
+	@Override
+	public IBinder onBind(Intent intent, Void alwaysNull) {
+		return null;
+	}
+
+	@Override
+	public void onServiceKilled(Intent rootIntent) {
+		Toast.makeText(getApplicationContext(), "后台获取位置服务已停止", Toast.LENGTH_LONG).show();
 	}
 
 	@Override
@@ -418,7 +477,7 @@ public class LocationGettingService extends Service {
 					item.setRadius(bdLocation.getRadius());
 					item.setTime(bdLocation.getTime());
 					item.setLatitude(Double.toString(bdLocation.getLatitude()));
-					item.setLongitide(Double.toString(bdLocation.getLongitude()));
+					item.setLongitude(Double.toString(bdLocation.getLongitude()));
 					item.setAddress(bdLocation.getAddrStr());
 					item.setLocationDescription(bdLocation.getLocationDescribe());
 					item.setUserID(userID);
@@ -446,7 +505,8 @@ public class LocationGettingService extends Service {
 
 									String ticker = "您已进入签到范围";
 									String title = "您已进入签到范围";
-									String content = "点击签到\n您在" + locationNames[i] + "\n位于" + bdLocation.getAddrStr();
+									String addrStr = bdLocation.getAddrStr();
+									String content = "点击签到\n您在" + locationNames[i] + "\n位于" + (TextUtils.isEmpty(addrStr)?"未知":addrStr);
 
 									NotifyUtil notificationSucceededCheckIn = new NotifyUtil(getApplicationContext(), IN_RANGE_NOTIFICATION);
 									notificationSucceededCheckIn.setOnGoing(false);
@@ -454,6 +514,7 @@ public class LocationGettingService extends Service {
 								}
 								break;
 							} else {
+								Log.d(TAG, "onReceiveLocation: 不在" + locationNames[i]);
 								item.setBuildingID(0);
 								SharedPreferences checkInStatus = getSharedPreferences("checkInStatus", MODE_PRIVATE);
 								SharedPreferences.Editor editor = checkInStatus.edit();

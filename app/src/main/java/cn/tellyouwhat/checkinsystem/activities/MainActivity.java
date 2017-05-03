@@ -9,8 +9,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -31,6 +29,8 @@ import android.widget.Toast;
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.jaeger.library.StatusBarUtil;
+import com.xdandroid.hellodaemon.DaemonEnv;
+import com.xdandroid.hellodaemon.IntentWrapper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -154,19 +154,30 @@ public class MainActivity extends BaseActivity {
 					.commit();
 		}
 
-		//开启获取位置的后台服务
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		if (sharedPref.getBoolean("immersed_status_bar_enabled", true)) {
 			StatusBarUtil.setColor(MainActivity.this, getResources().getColor(R.color.colorPrimary), 0);
 		}
+
+		//开启获取位置的后台服务
 		boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
 		if (backGroundServiceEnabled) {
-			Intent intent = new Intent(getApplicationContext(), LocationGettingService.class);
-			startService(intent);
+			DaemonEnv.initialize(this, LocationGettingService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
+			try {
+				startService(new Intent(this, LocationGettingService.class));
+			} catch (Exception ignored) {
+			}
+//			Intent intent = new Intent(getApplicationContext(), LocationGettingService.class);
+//			startService(intent);
 		}
 
-		Intent intent = new Intent(getApplicationContext(), AutoCheckInService.class);
-		startService(intent);
+//		Intent intent = new Intent(getApplicationContext(), AutoCheckInService.class);
+//		startService(intent);
+		DaemonEnv.initialize(this, AutoCheckInService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
+		try {
+			startService(new Intent(this, AutoCheckInService.class));
+		} catch (Exception ignored) {
+		}
 
 		BottomNavigationView mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
 		mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
@@ -207,6 +218,13 @@ public class MainActivity extends BaseActivity {
 		} else {
 			return super.onKeyDown(keyCode, event);
 		}
+	}*/
+
+	//重写这个方法，防止华为机型未加入白名单时按返回键回到桌面再锁屏后几秒钟进程被杀.
+	//重写 MainActivity.onBackPressed(), 只保留对以下 API 的调用.
+/*	@Override
+	public void onBackPressed() {
+//		IntentWrapper.onBackPressed(this);
 	}*/
 
 	public void checkUpdate() {

@@ -4,7 +4,7 @@ import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
 
 import cn.tellyouwhat.checkinsystem.R;
-import cn.tellyouwhat.checkinsystem.db.LocationItem;
+import cn.tellyouwhat.checkinsystem.bean.LocationItem;
 import cn.tellyouwhat.checkinsystem.utils.DateServer;
 
 /**

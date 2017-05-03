@@ -3,7 +3,7 @@ package cn.tellyouwhat.checkinsystem.utils;
 import java.util.List;
 
 import cn.tellyouwhat.checkinsystem.db.LocationDB;
-import cn.tellyouwhat.checkinsystem.db.LocationItem;
+import cn.tellyouwhat.checkinsystem.bean.LocationItem;
 
 /**
  * Created by HarborZeng on 2017/4/12.

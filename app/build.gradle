@@ -15,8 +15,8 @@ android {
 		applicationId "cn.tellyouwhat.checkinsystem"
 		minSdkVersion 14
 		targetSdkVersion 25
-		versionCode 201704232
-		versionName "1.0.1"
+		versionCode 201705011
+		versionName "1.1.2"
 		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 		vectorDrawables.useSupportLibrary = true
 	}
@@ -72,4 +72,5 @@ dependencies {
 	compile 'com.afollestad.material-dialogs:core:0.9.4.3'
 	compile 'com.sunfusheng:marqueeview:1.2.0'
 	compile 'com.nineoldandroids:library:2.4.0'
+	compile 'com.xdandroid:hellodaemon:1.0.3'
 }

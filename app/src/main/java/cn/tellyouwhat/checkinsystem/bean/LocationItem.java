@@ -1,8 +1,7 @@
-package cn.tellyouwhat.checkinsystem.db;
+package cn.tellyouwhat.checkinsystem.bean;
 
 import org.xutils.db.annotation.Column;
 import org.xutils.db.annotation.Table;
-
 
 /**
  * Created by Harbor-Laptop on 2017/3/23.
@@ -40,7 +39,7 @@ public class LocationItem {
 	private int buildingID;
 
 	@Column(name = "longitude")
-	private String longitide;
+	private String longitude;
 
 	@Column(name = "latitude")
 	private String latitude;
@@ -79,12 +78,12 @@ public class LocationItem {
 
 	private String locationDescription;
 
-	public String getLongitide() {
-		return longitide;
+	public String getLongitude() {
+		return longitude;
 	}
 
-	public void setLongitide(String longitide) {
-		this.longitide = longitide;
+	public void setLongitude(String longitude) {
+		this.longitude = longitude;
 	}
 
 	public String getLatitude() {

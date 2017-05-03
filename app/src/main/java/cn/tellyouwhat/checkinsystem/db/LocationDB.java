@@ -1,16 +1,14 @@
 package cn.tellyouwhat.checkinsystem.db;
 
 import android.database.Cursor;
-import android.util.Log;
-import android.widget.Toast;
 
 import org.xutils.DbManager;
 import org.xutils.ex.DbException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import cn.tellyouwhat.checkinsystem.bean.LocationItem;
 
 
 /**
@@ -31,9 +29,8 @@ public class LocationDB {
 	public void saveLocation(LocationItem location) {
 		try {
 			db.save(location);
-			Log.d("xyz", "save succeed!");
 		} catch (DbException e) {
-			Log.d("xyzhahah", e.toString());
+			e.printStackTrace();
 		}
 	}
 
@@ -108,16 +105,4 @@ public class LocationDB {
 		}
 		return item;
 	}
-
-	//将Person实例存进数据库
-	public List<LocationItem> loadAllLocation() {
-		List<LocationItem> list = null;
-		try {
-			list = db.selector(LocationItem.class).findAll();
-		} catch (DbException e) {
-			e.printStackTrace();
-		}
-		return list;
-	}
-	//读取所有Person信息
 }

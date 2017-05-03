@@ -15,6 +15,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
@@ -229,26 +230,36 @@ public class UserInfoActivity extends BaseActivity {
 		nameEditPageTextView = (TextView) findViewById(R.id.edit_page_name);
 		if (!TextUtils.isEmpty(name)) {
 			nameEditPageTextView.setText(name);
+		}else{
+			nameEditPageTextView.setText("");
 		}
 
 		jobNumberEditPageTextView = (TextView) findViewById(R.id.edit_page_job_number);
 		if (!TextUtils.isEmpty(jobNumber)) {
 			jobNumberEditPageTextView.setText(jobNumber);
+		}else{
+			jobNumberEditPageTextView.setText("");
 		}
 
 		phoneNumberEditPageTextView = (TextView) findViewById(R.id.edit_page_phone_number);
 		if (!TextUtils.isEmpty(phoneNumber)) {
 			phoneNumberEditPageTextView.setText(phoneNumber);
+		}else{
+			phoneNumberEditPageTextView.setText("");
 		}
 
 		emailEditPageTextView = (TextView) findViewById(R.id.edit_page_email);
 		if (!TextUtils.isEmpty(email)) {
 			emailEditPageTextView.setText(email);
+		}else{
+			emailEditPageTextView.setText("");
 		}
 
 		departmentEditPageTextView = (TextView) findViewById(R.id.edit_page_department);
 		if (!TextUtils.isEmpty(departmentName)) {
 			departmentEditPageTextView.setText(departmentName);
+		}else{
+			departmentEditPageTextView.setText("");
 		}
 
 		CircleImageView headEditPageCircleImageView = (CircleImageView) findViewById(R.id.edit_page_head);
@@ -327,7 +338,7 @@ public class UserInfoActivity extends BaseActivity {
 			Log.d(TAG, "onMenuItemClick: 点击了完成");
 			showProgress(true);
 			final String jobNumber = jobNumberEditPageTextView.getText().toString().trim();
-			final String department = departmentEditPageTextView.getText().toString().trim();
+//			final String department = departmentEditPageTextView.getText().toString().trim();
 			final String name = nameEditPageTextView.getText().toString().trim();
 			final String phone = phoneNumberEditPageTextView.getText().toString().trim();
 			final String email = emailEditPageTextView.getText().toString().trim();
@@ -553,6 +564,10 @@ public class UserInfoActivity extends BaseActivity {
 		options.setFreeStyleCropEnabled(false);
 
 		options.setAllowedGestures(UCropActivity.SCALE, UCropActivity.ROTATE, UCropActivity.ALL);
+
+		options.setToolbarColor(ContextCompat.getColor(this, R.color.colorPrimary));
+		options.setStatusBarColor(ContextCompat.getColor(this, R.color.colorPrimary));
+
 //		options.setMaxBitmapSize(16000);
 		/*
 		If you want to configure how gestures work for all UCropActivity tabs
