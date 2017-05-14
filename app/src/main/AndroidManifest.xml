@@ -29,6 +29,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+    <!--<uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />-->
 
 
     <application
@@ -149,6 +150,8 @@
             android:name=".activities.BoardActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:screenOrientation="portrait"/>
+
+        <service android:name=".services.UpdateTodayStatusService"/>
     </application>
 
 </manifest>

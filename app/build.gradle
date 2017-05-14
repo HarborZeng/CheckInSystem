@@ -15,8 +15,8 @@ android {
 		applicationId "cn.tellyouwhat.checkinsystem"
 		minSdkVersion 14
 		targetSdkVersion 25
-		versionCode 201705011
-		versionName "1.1.2"
+		versionCode 201705121
+		versionName "1.2.0"
 		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 		vectorDrawables.useSupportLibrary = true
 	}

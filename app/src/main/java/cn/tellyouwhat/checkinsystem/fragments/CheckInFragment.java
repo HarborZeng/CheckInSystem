@@ -84,8 +84,8 @@ import static cn.tellyouwhat.checkinsystem.bases.BaseApplication.api;
 
 public class CheckInFragment extends BaseFragment {
 	public static final int CHECK_IN_STATUS = 60;
-	private static final int CHECK_OUT_STATUS = 61;
-	private static final int CHECK_STATUS = 62;
+	public static final int CHECK_OUT_STATUS = 61;
+	public static final int CHECK_STATUS = 62;
 	private final String TAG = "CheckInFragment";
 	public LocationClient mLocationClient = null;
 	public LocationClient mGetLocationClient = null;
@@ -215,14 +215,14 @@ public class CheckInFragment extends BaseFragment {
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
-		Log.i(TAG, "onCreate: in CheckInFragment");
+//		Log.i(TAG, "onCreate: in CheckInFragment");
 		super.onCreate(savedInstanceState);
 		getLocationGPSDetail();
 	}
 
 	@Override
 	public void onResume() {
-		Log.i(TAG, "onResume: in CheckInFragment");
+//		Log.i(TAG, "onResume: in CheckInFragment");
 		super.onResume();
 		mEnableWiFiToggleButton.setChecked(mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLED);
 		mEnableGPSToggleButton.setChecked(mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER));
@@ -433,7 +433,7 @@ public class CheckInFragment extends BaseFragment {
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		Log.i(TAG, "onCreateView: in CheckInFragment");
+//		Log.i(TAG, "onCreateView: in CheckInFragment");
 		final View view = inflater.inflate(R.layout.fragment_check_in, container, false);
 
 		mLocationCardView = (CardView) view.findViewById(R.id.card_view_location);
@@ -883,7 +883,7 @@ public class CheckInFragment extends BaseFragment {
 		   以下内容属于测试代码
           */
 			//获取定位结果
-			final StringBuffer sb = new StringBuffer(256);
+/*			final StringBuffer sb = new StringBuffer(256);
 			sb.append("time : ");
 			sb.append(location.getTime());    //获取定位时间
 
@@ -967,7 +967,7 @@ public class CheckInFragment extends BaseFragment {
 				}
 			}
 
-			Log.i("BaiduLocationApiDem", sb.toString());
+			Log.i("BaiduLocationApiDem", sb.toString());*/
 
 			if (radius <= 50 && radius != 0) {
 				getActivity().runOnUiThread(new Runnable() {
@@ -976,7 +976,7 @@ public class CheckInFragment extends BaseFragment {
 						times = 0;
 						enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
 						enough_accuracy_text_view.setText("精度合格\n");
-						enough_accuracy_text_view.append(location.getLocationDescribe() == null ? "离线定位" : location.getLocationDescribe());
+						enough_accuracy_text_view.append(location.getLocationDescribe() == null ? "未知" : location.getLocationDescribe());
 						enough_accuracy_text_view.setVisibility(View.VISIBLE);
 						enough_accuracy_text_view.startAnimation(alphaAnimation);
 						imageView2_cover_in50.setVisibility(View.VISIBLE);
@@ -1027,7 +1027,7 @@ public class CheckInFragment extends BaseFragment {
 									item.setUserID(getActivity().getSharedPreferences("userInfo", MODE_PRIVATE).getString("employeeID", ""));
 									locationDB.saveLocation(item);
 
-									Log.i("zdhobuzd", "run: 在");
+//									Log.i("zdhobuzd", "run: 在");
 									mLocationClient.stop();
 									snackbar.dismiss();
 									new Thread(new Runnable() {
@@ -1066,15 +1066,15 @@ public class CheckInFragment extends BaseFragment {
 											});
 											SystemClock.sleep(1100);
 											if (isCheckingIn) {
-												beginCheckingIn(radius, longitude, latitude, time);
+												beginCheckingIn();
 											} else {
-												beginCheckingOut(radius, longitude, latitude, time);
+												beginCheckingOut();
 											}
 										}
 									}).start();
 									break;
 								} else {
-									Log.i("zdhobuzd", "run: 不在");
+//									Log.i("zdhobuzd", "run: 不在");
 									new Thread(new Runnable() {
 										@Override
 										public void run() {
@@ -1146,7 +1146,7 @@ public class CheckInFragment extends BaseFragment {
 
 		@Override
 		public void onConnectHotSpotMessage(String s, int i) {
-			Log.w("onConnectHotSpotMessage", "onConnectHotSpotMessage: s: " + s + ", i: " + i);
+//			Log.w("onConnectHotSpotMessage", "onConnectHotSpotMessage: s: " + s + ", i: " + i);
 		}
 	}
 
@@ -1252,11 +1252,11 @@ public class CheckInFragment extends BaseFragment {
 
 		@Override
 		public void onConnectHotSpotMessage(String s, int i) {
-			Log.w("onConnectHotSpotMessage", "onConnectHotSpotMessage: s: " + s + ", i: " + i);
+//			Log.w("onConnectHotSpotMessage", "onConnectHotSpotMessage: s: " + s + ", i: " + i);
 		}
 	}
 
-	private void beginCheckingOut(float radius, double longitude, double latitude, String time) {
+	private void beginCheckingOut() {
 		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/checkout");
 		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 			@Override
@@ -1359,12 +1359,12 @@ public class CheckInFragment extends BaseFragment {
 		});
 	}
 
-	private void beginCheckingIn(float radius, double longitude, double latitude, String time) {
+	private void beginCheckingIn() {
 		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/checkin");
 		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 			@Override
 			public void onSuccess(JSONObject result) {
-				Log.i(TAG, "onSuccess: 签到结果：" + result.toString());
+//				Log.i(TAG, "onSuccess: 签到结果：" + result.toString());
 				try {
 					getTodayStatus();
 					int resultInt = result.getInt("result");

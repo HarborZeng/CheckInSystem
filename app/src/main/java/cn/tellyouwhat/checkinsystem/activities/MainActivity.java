@@ -2,6 +2,7 @@ package cn.tellyouwhat.checkinsystem.activities;
 
 import android.Manifest;
 import android.app.DownloadManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -9,12 +10,18 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -47,6 +54,7 @@ import cn.tellyouwhat.checkinsystem.fragments.HistoryFragment;
 import cn.tellyouwhat.checkinsystem.fragments.MeFragment;
 import cn.tellyouwhat.checkinsystem.services.AutoCheckInService;
 import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
+import cn.tellyouwhat.checkinsystem.services.UpdateTodayStatusService;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
 import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
@@ -121,6 +129,65 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		boolean canMockLocation = canMockLocation();
+		detectMockLocation(canMockLocation);
+	}
+
+	private void detectMockLocation(boolean canMockLocation) {
+		if (canMockLocation) {
+			new MaterialDialog.Builder(MainActivity.this)
+					.title("检测到您开启了“模拟位置”")
+					.content("\n您必须前往“开发者选项”\n\n关闭模拟位置相关选项后，才能继续使用CheckIn\n\n或关闭虚拟定位软件")
+					.positiveText("设置")
+					.icon(getApplication().getResources().getDrawable(R.mipmap.warning))
+					.onPositive(new MaterialDialog.SingleButtonCallback() {
+						@Override
+						public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+							startActivity(new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS));
+//							finish();
+						}
+					})
+					.negativeText("重试")
+					.onNegative(new MaterialDialog.SingleButtonCallback() {
+						@Override
+						public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+							boolean canMockLocation = canMockLocation();
+							detectMockLocation(canMockLocation);
+						}
+					})
+					.show()
+					.setCancelable(false);
+		}
+	}
+
+	private boolean canMockLocation() {
+		boolean canMockLocation = false;
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+			canMockLocation = Settings.Secure.getInt(getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION, 0) != 0;
+		} else {
+			LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+			if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+				// TODO: Consider calling
+				//    ActivityCompat#requestPermissions
+				// here to request the missing permissions, and then overriding
+				//   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+				//                                          int[] grantResults)
+				// to handle the case where the user grants the permission. See the documentation
+				// for ActivityCompat#requestPermissions for more details.
+				return false;
+			}
+			PendingIntent intent = PendingIntent.getActivities(MainActivity.this, 99, new Intent[]{new Intent()}, PendingIntent.FLAG_ONE_SHOT);
+			locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, intent);
+			locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, intent);
+			Location locationNetWork = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+			Location locationGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+			if (locationGPS != null && locationNetWork != null) {
+				canMockLocation = locationNetWork.isFromMockProvider() || locationGPS.isFromMockProvider();
+			}
+			locationManager.removeUpdates(intent);
+			Log.i(TAG, "canMockLocation: canMockLocation? " + canMockLocation);
+		}
+		return canMockLocation;
 	}
 
 	@Override
@@ -179,6 +246,12 @@ public class MainActivity extends BaseActivity {
 		} catch (Exception ignored) {
 		}
 
+		DaemonEnv.initialize(this, UpdateTodayStatusService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
+		try {
+			startService(new Intent(this, UpdateTodayStatusService.class));
+		} catch (Exception ignored) {
+		}
+
 		BottomNavigationView mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
 		mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
@@ -189,7 +262,6 @@ public class MainActivity extends BaseActivity {
 			}
 		}).start();
 	}
-
 
 	@Override
 	protected void onDestroy() {

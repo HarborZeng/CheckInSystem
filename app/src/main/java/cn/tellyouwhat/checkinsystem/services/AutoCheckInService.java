@@ -150,7 +150,7 @@ public class AutoCheckInService extends AbsWorkService{
 											x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 												@Override
 												public void onSuccess(JSONObject result) {
-													Log.d(TAG, "onSuccess: 自动签到返回的数据：" + result.toString());
+//													Log.d(TAG, "onSuccess: 自动签到返回的数据：" + result.toString());
 													try {
 														int resultInt = result.getInt("result");
 														switch (resultInt) {
@@ -256,7 +256,7 @@ public class AutoCheckInService extends AbsWorkService{
 		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 			@Override
 			public void onSuccess(JSONObject result) {
-				Log.i(TAG, "onSuccess: 今日状态是：" + result.toString());
+//				Log.i(TAG, "onSuccess: 今日状态是：" + result.toString());
 				int resultInt = -1;
 				try {
 					resultInt = result.getInt("result");
@@ -283,7 +283,11 @@ public class AutoCheckInService extends AbsWorkService{
 						updateSession();
 						break;
 					case -1:
-						Toast.makeText(x.app(), "不得了的错误代码012", Toast.LENGTH_LONG).show();
+						try {
+							Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_LONG).show();
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}
 						break;
 					default:
 						break;
@@ -528,7 +532,7 @@ public class AutoCheckInService extends AbsWorkService{
 																new CommonCallback<JSONObject>() {
 																	@Override
 																	public void onSuccess(JSONObject result) {
-																		Log.d(TAG, "onSuccess: 自动签出返回的数据是：" + result.toString());
+//																		Log.d(TAG, "onSuccess: 自动签出返回的数据是：" + result.toString());
 																		try {
 																			int resultAutoCheckOut = result.getInt("result");
 																			switch (resultAutoCheckOut) {

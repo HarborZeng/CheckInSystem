@@ -27,7 +27,7 @@ public class CookiedRequestParams extends RequestParams {
 		SharedPreferences sharedPreferences = x.app().getSharedPreferences(ConstantValues.COOIKE_SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
 		String cookie = sharedPreferences.getString(ConstantValues.cookie, "");
 		if (!TextUtils.isEmpty(cookie)) {
-			Log.i("cookie", "CookiedRequestParams: cookie is " + cookie);
+//			Log.i("cookie", "CookiedRequestParams: cookie is " + cookie);
 
 			addHeader("Cookie", ConstantValues.COOKIE_NAME + "=" + cookie);
 		}
