@@ -464,6 +464,10 @@ public class MainActivity extends BaseActivity {
 //		Log.d("TAG", "download: " + Environment.getExternalStorageDirectory().getPath() + "/" + Environment.DIRECTORY_DOWNLOADS + "/" + newVersionFileName);
 //			progressBar.setProgress(0);
 		final ProgressDialog builder = new ProgressDialog(MainActivity.this, ProgressDialog.STYLE_SPINNER);
+		if (mForceUpgrade) {
+			builder.setCancelable(false);
+			builder.setCanceledOnTouchOutside(false);
+		}
 //		Log.d(TAG, "download: params：" + params);
 
 		final Callback.Cancelable cancelable = x.http().get(params, new Callback.ProgressCallback<File>() {
