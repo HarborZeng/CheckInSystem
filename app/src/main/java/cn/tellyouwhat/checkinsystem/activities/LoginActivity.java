@@ -2,6 +2,8 @@ package cn.tellyouwhat.checkinsystem.activities;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.annotation.SuppressLint;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,6 +14,7 @@ import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -40,6 +43,9 @@ import java.net.HttpCookie;
 import java.util.List;
 
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.services.AutoCheckInService;
+import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
+import cn.tellyouwhat.checkinsystem.services.UpdateTodayStatusService;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
@@ -84,6 +90,13 @@ public class LoginActivity extends BaseActivity {
 		setBackEnable(false);
 		setContentView(R.layout.activity_login);
 
+		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		notificationManager.cancelAll();
+
+		stopService(new Intent(this, UpdateTodayStatusService.class));
+		stopService(new Intent(this, LocationGettingService.class));
+		stopService(new Intent(this, AutoCheckInService.class));
+
 		mloginBG = findViewById(R.id.login_bg);
 		mloginBG.setVisibility(View.GONE);
 
@@ -117,7 +130,7 @@ public class LoginActivity extends BaseActivity {
 				if (!hasFocus) {
 					//TODO 等待api
 					String number = mNumberView.getText().toString().trim();
-					RequestParams requestParams = new RequestParams("http://api.checkin.tellyouwhat.cn/User/getHeadImage?username=" + number);
+					RequestParams requestParams = new RequestParams("https://api.checkin.tellyouwhat.cn/User/getHeadImage?username=" + number);
 					x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 						@Override
 						public void onSuccess(JSONObject result) {
@@ -305,7 +318,8 @@ public class LoginActivity extends BaseActivity {
 		String encryptedPassword = EncryptUtil.md5WithSalt(password, ConstantValues.SALT);
 
 		//开始准备数据
-		RequestParams params = new RequestParams("http://api.checkin.tellyouwhat.cn/User/Login?username=" + number + "&password=" + encryptedPassword + "&deviceid=" + Build.SERIAL);
+		@SuppressLint("HardwareIds") String deviceID = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)).getDeviceId();
+		RequestParams params = new RequestParams("https://api.checkin.tellyouwhat.cn/User/Login?username=" + number + "&password=" + encryptedPassword + "&deviceid=" + deviceID);
 		params.setConnectTimeout(5000);
 		//利用xUtils3get提交
 		x.http().get(params, new Callback.CommonCallback<JSONObject>() {
@@ -433,8 +447,8 @@ public class LoginActivity extends BaseActivity {
 	}
 
 	private void storeUserInfo() {
-		Log.i(TAG, "store user information: setting up...");
-		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/User/GetUserInfo");
+//		Log.i(TAG, "store user information: setting up...");
+		CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/User/GetUserInfo");
 		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 			private int resultInt;
 
@@ -471,7 +485,11 @@ public class LoginActivity extends BaseActivity {
 						updateSession();
 						break;
 					case -1:
-						Toast.makeText(getApplicationContext(), "发生了不可描述的错误010", Toast.LENGTH_SHORT).show();
+						try {
+							Toast.makeText(getApplicationContext(), result.getString("message"), Toast.LENGTH_SHORT).show();
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}
 						break;
 					default:
 						break;
@@ -499,7 +517,8 @@ public class LoginActivity extends BaseActivity {
 		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");
 		String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
 		if (!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(token)) {
-			RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+			@SuppressLint("HardwareIds") String deviceID = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)).getDeviceId();
+			RequestParams p = new RequestParams("https://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + deviceID + "&token=" + token);
 			x.http().get(p, new Callback.CommonCallback<JSONObject>() {
 
 				private int resultInt;
@@ -513,7 +532,7 @@ public class LoginActivity extends BaseActivity {
 					}
 					switch (resultInt) {
 						case 1:
-							Log.i(TAG, "onSuccess: session 已经更新");
+//							Log.i(TAG, "onSuccess: session 已经更新");
 							DbCookieStore instance = DbCookieStore.INSTANCE;
 							List<HttpCookie> cookies = instance.getCookies();
 							for (HttpCookie cookie : cookies) {
@@ -539,7 +558,11 @@ public class LoginActivity extends BaseActivity {
 							reLoginUtil.reLoginWithAlertDialog();
 							break;
 						case -1:
-							Toast.makeText(LoginActivity.this, "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
+							try {
+								Toast.makeText(LoginActivity.this, result.getString("message"), Toast.LENGTH_SHORT).show();
+							} catch (JSONException e) {
+								e.printStackTrace();
+							}
 							break;
 						default:
 							break;

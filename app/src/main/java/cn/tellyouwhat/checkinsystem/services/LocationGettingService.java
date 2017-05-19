@@ -126,9 +126,9 @@ public class LocationGettingService extends AbsWorkService {
 
 		//系统电量过低时
 		batteryReceiver = new BatteryReceiver();
-		IntentFilter batteryfilter = new IntentFilter();
-		batteryfilter.addAction(Intent.ACTION_BATTERY_CHANGED);
-		registerReceiver(batteryReceiver, batteryfilter);
+		IntentFilter batteryFilter = new IntentFilter();
+		batteryFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
+		registerReceiver(batteryReceiver, batteryFilter);
 
 		screenReceiver = new ScreenReceiver();
 		/*<intent-filter>
@@ -140,7 +140,7 @@ public class LocationGettingService extends AbsWorkService {
 		intentFilter.addAction(Intent.ACTION_SCREEN_ON);
 		registerReceiver(screenReceiver, intentFilter);
 
-		RequestParams requestParams = new RequestParams("http://api.checkin.tellyouwhat.cn/location/getalllocation");
+		RequestParams requestParams = new RequestParams("https://api.checkin.tellyouwhat.cn/location/getalllocation");
 		x.http().request(HttpMethod.GET, requestParams, new Callback.CommonCallback<JSONObject>() {
 			@Override
 			public void onSuccess(JSONObject result) {
@@ -230,12 +230,13 @@ public class LocationGettingService extends AbsWorkService {
 //				if (backGroundServiceEnabled) {
 //				}
 // 要做的事情
+		//用户已登录的情况下才会获取地理位置
+		SharedPreferences userInfo = getSharedPreferences("userInfo", MODE_PRIVATE);
+		final String token = userInfo.getString(ConstantValues.TOKEN, "");
 		handler = new Handler() {
 			@Override
 			public void handleMessage(Message msg) {
-				//用户已登录的情况下才会获取地理位置
-				SharedPreferences userInfo = getSharedPreferences("userInfo", MODE_PRIVATE);
-				String token = userInfo.getString(ConstantValues.TOKEN, "");
+
 				if (!TextUtils.isEmpty(token)) {
 					mLocationClient.start();
 				}
@@ -256,7 +257,7 @@ public class LocationGettingService extends AbsWorkService {
 		boolean useBackgroundService = sharedPref.getBoolean("use_background_service", true);
 		boolean useBackgroundServiceReceiver = sharedPref.getBoolean("use_background_service_receiver", true);
 		sharedPref.registerOnSharedPreferenceChangeListener(listener);
-		if (useBackgroundService && useBackgroundServiceReceiver) {
+		if (useBackgroundService && useBackgroundServiceReceiver && !TextUtils.isEmpty(token)) {
 			timer.schedule(task, DELAY * 50, PERIOD);
 		}
 	}
@@ -506,7 +507,7 @@ public class LocationGettingService extends AbsWorkService {
 									String ticker = "您已进入签到范围";
 									String title = "您已进入签到范围";
 									String addrStr = bdLocation.getAddrStr();
-									String content = "点击签到\n您在" + locationNames[i] + "\n位于" + (TextUtils.isEmpty(addrStr)?"未知":addrStr);
+									String content = "点击签到\n您在" + locationNames[i] + "\n位于" + (TextUtils.isEmpty(addrStr) ? "未知" : addrStr);
 
 									NotifyUtil notificationSucceededCheckIn = new NotifyUtil(getApplicationContext(), IN_RANGE_NOTIFICATION);
 									notificationSucceededCheckIn.setOnGoing(false);

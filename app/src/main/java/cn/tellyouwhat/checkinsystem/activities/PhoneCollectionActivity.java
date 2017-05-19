@@ -89,7 +89,7 @@ public class PhoneCollectionActivity extends BaseActivity implements ObservableS
 	}
 
 	private void initData() {
-		x.http().get(new RequestParams("http://api.checkin.tellyouwhat.cn/Telephone/GetAllTelephone"),
+		x.http().get(new RequestParams("https://api.checkin.tellyouwhat.cn/Telephone/GetAllTelephone"),
 				new Callback.CommonCallback<JSONObject>() {
 					@Override
 					public void onSuccess(JSONObject result) {

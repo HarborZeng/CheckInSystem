@@ -1,12 +1,13 @@
 package cn.tellyouwhat.checkinsystem.services;
 
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -49,6 +50,11 @@ public class UpdateTodayStatusService extends AbsWorkService {
 	public void onCreate() {
 		super.onCreate();
 		sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		SharedPreferences userInfo = getSharedPreferences("userInfo", MODE_PRIVATE);
+		String token = userInfo.getString(ConstantValues.TOKEN, "");
+		if (TextUtils.isEmpty(token)) {
+			return;
+		}
 		new Timer().schedule(new TimerTask() {
 			@Override
 			public void run() {
@@ -59,7 +65,7 @@ public class UpdateTodayStatusService extends AbsWorkService {
 
 	private void getTodayStatus() {
 //		Log.i(TAG, "getTodayStatus: 获取今日状态中ing");
-		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/GetTodayStatus");
+		CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/CheckIn/GetTodayStatus");
 		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 
 
@@ -125,7 +131,8 @@ public class UpdateTodayStatusService extends AbsWorkService {
 		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");
 		String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
 		if (!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(token)) {
-			RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+			@SuppressLint("HardwareIds") String deviceID = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)).getDeviceId();
+			RequestParams p = new RequestParams("https://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + deviceID + "&token=" + token);
 			x.http().get(p, new Callback.CommonCallback<JSONObject>() {
 
 				private int resultInt;
@@ -153,6 +160,7 @@ public class UpdateTodayStatusService extends AbsWorkService {
 									break;
 								}
 							}
+							getTodayStatus();
 							break;
 						case -1:
 							try {
@@ -218,7 +226,7 @@ public class UpdateTodayStatusService extends AbsWorkService {
 
 	@Override
 	public Boolean shouldStopService(Intent intent, int flags, int startId) {
-		return null;
+		return false;
 	}
 
 	@Override

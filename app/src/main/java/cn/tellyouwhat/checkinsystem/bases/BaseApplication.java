@@ -2,10 +2,9 @@ package cn.tellyouwhat.checkinsystem.bases;
 
 import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
 import android.os.UserManager;
-import android.util.Log;
 
+import com.oasisfeng.condom.CondomProcess;
 import com.squareup.leakcanary.LeakCanary;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
@@ -25,6 +24,9 @@ public class BaseApplication extends Application {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+
+		CondomProcess.installExceptDefaultProcess(this);
+
 		registerToWeChat();
 		if (LeakCanary.isInAnalyzerProcess(this)) {
 			// This process is dedicated to LeakCanary for heap analysis.
@@ -33,6 +35,8 @@ public class BaseApplication extends Application {
 		}
 		LeakCanary.install(this);
 		// Normal app init code...
+
+//		Themer.INSTANCE.init(this, R.style.AppTheme);//设置默认主题
 
 		x.Ext.init(this);
 //		x.Ext.setDebug(true);

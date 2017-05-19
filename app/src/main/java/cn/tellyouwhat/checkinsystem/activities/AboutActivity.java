@@ -34,8 +34,6 @@ import android.widget.Toast;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 import com.github.ksoichiro.android.observablescrollview.ObservableListView;
-import com.github.ksoichiro.android.observablescrollview.ObservableScrollViewCallbacks;
-import com.github.ksoichiro.android.observablescrollview.ScrollState;
 import com.jaeger.library.StatusBarUtil;
 
 import org.json.JSONException;
@@ -61,7 +59,6 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 public class AboutActivity extends BaseActivity {
 	private static final String TAG = "AboutActivity";
-	private ActionBar supportActionBar;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -120,7 +117,7 @@ public class AboutActivity extends BaseActivity {
 				}
 			}
 		});
-		supportActionBar = getSupportActionBar();
+		ActionBar supportActionBar = getSupportActionBar();
 		if (supportActionBar != null) {
 			supportActionBar.setDisplayHomeAsUpEnabled(true);
 		}
@@ -182,7 +179,7 @@ public class AboutActivity extends BaseActivity {
 		if (networkInfo != null && networkInfo.isAvailable()) {
 //			Log.d(TAG, "checkUpdate: 网络正常");
 
-			RequestParams params = new RequestParams("http://update.checkin.tellyouwhat.cn/update.json");
+			RequestParams params = new RequestParams("https://update.checkin.tellyouwhat.cn/update.json");
 			x.http().get(params, new Callback.CommonCallback<JSONObject>() {
 				@Override
 				public void onSuccess(JSONObject object) {

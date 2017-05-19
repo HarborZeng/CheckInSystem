@@ -78,11 +78,15 @@
     <PreferenceCategory
         android:key="more_settings"
         android:title="更多">
+        <!--<ListPreference
+            android:key="change_style"
+            android:title="主题"
+            android:entries="@array/pref_style_titles"
+            android:entryValues="@array/pref_style_values"/>-->
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="immersed_status_bar_enabled"
             android:title="使用沉浸式状态栏"/>
-
     </PreferenceCategory>
     <PreferenceCategory
         android:title="关于">

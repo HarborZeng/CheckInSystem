@@ -10,10 +10,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -29,6 +27,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -37,7 +36,6 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.jaeger.library.StatusBarUtil;
 import com.xdandroid.hellodaemon.DaemonEnv;
-import com.xdandroid.hellodaemon.IntentWrapper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,6 +53,7 @@ import cn.tellyouwhat.checkinsystem.fragments.MeFragment;
 import cn.tellyouwhat.checkinsystem.services.AutoCheckInService;
 import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 import cn.tellyouwhat.checkinsystem.services.UpdateTodayStatusService;
+import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
 import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
@@ -197,6 +196,8 @@ public class MainActivity extends BaseActivity {
 		setBackEnable(false);
 		setContentView(R.layout.activity_main);
 
+//		Themer.INSTANCE.init(getApplication(), R.style.AppTheme);//设置默认主题
+
 		Intent checkIntent = getIntent();
 		boolean beginCheckIn = checkIntent.getBooleanExtra("BEGIN_CHECK_IN", false);
 		boolean beginCheckOut = checkIntent.getBooleanExtra("BEGIN_CHECK_OUT", false);
@@ -226,31 +227,7 @@ public class MainActivity extends BaseActivity {
 			StatusBarUtil.setColor(MainActivity.this, getResources().getColor(R.color.colorPrimary), 0);
 		}
 
-		//开启获取位置的后台服务
-		boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
-		if (backGroundServiceEnabled) {
-			DaemonEnv.initialize(this, LocationGettingService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
-			try {
-				startService(new Intent(this, LocationGettingService.class));
-			} catch (Exception ignored) {
-			}
-//			Intent intent = new Intent(getApplicationContext(), LocationGettingService.class);
-//			startService(intent);
-		}
-
-//		Intent intent = new Intent(getApplicationContext(), AutoCheckInService.class);
-//		startService(intent);
-		DaemonEnv.initialize(this, AutoCheckInService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
-		try {
-			startService(new Intent(this, AutoCheckInService.class));
-		} catch (Exception ignored) {
-		}
-
-		DaemonEnv.initialize(this, UpdateTodayStatusService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
-		try {
-			startService(new Intent(this, UpdateTodayStatusService.class));
-		} catch (Exception ignored) {
-		}
+		startServices(sharedPref);
 
 		BottomNavigationView mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
 		mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
@@ -261,6 +238,38 @@ public class MainActivity extends BaseActivity {
 				checkUpdate();
 			}
 		}).start();
+	}
+
+	private void startServices(SharedPreferences sharedPref) {
+		SharedPreferences userInfo = getSharedPreferences("userInfo", MODE_PRIVATE);
+		final String token = userInfo.getString(ConstantValues.TOKEN, "");
+		if (!TextUtils.isEmpty(token)) {
+			//开启获取位置的后台服务
+			boolean backGroundServiceEnabled = sharedPref.getBoolean("use_background_service", true);
+			if (backGroundServiceEnabled) {
+				DaemonEnv.initialize(getApplicationContext(), LocationGettingService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
+				try {
+					startService(new Intent(this, LocationGettingService.class));
+				} catch (Exception ignored) {
+				}
+//			Intent intent = new Intent(getApplicationContext(), LocationGettingService.class);
+//			startService(intent);
+			}
+
+//		Intent intent = new Intent(getApplicationContext(), AutoCheckInService.class);
+//		startService(intent);
+			DaemonEnv.initialize(getApplicationContext(), AutoCheckInService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
+			try {
+				startService(new Intent(this, AutoCheckInService.class));
+			} catch (Exception ignored) {
+			}
+
+			DaemonEnv.initialize(getApplicationContext(), UpdateTodayStatusService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
+			try {
+				startService(new Intent(this, UpdateTodayStatusService.class));
+			} catch (Exception ignored) {
+			}
+		}
 	}
 
 	@Override
@@ -305,7 +314,7 @@ public class MainActivity extends BaseActivity {
 		if (networkInfo != null && networkInfo.isAvailable()) {
 //			Log.d(TAG, "checkUpdate: 网络正常");
 
-			RequestParams params = new RequestParams("http://update.checkin.tellyouwhat.cn/update.json");
+			RequestParams params = new RequestParams("https://update.checkin.tellyouwhat.cn/update.json");
 			x.http().get(params, new Callback.CommonCallback<JSONObject>() {
 				@Override
 				public void onSuccess(JSONObject object) {

@@ -246,7 +246,7 @@ public class CheckInFragment extends BaseFragment {
 
 	private void getTodayStatus() {
 //		Log.i(TAG, "getTodayStatus: 获取今日状态中ing");
-		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/GetTodayStatus");
+		CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/CheckIn/GetTodayStatus");
 		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 			@Override
 			public void onSuccess(JSONObject result) {
@@ -346,7 +346,7 @@ public class CheckInFragment extends BaseFragment {
 	}
 
 	private void getLocationGPSDetail() {
-		RequestParams requestParams = new RequestParams("http://api.checkin.tellyouwhat.cn/location/getalllocation");
+		RequestParams requestParams = new RequestParams("https://api.checkin.tellyouwhat.cn/location/getalllocation");
 		x.http().request(HttpMethod.GET, requestParams, new Callback.CommonCallback<JSONObject>() {
 			@Override
 			public void onSuccess(JSONObject result) {
@@ -729,34 +729,48 @@ public class CheckInFragment extends BaseFragment {
 	}
 
 	private void prepareBoard() {
-		x.http().get(new RequestParams("http://update.checkin.tellyouwhat.cn/board.json"), new Callback.CommonCallback<JSONArray>() {
+		x.http().get(new RequestParams("https://api.checkin.tellyouwhat.cn/Notice/GetAllNotices"), new Callback.CommonCallback<JSONObject>() {
 			@Override
-			public void onSuccess(JSONArray result) {
+			public void onSuccess(JSONObject result) {
 //				Log.d(TAG, "onSuccess: 板子上要写的东西有："+result);
-				mNotices = new ArrayList<>();
-				for (int i = 0; i < result.length(); i++) {
+				int resultInt = 0;
+				try {
+					resultInt = result.getInt("result");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				if (resultInt == 1) {
+					mNotices = new ArrayList<>();
+					JSONArray data = null;
 					try {
-						JSONObject jsonObject = result.getJSONObject(i);
-						String title = jsonObject.getString("title");
-						String content = jsonObject.getString("content");
-						String time = jsonObject.getString("time");
-						String author = jsonObject.getString("author");
-						Notice notice = new Notice();
-						notice.setContent(content);
-						notice.setTitle(title);
-						notice.setTime(time);
-						notice.setAuthor(author);
-						mNotices.add(notice);
+						data = result.getJSONArray("data");
 					} catch (JSONException e) {
 						e.printStackTrace();
 					}
+					for (int i = 0; i < (data != null ? data.length() : 0); i++) {
+						try {
+							JSONObject jsonObject = data.getJSONObject(i);
+							String title = jsonObject.getString("Title");
+							String content = jsonObject.getString("Content");
+							String time = jsonObject.getString("Time").replace("T", " ").substring(0, 16);
+							String author = jsonObject.getString("Author");
+							Notice notice = new Notice();
+							notice.setContent(content);
+							notice.setTitle(title);
+							notice.setTime(time);
+							notice.setAuthor(author);
+							mNotices.add(notice);
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}
+					}
+					List<String> noticeTitles = new ArrayList<>();
+					for (Notice noticeTitle :
+							mNotices) {
+						noticeTitles.add(noticeTitle.getTitle());
+					}
+					marqueeView.startWithList(noticeTitles);
 				}
-				List<String> noticeTitles = new ArrayList<>();
-				for (Notice noticeTitle :
-						mNotices) {
-					noticeTitles.add(noticeTitle.getTitle());
-				}
-				marqueeView.startWithList(noticeTitles);
 			}
 
 			@Override
@@ -1257,7 +1271,7 @@ public class CheckInFragment extends BaseFragment {
 	}
 
 	private void beginCheckingOut() {
-		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/checkout");
+		CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/checkin/checkout");
 		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 			@Override
 			public void onSuccess(JSONObject result) {
@@ -1360,7 +1374,7 @@ public class CheckInFragment extends BaseFragment {
 	}
 
 	private void beginCheckingIn() {
-		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/checkin");
+		CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/checkin/checkin");
 		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 			@Override
 			public void onSuccess(JSONObject result) {

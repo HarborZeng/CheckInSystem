@@ -166,7 +166,7 @@ public class UserInfoActivity extends BaseActivity {
 	}
 
 	private void getAllDepartment() {
-		x.http().get(new RequestParams("http://api.checkin.tellyouwhat.cn/Department/GetAllDepartments"), new Callback.CommonCallback<JSONObject>() {
+		x.http().get(new RequestParams("https://api.checkin.tellyouwhat.cn/Department/GetAllDepartments"), new Callback.CommonCallback<JSONObject>() {
 			@Override
 			public void onSuccess(JSONObject result) {
 				Log.d(TAG, "onSuccess: 公司职位部门: " + result.toString());
@@ -343,7 +343,7 @@ public class UserInfoActivity extends BaseActivity {
 			final String phone = phoneNumberEditPageTextView.getText().toString().trim();
 			final String email = emailEditPageTextView.getText().toString().trim();
 //			Log.i(TAG, "onOptionsItemSelected: jobNumber: " + jobNumber + ", department: " + department + ", name:" + URLEncoder.encode(name, "UTF-8") + ", phone: " + phone + ", email: " + email);
-			CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateUserInfo");
+			CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/User/UpdateUserInfo");
 			requestParams.setMultipart(true);
 			final File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/head.jpg");
 			if (file.exists()) {
@@ -406,7 +406,7 @@ public class UserInfoActivity extends BaseActivity {
 	}
 
 	private void updateUserInfoAfterModified() {
-		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/User/GetUserInfo");
+		CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/User/GetUserInfo");
 		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 			private int resultInt;
 

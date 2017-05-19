@@ -1,5 +1,6 @@
 package cn.tellyouwhat.checkinsystem.services;
 
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -10,6 +11,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -36,8 +38,8 @@ import java.util.TimerTask;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.activities.MainActivity;
-import cn.tellyouwhat.checkinsystem.db.LocationDB;
 import cn.tellyouwhat.checkinsystem.bean.LocationItem;
+import cn.tellyouwhat.checkinsystem.db.LocationDB;
 import cn.tellyouwhat.checkinsystem.receivers.BatteryReceiver;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
@@ -49,7 +51,7 @@ import cn.tellyouwhat.checkinsystem.utils.NotifyUtil;
  * This is a class for auto check in
  */
 
-public class AutoCheckInService extends AbsWorkService{
+public class AutoCheckInService extends AbsWorkService {
 	private static final String TAG = "AutoCheckInService";
 
 	static {
@@ -118,7 +120,7 @@ public class AutoCheckInService extends AbsWorkService{
 						String encryptedToken = userInfo.getString(ConstantValues.TOKEN, "");
 						String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
 						if (!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(token)) {
-							RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+							RequestParams p = new RequestParams("https://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
 							x.http().get(p, new Callback.CommonCallback<JSONObject>() {
 								private int resultInt;
 
@@ -145,7 +147,7 @@ public class AutoCheckInService extends AbsWorkService{
 												}
 											}
 											//开始自动签到
-											CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/AutoCheckIn?hour=" +
+											CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/CheckIn/AutoCheckIn?hour=" +
 													hour + "&minute=" + minute + "&second=" + second);
 											x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 												@Override
@@ -252,7 +254,7 @@ public class AutoCheckInService extends AbsWorkService{
 	};
 
 	private void updateTodayStatus() {
-		CookiedRequestParams requestParams = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/GetTodayStatus");
+		CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/CheckIn/GetTodayStatus");
 		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
 			@Override
 			public void onSuccess(JSONObject result) {
@@ -317,7 +319,8 @@ public class AutoCheckInService extends AbsWorkService{
 		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");
 		String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
 		if (!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(token)) {
-			RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+			@SuppressLint("HardwareIds") String deviceID = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)).getDeviceId();
+			RequestParams p = new RequestParams("https://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + deviceID + "&token=" + token);
 			x.http().get(p, new Callback.CommonCallback<JSONObject>() {
 				private int resultInt;
 
@@ -397,12 +400,12 @@ public class AutoCheckInService extends AbsWorkService{
 
 		//系统电量过低时
 		batteryReceiver = new BatteryReceiver();
-		IntentFilter batteryfilter = new IntentFilter();
-		batteryfilter.addAction(Intent.ACTION_BATTERY_CHANGED);
-		registerReceiver(batteryReceiver, batteryfilter);
+		IntentFilter batteryFilter = new IntentFilter();
+		batteryFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
+		registerReceiver(batteryReceiver, batteryFilter);
 
 		Date date = new Date();
-		Log.d(TAG, "onCreate: 年份是：" + date.getYear());
+//		Log.d(TAG, "onCreate: 年份是：" + date.getYear());
 		Date time = null;
 		try {
 			time = formatter.parse((date.getYear() + 1900) + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " 23:59:00");
@@ -411,12 +414,16 @@ public class AutoCheckInService extends AbsWorkService{
 		}
 		long DAY_MILLIS = 86400000;
 		Log.d(TAG, "onCreate: time is " + time);
-		new Timer(true).schedule(new TimerTask() {
-			@Override
-			public void run() {
-				handler.sendEmptyMessage(CHECK_OUT);
-			}
-		}, time, DAY_MILLIS);
+		SharedPreferences userInfo = getSharedPreferences("userInfo", MODE_PRIVATE);
+		String token = userInfo.getString(ConstantValues.TOKEN, "");
+		if (TextUtils.isEmpty(token)) {
+			new Timer(true).schedule(new TimerTask() {
+				@Override
+				public void run() {
+					handler.sendEmptyMessage(CHECK_OUT);
+				}
+			}, time, DAY_MILLIS);
+		}
 	}
 
 	@Override
@@ -471,7 +478,8 @@ public class AutoCheckInService extends AbsWorkService{
 		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");
 		String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
 		if (!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(token)) {
-			RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+			@SuppressLint("HardwareIds") String deviceID = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)).getDeviceId();
+			RequestParams p = new RequestParams("https://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + deviceID + "&token=" + token);
 			x.http().get(p, new Callback.CommonCallback<JSONObject>() {
 				private int resultInt;
 
@@ -503,7 +511,7 @@ public class AutoCheckInService extends AbsWorkService{
 							int month = calendar.get(Calendar.MONTH);
 //							Log.i(TAG, "getThisMonthStatusThenCheckOut: year is " + year + ", and month is " + month);
 							int realMonth = month + 1;
-							CookiedRequestParams params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/GetMonthData?year=" + year + "&month=" + realMonth);
+							CookiedRequestParams params = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/CheckIn/GetMonthData?year=" + year + "&month=" + realMonth);
 							x.http().get(params, new Callback.CommonCallback<JSONObject>() {
 								@Override
 								public void onSuccess(JSONObject result) {
@@ -527,8 +535,8 @@ public class AutoCheckInService extends AbsWorkService{
 													String checkInID = jsonObject.getString("CheckInID");
 													String checkInTime = jsonObject.getString("CheckInTime");
 													if (checkInTime.startsWith(timeYear + "-" + timeMonth + "-" + timeDay)) {
-														x.http().get(new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/AutoCheckOut?checkinid="
-																		+ checkInID + "&hour=" + hour + "&minute="  + minute + "&second=" + second),
+														x.http().get(new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/CheckIn/AutoCheckOut?checkinid="
+																		+ checkInID + "&hour=" + hour + "&minute=" + minute + "&second=" + second),
 																new CommonCallback<JSONObject>() {
 																	@Override
 																	public void onSuccess(JSONObject result) {
@@ -632,7 +640,11 @@ public class AutoCheckInService extends AbsWorkService{
 							}
 							break;
 						case -1:
-							Toast.makeText(x.app(), "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
+							try {
+								Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+							} catch (JSONException e) {
+								e.printStackTrace();
+							}
 							break;
 						default:
 							break;

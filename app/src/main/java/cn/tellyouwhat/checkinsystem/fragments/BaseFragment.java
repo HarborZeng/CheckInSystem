@@ -1,5 +1,6 @@
 package cn.tellyouwhat.checkinsystem.fragments;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -9,6 +10,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -28,6 +30,7 @@ import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 
 import static android.content.Context.MODE_PRIVATE;
+import static android.content.Context.TELEPHONY_SERVICE;
 
 /**
  * Created by Harbor-Laptop on 2017/3/28.
@@ -75,7 +78,8 @@ public class BaseFragment extends Fragment {
 		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");
 		String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
 		if (!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(token)) {
-			RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+			@SuppressLint("HardwareIds") String deviceID = ((TelephonyManager) getActivity().getSystemService(TELEPHONY_SERVICE)).getDeviceId();
+			RequestParams p = new RequestParams("https://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + deviceID + "&token=" + token);
 			x.http().get(p, new Callback.CommonCallback<JSONObject>() {
 
 				private int resultInt;

@@ -246,7 +246,7 @@ public class HistoryFragment extends BaseFragment {
 														String second = time.substring(17, 19);
 //								Toast.makeText(ModifyCheckTimeActivity.this, hour+minute+second, Toast.LENGTH_SHORT).show();
 														Log.d("传的api网址", "onClick: 传的api网址：" +
-																"http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?checkinid=" +
+																"https://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?checkinid=" +
 																checkInID +
 																"&hour=" + hour +
 																"&minute=" + minute +
@@ -254,25 +254,25 @@ public class HistoryFragment extends BaseFragment {
 																"&reason=" + encodedComment);
 														CookiedRequestParams params;
 														if (isCheckIn) {
-															params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?checkinid=" + checkInID +
+															params = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/checkin/ModifyCheckIn?checkinid=" + checkInID +
 																	"&hour=" + hour +
 																	"&minute=" + minute +
 																	"&second=" + second +
 																	"&reason=" + encodedComment);
 														} else {
-															params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckOut?checkinid=" + checkInID +
+															params = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/checkin/ModifyCheckOut?checkinid=" + checkInID +
 																	"&hour=" + hour +
 																	"&minute=" + minute +
 																	"&second=" + second +
 																	"&reason=" + encodedComment);
-															Log.d(TAG, "onInput: " + "http://api.checkin.tellyouwhat.cn/checkin/ModifyCheckOut?checkinid=" + checkInID +
+															Log.d(TAG, "onInput: " + "https://api.checkin.tellyouwhat.cn/checkin/ModifyCheckOut?checkinid=" + checkInID +
 																	"&hour=" + hour +
 																	"&minute=" + minute +
 																	"&second=" + second +
 																	"&reason=" + encodedComment);
 														}
 														if (!checkInRecord.isHasCheckOut()) {
-															x.http().get(new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/AutoCheckOut?checkinid="
+															x.http().get(new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/CheckIn/AutoCheckOut?checkinid="
 																			+ checkInID + "&hour=" + hour + "&minute=" + minute + "&second=" + second),
 																	new Callback.CommonCallback<JSONObject>() {
 
@@ -410,7 +410,7 @@ public class HistoryFragment extends BaseFragment {
 		showProgress(true);
 		Log.i(TAG, "getThisMonthStatus: year is " + year + ", and month is " + month);
 		int realMonth = month + 1;
-		CookiedRequestParams params = new CookiedRequestParams("http://api.checkin.tellyouwhat.cn/CheckIn/GetMonthData?year=" + year + "&month=" + realMonth);
+		CookiedRequestParams params = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/CheckIn/GetMonthData?year=" + year + "&month=" + realMonth);
 		x.http().get(params, new Callback.CommonCallback<JSONObject>() {
 			@Override
 			public void onSuccess(JSONObject result) {

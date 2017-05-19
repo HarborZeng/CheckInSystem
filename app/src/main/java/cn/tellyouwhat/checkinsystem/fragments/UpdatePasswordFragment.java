@@ -87,7 +87,7 @@ public class UpdatePasswordFragment extends Fragment implements ISlidePolicy {
 					.playOn(view.findViewById(R.id.editText_new_password));
 		} else if (!TextUtils.isEmpty(newPass) && newPass.equals(againPass)) {
 			String encryptedPassword = EncryptUtil.md5WithSalt(newPass, ConstantValues.SALT);
-			String url = "http://api.checkin.tellyouwhat.cn/user/UpdatePassword?code=" + verificationCode + "&newpass=" + encryptedPassword;
+			String url = "https://api.checkin.tellyouwhat.cn/user/UpdatePassword?code=" + verificationCode + "&newpass=" + encryptedPassword;
 			RequestParams params = new RequestParams(url);
 			x.http().get(params, new Callback.CommonCallback<JSONObject>() {
 				@Override

@@ -48,7 +48,7 @@
             android:cropToPadding="false"
             android:paddingRight="0dp"
             android:paddingTop="12dp"
-            android:src="@drawable/check_code"/>
+            android:src="@drawable/loading"/>
 
         <android.support.design.widget.TextInputLayout
             android:id="@+id/textInputLayoutPassword"

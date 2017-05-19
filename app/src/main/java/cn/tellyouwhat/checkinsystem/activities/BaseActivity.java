@@ -1,16 +1,16 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
+import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.github.anzewei.parallaxbacklayout.ParallaxActivityBase;
@@ -31,8 +31,9 @@ import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 
 /**
  * Created by Harbor-Laptop on 2017/2/24.
+ *
  * @author HarborZeng
- * It's all activities' root
+ *         It's all activities' root
  */
 
 public class BaseActivity extends ParallaxActivityBase {
@@ -105,7 +106,8 @@ public class BaseActivity extends ParallaxActivityBase {
 		String encryptedToken = sharedPreferences.getString(ConstantValues.TOKEN, "");
 		String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
 		if (!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(token)) {
-			RequestParams p = new RequestParams("http://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+			@SuppressLint("HardwareIds") String deviceID = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)).getDeviceId();
+			RequestParams p = new RequestParams("https://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + deviceID + "&token=" + token);
 			x.http().get(p, new Callback.CommonCallback<JSONObject>() {
 
 				private int resultInt;

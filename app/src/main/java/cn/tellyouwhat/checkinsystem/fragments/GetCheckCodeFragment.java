@@ -73,7 +73,7 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 	}
 
 	private void requestCheckCode() {
-		RequestParams params = new RequestParams("http://api.checkin.tellyouwhat.cn/user/GetCheckCode");
+		RequestParams params = new RequestParams("https://api.checkin.tellyouwhat.cn/user/GetCheckCode");
 		params.setUseCookie(true);
 		params.setMultipart(true);
 		x.http().get(params, new Callback.CommonCallback<JSONObject>() {
@@ -149,7 +149,7 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 		} else {
 			phoneNumber = mPhoneNumber.getText().toString().trim();
 			userInput = mCheckCodeEditText.getText().toString().trim();
-			String requestURL = "http://api.checkin.tellyouwhat.cn/User/SendSMS?checkcode=" + userInput + "&phonenumber=" + phoneNumber;
+			String requestURL = "https://api.checkin.tellyouwhat.cn/User/SendSMS?checkcode=" + userInput + "&phonenumber=" + phoneNumber;
 
 			RequestParams requestParams = new RequestParams(requestURL);
 			Log.d(TAG, "onUserIllegallyRequestedNextPage: 请求的链接：" + requestURL);

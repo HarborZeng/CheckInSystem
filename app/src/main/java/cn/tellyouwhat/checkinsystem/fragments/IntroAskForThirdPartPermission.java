@@ -1,29 +1,18 @@
 package cn.tellyouwhat.checkinsystem.fragments;
 
-import android.content.ComponentName;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.github.paolorotolo.appintro.ISlideBackgroundColorHolder;
 import com.github.paolorotolo.appintro.ISlidePolicy;
-import com.xdandroid.hellodaemon.IntentWrapper;
-
-import java.util.List;
 
 import cn.tellyouwhat.checkinsystem.R;
-import cn.tellyouwhat.checkinsystem.utils.FlymeUtil;
-import cn.tellyouwhat.checkinsystem.utils.MIUIUtil;
 
-import static com.xdandroid.hellodaemon.IntentWrapper.getIntentWrapperList;
 import static com.xdandroid.hellodaemon.IntentWrapper.whiteListMatters;
 
 /**
@@ -32,6 +21,12 @@ import static com.xdandroid.hellodaemon.IntentWrapper.whiteListMatters;
 
 public class IntroAskForThirdPartPermission extends Fragment implements ISlidePolicy, ISlideBackgroundColorHolder {
 	private boolean buttonClicked = false;
+
+	public static IntroAskForThirdPartPermission newInstance() {
+		IntroAskForThirdPartPermission fragment = new IntroAskForThirdPartPermission();
+		fragment.setRetainInstance(true);
+		return fragment;
+	}
 
 	@Nullable
 	@Override
@@ -75,12 +70,6 @@ public class IntroAskForThirdPartPermission extends Fragment implements ISlidePo
 
 		whiteListMatters(getActivity(), "需要权限才能正常运行");
 		buttonClicked = true;
-	}
-
-	public static IntroAskForThirdPartPermission newInstance() {
-		IntroAskForThirdPartPermission fragment = new IntroAskForThirdPartPermission();
-		fragment.setRetainInstance(true);
-		return fragment;
 	}
 
 	@Override

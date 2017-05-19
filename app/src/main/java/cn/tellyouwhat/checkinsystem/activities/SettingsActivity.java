@@ -49,6 +49,8 @@ import cn.tellyouwhat.checkinsystem.utils.NotifyUtil;
  * API Guide</a> for more information on developing a Settings UI.
  */
 public class SettingsActivity extends AppCompatPreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener, DirectoryChooserFragment.OnFragmentInteractionListener {
+	private static final String BILI_PINK = "0";
+	private static final String ZHIHU_BLUE = "1";
 	private ParallaxBackActivityHelper mHelper;
 	private Preference batteryOptimizing;
 	private String mDirectory;
@@ -325,9 +327,22 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 				}
 				Toast.makeText(getApplicationContext(), "可能要重启才能生效", Toast.LENGTH_SHORT).show();
 				break;
-			case "m":
+			case "change_style":
+				/*switch (sharedPreferences.getString("change_style", "0")) {
+					case BILI_PINK:
+						Themer.INSTANCE.setThemeSoft(this, R.style.AppTheme, null);//带有300毫秒的渐变动画
+						break;
+					case ZHIHU_BLUE:
+						Themer.INSTANCE.setThemeSoft(this, R.style.ZhiHuBlue, null);//带有300毫秒的渐变动画
+						break;
+					default:
+						Themer.INSTANCE.setThemeSoft(this, R.style.AppTheme, null);//带有300毫秒的渐变动画
+						break;
+				}*/
 				break;
 			case "g":
+				break;
+			default:
 				break;
 		}
 	}

@@ -11,7 +11,6 @@ import android.util.Log;
 import java.util.ArrayList;
 
 import cn.tellyouwhat.checkinsystem.activities.LoginActivity;
-import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 
 /**
  * Created by Harbor-Laptop on 2017/4/6.
@@ -87,7 +86,7 @@ public class ReLoginUtil {
 	}
 
 	private void stopService() {
-		activity.stopService(new Intent(activity, LocationGettingService.class));
+//		AbsWorkService.cancelJobAlarmSub();
 	}
 
 	//
