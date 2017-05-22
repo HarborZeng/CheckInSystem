@@ -21,7 +21,7 @@ public class IntroActivity extends AppIntro2 {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 //		StatusBarUtil.setColor(this, Color.parseColor("#0277BD"), 0);
-
+		setColorTransitionsEnabled(true);
 		addSlide(IntroOne.newInstance());
 		addSlide(IntroTwo.newInstance());
 		addSlide(IntroThree.newInstance());

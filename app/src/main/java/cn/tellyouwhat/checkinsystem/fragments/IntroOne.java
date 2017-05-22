@@ -1,11 +1,10 @@
 package cn.tellyouwhat.checkinsystem.fragments;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,13 +38,12 @@ public class IntroOne extends Fragment implements ISlideBackgroundColorHolder {
 
 	@Override
 	public int getDefaultBackgroundColor() {
-		return Color.parseColor("#0277BD");
+		return ContextCompat.getColor(getContext(), R.color.intro_fragment_one);
 	}
 
 	@Override
 	public void setBackgroundColor(@ColorInt int backgroundColor) {
 		if (intro1 != null) {
-			Log.d("IntroOne", "setBackgroundColor: intro1不为空");
 			intro1.setBackgroundColor(backgroundColor);
 		}
 	}

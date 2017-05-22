@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,14 +38,13 @@ public class IntroTwo extends Fragment implements ISlideBackgroundColorHolder {
 
 	@Override
 	public int getDefaultBackgroundColor() {
-		return getResources().getColor(R.color.theme_yellow_primary_dark);
+		return ContextCompat.getColor(getContext(), R.color.intro_fragment_two);
 	}
 
 	@Override
 	public void setBackgroundColor(@ColorInt int backgroundColor) {
 
 		if (intro2 != null) {
-			Log.d("IntroTwo", "setBackgroundColor: intro2不为空");
 			intro2.setBackgroundColor(backgroundColor);
 		}
 	}

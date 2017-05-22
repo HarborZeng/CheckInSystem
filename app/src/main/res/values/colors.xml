@@ -82,4 +82,8 @@
     <color name="primaryDark">#00796b</color>
     <color name="accent">#eeff41</color>
     <color name="accentLight">#F4FF81</color>
+    <color name="intro_fragment_one">#0277BD</color>
+    <color name="intro_fragment_two">#ff9100</color>
+    <color name="intro_fragment_three">#2e7d32</color>
+    <color name="intro_fragment_privilege">#d81b60</color>
 </resources>
