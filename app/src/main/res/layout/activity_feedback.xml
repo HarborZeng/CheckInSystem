@@ -31,6 +31,7 @@
     <android.support.v7.widget.CardView
         android:layout_below="@+id/card_view_of_feedback_edit_text"
         android:layout_margin="10dp"
+        android:id="@+id/card_view_contact"
         app:cardCornerRadius="5dp"
         android:contextClickable="true"
         android:clickable="true"
@@ -53,6 +54,15 @@
             android:id="@+id/contact_information_edit_text"/>
     </android.support.v7.widget.CardView>
 
+    <CheckBox
+        android:id="@+id/checkbox_upload_phone_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/card_view_contact"
+        android:layout_marginTop="20dp"
+        android:text="上传设备信息，帮助我们更好分析您的问题"
+        android:textStyle="bold"/>
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -68,6 +78,7 @@
             android:visibility="gone"
             app:cardElevation="4dp">
         </android.support.v7.widget.CardView>
+
     </FrameLayout>
 
     <FrameLayout
@@ -87,5 +98,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
             android:visibility="visible"/>
+
     </FrameLayout>
+
 </RelativeLayout>

@@ -50,7 +50,7 @@ public class MeFragment extends BaseFragment {
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
-		Log.i(TAG, "onCreate: in MeFragment");
+//		Log.i(TAG, "onCreate: in MeFragment");
 		super.onCreate(savedInstanceState);
 		mAlphaAnimationOut.setDuration(500);
 		mAlphaAnimationIn.setDuration(1000);
@@ -58,13 +58,13 @@ public class MeFragment extends BaseFragment {
 
 	@Override
 	public void onResume() {
-		Log.i(TAG, "onResume: in MeFragment");
+//		Log.i(TAG, "onResume: in MeFragment");
 		super.onResume();
 	}
 
 	@Override
 	public void onPause() {
-		Log.i(TAG, "onPause: in MeFragment");
+//		Log.i(TAG, "onPause: in MeFragment");
 		super.onPause();
 	}
 
@@ -111,7 +111,9 @@ public class MeFragment extends BaseFragment {
 		checkInGraphicCardView.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Toast.makeText(getContext(), "尚未开放", Toast.LENGTH_LONG).show();
+				getActivity().getSupportFragmentManager().beginTransaction()
+						.add(R.id.container_me_fragment, ChartFragment.newInstance())
+						.commit();
 			}
 		});
 

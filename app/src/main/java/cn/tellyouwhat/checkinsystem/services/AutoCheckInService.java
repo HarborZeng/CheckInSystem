@@ -109,7 +109,7 @@ public class AutoCheckInService extends AbsWorkService {
 						}
 						LocationItem item = locationDB.queryFirstRecordOfDay(yearString, monthString, dayString, employeeID);
 						String time = item.getTime();
-						Log.d(TAG, "onSharedPreferenceChanged: 从数据库查来的time:" + time);
+
 						final String hour = time.substring(11, 13);
 						final String minute = time.substring(14, 16);
 						final String second = time.substring(17, 19);
@@ -120,7 +120,8 @@ public class AutoCheckInService extends AbsWorkService {
 						String encryptedToken = userInfo.getString(ConstantValues.TOKEN, "");
 						String token = EncryptUtil.decryptBase64withSalt(encryptedToken, ConstantValues.SALT);
 						if (!TextUtils.isEmpty(userName) && !TextUtils.isEmpty(token)) {
-							RequestParams p = new RequestParams("https://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + Build.SERIAL + "&token=" + token);
+							@SuppressLint("HardwareIds") String deviceID = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)).getDeviceId();
+							RequestParams p = new RequestParams("https://api.checkin.tellyouwhat.cn/User/UpdateSession?username=" + userName + "&deviceid=" + deviceID + "&token=" + token);
 							x.http().get(p, new Callback.CommonCallback<JSONObject>() {
 								private int resultInt;
 
@@ -215,18 +216,12 @@ public class AutoCheckInService extends AbsWorkService {
 											});
 											//自动签到结束
 											break;
-										case 0:
+										default:
 											try {
 												Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
 											} catch (JSONException e) {
 												e.printStackTrace();
 											}
-											break;
-										case -1:
-											Toast.makeText(x.app(), "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
-											break;
-										default:
-											break;
 									}
 								}
 
@@ -347,18 +342,12 @@ public class AutoCheckInService extends AbsWorkService {
 								}
 							}
 							break;
-						case 0:
+						default:
 							try {
 								Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
 							} catch (JSONException e) {
 								e.printStackTrace();
 							}
-							break;
-						case -1:
-							Toast.makeText(x.app(), "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
-							break;
-						default:
-							break;
 					}
 				}
 

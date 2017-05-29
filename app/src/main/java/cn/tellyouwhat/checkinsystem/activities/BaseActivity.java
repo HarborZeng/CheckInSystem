@@ -174,4 +174,5 @@ public class BaseActivity extends ParallaxActivityBase {
 			reLoginUtil.reLoginWithAlertDialog();
 		}
 	}
+
 }

@@ -238,6 +238,9 @@ public class CheckInFragment extends BaseFragment {
 		if (mGetLocationClient != null) {
 			mGetLocationClient.stop();
 		}
+		if (mLocationCardView == null) {
+			return;
+		}
 		mLocationCardView.setVisibility(View.GONE);
 		if (snackbar != null && snackbar.isShownOrQueued()) {
 			snackbar.dismiss();
@@ -1164,7 +1167,7 @@ public class CheckInFragment extends BaseFragment {
 		}
 	}
 
-	public class GetLocationLocationListener implements BDLocationListener {
+	private class GetLocationLocationListener implements BDLocationListener {
 		@Override
 		public void onReceiveLocation(final BDLocation location) {
 			alphaAnimation.setDuration(800);

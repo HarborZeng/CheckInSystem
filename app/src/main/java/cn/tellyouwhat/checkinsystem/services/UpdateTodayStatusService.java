@@ -236,7 +236,7 @@ public class UpdateTodayStatusService extends AbsWorkService {
 
 	@Override
 	public void stopWork(Intent intent, int flags, int startId) {
-
+		stopService(intent);
 	}
 
 	@Override

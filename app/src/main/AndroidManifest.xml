@@ -47,7 +47,7 @@
             android:name="com.baidu.lbsapi.API_KEY"
             android:value="nIT6orX82KFVr8fKyWgkvCWGIpGFaS0r"/>
 
-        <activity
+        <!--<activity
             android:name=".activities.SplashActivity"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
@@ -57,7 +57,7 @@
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
+        </activity>-->
         <activity
             android:name=".activities.LoginActivity"
             android:label="@string/log_in"
@@ -91,10 +91,13 @@
             android:name=".activities.MainActivity"
             android:label="@string/check_in"
             android:launchMode="singleTask"
+            android:theme="@style/AppTheme.Launcher"
             android:screenOrientation="portrait">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="cn.tellyouwhat.checkinsystem.activities.BaseActivity"/>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
         </activity>
         <activity
             android:name=".activities.SettingsActivity"
@@ -152,6 +155,7 @@
             android:screenOrientation="portrait"/>
 
         <service android:name=".services.UpdateTodayStatusService"/>
+
     </application>
 
 </manifest>

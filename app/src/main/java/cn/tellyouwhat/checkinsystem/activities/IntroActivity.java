@@ -1,6 +1,8 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -15,6 +17,8 @@ import cn.tellyouwhat.checkinsystem.fragments.IntroAskForThirdPartPermission;
 import cn.tellyouwhat.checkinsystem.fragments.IntroOne;
 import cn.tellyouwhat.checkinsystem.fragments.IntroThree;
 import cn.tellyouwhat.checkinsystem.fragments.IntroTwo;
+import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
+import cn.tellyouwhat.checkinsystem.utils.SPUtil;
 
 public class IntroActivity extends AppIntro2 {
 	@Override
@@ -29,6 +33,7 @@ public class IntroActivity extends AppIntro2 {
 //		addSlide(AppIntroFragment.newInstance("", "内容", R.drawable.funny, Color.parseColor("#124874")));
 //		setFadeAnimation();
 		setImmersiveMode(true);
+
 //		setDepthAnimation();
 //		setFlowAnimation();
 //		setZoomAnimation();
@@ -47,6 +52,8 @@ public class IntroActivity extends AppIntro2 {
 	public void onDonePressed(Fragment currentFragment) {
 		super.onDonePressed(currentFragment);
 		// Do something when users tap on Done button.
+		SPUtil spUtil = new SPUtil(this);
+		spUtil.putBoolean(ConstantValues.FIRST_TIME_AFTER_UPGRADE + getLocalVersionCode(), false);
 		enterMain();
 	}
 
@@ -60,5 +67,17 @@ public class IntroActivity extends AppIntro2 {
 		Intent intent = new Intent(this, MainActivity.class);
 		startActivity(intent);
 		finish();
+	}
+
+	private int getLocalVersionCode() {
+		PackageInfo packageInfo;
+		PackageManager packageManager = getPackageManager();
+		try {
+			packageInfo = packageManager.getPackageInfo(getPackageName(), 0);
+		} catch (PackageManager.NameNotFoundException e) {
+			e.printStackTrace();
+			return 0;
+		}
+		return packageInfo.versionCode;
 	}
 }

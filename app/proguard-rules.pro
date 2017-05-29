@@ -39,6 +39,17 @@
 -keep class com.chad.library.adapter.** {
    *;
 }
+
+# ProGuard configurations for richapmLens
+-keep class com.richapm.** { *; }
+-dontwarn com.richapm.**
+-keepattributes Exceptions, Signature, InnerClasses
+
+-keepclassmembers class * extends com.stephentuso.welcome.WelcomeActivity {
+    public static java.lang.String welcomeKey();
+}
+# End richapmLens
+
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:

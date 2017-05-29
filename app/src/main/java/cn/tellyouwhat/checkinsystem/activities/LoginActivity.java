@@ -437,7 +437,6 @@ public class LoginActivity extends BaseActivity {
 		boolean isFirstTimeAfterUpgrade = spUtil.getBoolean(ConstantValues.FIRST_TIME_AFTER_UPGRADE + localVersionCode, true);
 		Intent intent;
 		if (isFirstTimeAfterUpgrade && mNeedToShowTabbedActivity) {
-			spUtil.putBoolean(ConstantValues.FIRST_TIME_AFTER_UPGRADE + localVersionCode, false);
 			intent = new Intent(this, IntroActivity.class);
 		} else {
 			intent = new Intent(this, MainActivity.class);

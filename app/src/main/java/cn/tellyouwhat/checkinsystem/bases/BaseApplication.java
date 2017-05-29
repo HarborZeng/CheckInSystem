@@ -8,14 +8,12 @@ import com.oasisfeng.condom.CondomProcess;
 import com.squareup.leakcanary.LeakCanary;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
-import com.xdandroid.hellodaemon.DaemonEnv;
 
 import org.xutils.x;
 
 import java.lang.reflect.Method;
 
 import cn.tellyouwhat.checkinsystem.BuildConfig;
-import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 
 public class BaseApplication extends Application {
@@ -35,8 +33,6 @@ public class BaseApplication extends Application {
 		}
 		LeakCanary.install(this);
 		// Normal app init code...
-
-//		Themer.INSTANCE.init(this, R.style.AppTheme);//设置默认主题
 
 		x.Ext.init(this);
 //		x.Ext.setDebug(true);
@@ -61,7 +57,6 @@ public class BaseApplication extends Application {
 				}
 			}
 		}
-		DaemonEnv.initialize(this, LocationGettingService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
 	}
 
 	private void registerToWeChat() {

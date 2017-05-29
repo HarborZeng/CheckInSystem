@@ -15,6 +15,8 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -51,6 +53,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.fragments.HeadImageFragment;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -268,6 +271,17 @@ public class UserInfoActivity extends BaseActivity {
 			Bitmap bitmapHeadImage = BitmapFactory.decodeByteArray(decodedHeadImage, 0, decodedHeadImage.length);
 			headEditPageCircleImageView.setImageBitmap(bitmapHeadImage);
 		}
+
+		headEditPageCircleImageView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				getSupportFragmentManager().beginTransaction()
+						.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+						.add(R.id.relative_layout_user_info_activity, HeadImageFragment.newInstance())
+						.commit();
+			}
+		});
+
 		mEditPageHeadCardView = (CardView) findViewById(R.id.card_view_edit_page_head);
 		mEditPageHeadCardView.setOnClickListener(new View.OnClickListener() {
 			@Override

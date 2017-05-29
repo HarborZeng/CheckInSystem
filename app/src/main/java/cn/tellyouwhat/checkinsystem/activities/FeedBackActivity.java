@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -29,6 +30,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.utils.PhoneInfoProvider;
 
 /**
  * Created by Harbor-Laptop on 2017/4/9.
@@ -49,6 +51,8 @@ public class FeedBackActivity extends BaseActivity {
 	private CardView mFeedBackCardView;
 	private AlphaAnimation mAnimationIn = new AlphaAnimation(0f, 1f);
 	private AlphaAnimation mAnimationOut = new AlphaAnimation(1f, 0f);
+	private CheckBox mUploadPhoneInfoCheckBox;
+	private String mAllPhoneyInfo = "无设备信息";
 
 	@Override
 	protected void onCreate(Bundle arg0) {
@@ -63,6 +67,7 @@ public class FeedBackActivity extends BaseActivity {
 		mFeedBackEditText = (EditText) findViewById(R.id.feedback_edit_text);
 		mFeedBackProgressBar = (ProgressBar) findViewById(R.id.feedback_summit_progress);
 		mFeedBackCardView = (CardView) findViewById(R.id.feedback_summit_bg);
+		mUploadPhoneInfoCheckBox = (CheckBox) findViewById(R.id.checkbox_upload_phone_info);
 		mFeedBackProgressBar.setVisibility(View.INVISIBLE);
 		mFeedBackCardView.setVisibility(View.INVISIBLE);
 	}
@@ -82,6 +87,9 @@ public class FeedBackActivity extends BaseActivity {
 				return true;
 			case R.id.item_submit:
 				showProgress(true);
+				if (mUploadPhoneInfoCheckBox.isChecked()) {
+					mAllPhoneyInfo = PhoneInfoProvider.getInstance().getAllInfo(getApplicationContext());
+				}
 				String contactInfo = null;
 				String feedbackText = null;
 				try {
@@ -93,10 +101,9 @@ public class FeedBackActivity extends BaseActivity {
 				SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
 				String userName = sharedPreferences.getString("USER_NAME", "");
 				if (!TextUtils.isEmpty(feedbackText)) {
-//					Log.i(TAG, "onOptionsItemSelected: contactInfo: " + contactInfo + ", feedbackText: " + feedbackText);
 					RequestParams requestParams = null;
 					try {
-						requestParams = new RequestParams("http://sc.ftqq.com/SCU6693Tdfc142ce95a8a9fcfbbb14f587cbdf4258c9c7a088af6.send?text=" + (TextUtils.isEmpty(contactInfo) ? URLEncoder.encode("匿名", "UTF-8") : contactInfo) + URLEncoder.encode(", 真实信息: " + userName, "UTF-8") + "&desp=" + feedbackText);
+						requestParams = new RequestParams("http://sc.ftqq.com/SCU6693Tdfc142ce95a8a9fcfbbb14f587cbdf4258c9c7a088af6.send?text=" + (TextUtils.isEmpty(contactInfo) ? URLEncoder.encode("匿名", "UTF-8") : contactInfo) + URLEncoder.encode(", 真实信息: " + userName, "UTF-8") + "&desp=" + feedbackText + "\n" + URLEncoder.encode(mAllPhoneyInfo, "UTF-8"));
 					} catch (UnsupportedEncodingException e) {
 						e.printStackTrace();
 					}
