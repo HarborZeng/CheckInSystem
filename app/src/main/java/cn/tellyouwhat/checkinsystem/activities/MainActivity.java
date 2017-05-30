@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.DownloadManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -18,6 +19,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -37,6 +39,7 @@ import android.widget.Toast;
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.jaeger.library.StatusBarUtil;
+import com.stephentuso.welcome.WelcomeHelper;
 import com.xdandroid.hellodaemon.DaemonEnv;
 
 import org.json.JSONException;
@@ -64,6 +67,7 @@ import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 import cn.tellyouwhat.checkinsystem.utils.SPUtil;
 
 import static android.content.Intent.ACTION_VIEW;
+import static com.xdandroid.hellodaemon.IntentWrapper.whiteListMatters;
 
 public class MainActivity extends BaseActivity {
 
@@ -128,6 +132,8 @@ public class MainActivity extends BaseActivity {
 	private String mDownloadURL;
 	private boolean mForceUpgrade;
 	private String mSize;
+	private Bundle mInstanceState;
+	private WelcomeHelper mWelcomeHelper;
 
 	@Override
 	protected void onResume() {
@@ -142,7 +148,7 @@ public class MainActivity extends BaseActivity {
 					.title("检测到您开启了“模拟位置”")
 					.content("\n您必须前往“开发者选项”\n\n关闭模拟位置相关选项后，才能继续使用CheckIn\n\n或关闭虚拟定位软件")
 					.positiveText("设置")
-					.icon(getApplication().getResources().getDrawable(R.mipmap.warning))
+					.icon(ContextCompat.getDrawable(getApplicationContext(), R.mipmap.warning))
 					.onPositive(new MaterialDialog.SingleButtonCallback() {
 						@Override
 						public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
@@ -198,6 +204,7 @@ public class MainActivity extends BaseActivity {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		mInstanceState = savedInstanceState;
 		setBackEnable(false);
 		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 		if (
@@ -212,7 +219,6 @@ public class MainActivity extends BaseActivity {
 
 		} else {
 			//有权限直接进逻辑
-			setTheme(R.style.AppTheme);
 			AfterPermissionGranted();
 		}
 		initShortCut();
@@ -258,7 +264,6 @@ public class MainActivity extends BaseActivity {
 			for (int i = 0; i < grantResults.length; i++) {
 				if (grantResults[i] == -1) {
 					canEnter[i] = false;
-//             Toast.makeText(this, "您必须要授予权限才能继续", Toast.LENGTH_LONG).show();
 					finish();
 				} else {
 					canEnter[i] = true;
@@ -282,13 +287,18 @@ public class MainActivity extends BaseActivity {
 		if (TextUtils.isEmpty(token)) {
 			enterLogin();
 		} else {
+			synchronized (MainActivity.class) {
+				mWelcomeHelper = new WelcomeHelper(this, IntroActivity.class);
+				mWelcomeHelper.show(mInstanceState);
+			}
+			SystemClock.sleep(800);
+			setTheme(R.style.AppTheme);
 			setContentView(R.layout.activity_main);
+			setTitle("签到");
 			Intent checkIntent = getIntent();
 			boolean beginCheckIn = checkIntent.getBooleanExtra("BEGIN_CHECK_IN", false);
 			boolean beginCheckOut = checkIntent.getBooleanExtra("BEGIN_CHECK_OUT", false);
 			Bundle bundle = new Bundle();
-//    Log.d(TAG, "onCreate: BEGIN_CHECK_IN:"+beginCheckIn);
-//    Log.d(TAG, "onCreate: BEGIN_CHECK_OUT:"+beginCheckOut);
 			bundle.putBoolean("BEGIN_CHECK_IN", beginCheckIn);
 			bundle.putBoolean("BEGIN_CHECK_OUT", beginCheckOut);
 
@@ -321,7 +331,6 @@ public class MainActivity extends BaseActivity {
 			}).start();
 		}
 	}
-
 
 	private void initShortCut() {
 		SPUtil spUtil = new SPUtil(this);
@@ -390,20 +399,38 @@ public class MainActivity extends BaseActivity {
 		}
 	}
 
-
 	@Override
 	protected void onDestroy() {
-//    Log.i(TAG, "onDestroy: in MainActivity");
 		super.onDestroy();
 		ReLoginUtil.removeAllDialog();
 	}
 
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
+		if (requestCode == WelcomeHelper.DEFAULT_WELCOME_SCREEN_REQUEST) {
+			// The key of the welcome screen is in the Intent
+			//这条语句可能会被报空指针
+//			String welcomeKey = data.getStringExtra(IntroActivity.WELCOME_SCREEN_KEY);
+			whiteListMatters(MainActivity.this, "由于系统限制，必须要开启一些权限，您才能正常签到。\n");
+		}
+	}
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		if (mWelcomeHelper == null) {
+			return;
+		}
+		mWelcomeHelper.onSaveInstanceState(outState);
+	}
 
 	public void checkUpdate() {
 		ConnectivityManager connectivityManager = (ConnectivityManager) getApplicationContext().getSystemService(CONNECTIVITY_SERVICE);
 		NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
 		if (networkInfo != null && networkInfo.isAvailable()) {
-//       Log.d(TAG, "checkUpdate: 网络正常");
+			Log.d(TAG, "checkUpdate: 网络正常");
 
 			RequestParams params = new RequestParams("https://update.checkin.tellyouwhat.cn/update.json");
 			x.http().get(params, new Callback.CommonCallback<JSONObject>() {
@@ -418,7 +445,7 @@ public class MainActivity extends BaseActivity {
 						mSize = object.getString("size");
 						int localVersionCode = PhoneInfoProvider.getLocalVersionCode(getApplicationContext());
 						if (localVersionCode < Integer.parseInt(mVersionCode)) {
-//             Log.d(TAG, "onUpdateAvailable: 有更新版本：" + versionName);
+							Log.d(TAG, "onUpdateAvailable: 有更新版本：" + mVersionName);
 							askToUpgrade();
 						} else if (localVersionCode > Integer.parseInt(mVersionCode)) {
 							Toast.makeText(x.app(), R.string.you_are_using_an_Alpha_Test_application, Toast.LENGTH_LONG).show();
@@ -433,7 +460,9 @@ public class MainActivity extends BaseActivity {
 				public void onError(Throwable ex, boolean isOnCallback) {
 					Log.w(TAG, "run: JSON parser may occurred error or it's an IOException", ex);
 					Toast.makeText(x.app(), R.string.server_error, Toast.LENGTH_SHORT).show();
-					ExceptionReporter.reportException(ex.getMessage(), PhoneInfoProvider.getInstance().getAllInfo(getApplicationContext()));
+					ExceptionReporter.reportException("JSON parser may occurred error or it's an IOException",
+							ex.getMessage(),
+							PhoneInfoProvider.getInstance().getAllInfo(getApplicationContext()));
 				}
 
 				@Override
@@ -507,6 +536,14 @@ public class MainActivity extends BaseActivity {
 									}
 								}
 							}
+						})
+						.neutralText("去酷安更新")
+						.neutralColor(ContextCompat.getColor(getApplicationContext(), R.color.sample_red))
+						.onNeutral(new MaterialDialog.SingleButtonCallback() {
+							@Override
+							public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+								gotoCoolAPK();
+							}
 						});
 				if (mForceUpgrade) {
 					builder.title(R.string.must_upgrade).cancelable(false);
@@ -574,10 +611,6 @@ public class MainActivity extends BaseActivity {
 				StringBuffer stringBuffer = new StringBuffer();
 				stringBuffer.append(getString(R.string.please_wait_a_second)).append(DoubleUtil.formatDouble2(((double) current) / 1024 / 1024, RoundingMode.DOWN, 2)).append("/").append(DoubleUtil.formatDouble2(((double) total) / 1024 / 1024, RoundingMode.DOWN, 2)).append("M");
 				builder.setMessage(stringBuffer);
-//             progressBar.setMax((int) total);
-//             progressBar.setProgress((int) current);
-//                Toast.makeText(SplashActivity.this, "下载中。。。", Toast.LENGTH_SHORT).show();
-//          Log.d(TAG, "onLoading: 下载中");
 			}
 
 			@Override
@@ -621,6 +654,14 @@ public class MainActivity extends BaseActivity {
 								long enqueue = downloadManager.enqueue(request);
 								//TODO 下载逻辑
 
+							}
+						})
+						.negativeText("去酷安更新")
+						.negativeColor(ContextCompat.getColor(getApplicationContext(), R.color.sample_red))
+						.onNegative(new MaterialDialog.SingleButtonCallback() {
+							@Override
+							public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+								gotoCoolAPK();
 							}
 						})
 						.show();
@@ -670,5 +711,21 @@ public class MainActivity extends BaseActivity {
 		intent.setDataAndType(uri, "application/vnd.android.package-archive");
 //    Log.i(TAG, "installAPK: 准备好了数据，马上开启下一个activity");
 		startActivity(intent);
+	}
+
+	private void gotoCoolAPK() {
+		Uri uri = Uri.parse("market://details?id=" + getPackageName());
+		Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri)
+				.setPackage("com.coolapk.market")  //指定应用市场
+				.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		try {
+			startActivity(goToMarket);
+		} catch (ActivityNotFoundException e) {
+			e.printStackTrace();
+			Toast.makeText(MainActivity.this, "您的手机并没有安装酷安", Toast.LENGTH_LONG).show();
+			uri = Uri.parse("http://www.coolapk.com/apk/cn.tellyouwhat.checkinsystem");
+			Intent gotoWebsite = new Intent(Intent.ACTION_VIEW, uri);
+			startActivity(gotoWebsite);
+		}
 	}
 }

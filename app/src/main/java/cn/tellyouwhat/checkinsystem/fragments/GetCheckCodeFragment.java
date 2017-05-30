@@ -7,14 +7,17 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.CardView;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.daimajia.androidanimations.library.Techniques;
@@ -42,17 +45,21 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 	private ImageView mCheckCodeImageView;
 	private View view;
 	private String phoneNumber;
-	private String userInput;
 	private boolean isCorrectCode = false;
+	private AlphaAnimation mAnimationIn = new AlphaAnimation(0f, 1f);
+	private AlphaAnimation mAnimationOut = new AlphaAnimation(1f, 0f);
+	private CardView mCheckCodeCardView;
+	private ProgressBar mCheckCodeProgressBar;
 
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 		view = inflater.inflate(R.layout.fragment_get_checkcode, container, false);
-		requestCheckCode();
 		mPhoneNumber = (EditText) view.findViewById(R.id.editText_phoneNumber);
 		mCheckCodeImageView = (ImageView) view.findViewById(R.id.imageview_check_code);
 		mCheckCodeEditText = (EditText) view.findViewById(R.id.editText_check_code);
+
+		requestCheckCode();
 
 		mPhoneNumber.requestFocus();
 		Intent intent = getActivity().getIntent();
@@ -69,7 +76,19 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 			}
 		});
 
+		mCheckCodeCardView = (CardView) view.findViewById(R.id.check_code_summit_bg);
+		mCheckCodeProgressBar = (ProgressBar) view.findViewById(R.id.check_code_summit_progress);
+
 		return view;
+	}
+
+	private void showProgress(boolean show) {
+		mAnimationIn.setDuration(500);
+		mAnimationOut.setDuration(500);
+		mCheckCodeProgressBar.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+		mCheckCodeCardView.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+		mCheckCodeProgressBar.startAnimation(show ? mAnimationIn : mAnimationOut);
+		mCheckCodeCardView.startAnimation(show ? mAnimationIn : mAnimationOut);
 	}
 
 	private void requestCheckCode() {
@@ -119,7 +138,6 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 
 			@Override
 			public void onFinished() {
-
 			}
 		});
 	}
@@ -138,7 +156,7 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 			YoYo.with(Techniques.Tada)
 					.duration(700)
 					.repeat(1)
-					.playOn(view.findViewById(R.id.linearLayout_input_phone_nuber));
+					.playOn(view.findViewById(R.id.linearLayout_input_phone_number));
 		} else if (TextUtils.isEmpty(mCheckCodeEditText.getText().toString().trim())) {
 			mCheckCodeEditText.setError("请输入图片上的字母！");
 			mCheckCodeEditText.requestFocus();
@@ -147,8 +165,9 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 					.repeat(1)
 					.playOn(view.findViewById(R.id.textInputLayoutPassword));
 		} else {
+			showProgress(true);
 			phoneNumber = mPhoneNumber.getText().toString().trim();
-			userInput = mCheckCodeEditText.getText().toString().trim();
+			String userInput = mCheckCodeEditText.getText().toString().trim();
 			String requestURL = "https://api.checkin.tellyouwhat.cn/User/SendSMS?checkcode=" + userInput + "&phonenumber=" + phoneNumber;
 
 			RequestParams requestParams = new RequestParams(requestURL);
@@ -193,6 +212,7 @@ public class GetCheckCodeFragment extends Fragment implements ISlidePolicy {
 				public void onFinished() {
 //					isCorrectCode = true;
 					requestCheckCode();
+					showProgress(false);
 				}
 			});
 		}

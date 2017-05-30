@@ -52,7 +52,7 @@ public class FeedBackActivity extends BaseActivity {
 	private AlphaAnimation mAnimationIn = new AlphaAnimation(0f, 1f);
 	private AlphaAnimation mAnimationOut = new AlphaAnimation(1f, 0f);
 	private CheckBox mUploadPhoneInfoCheckBox;
-	private String mAllPhoneyInfo = "无设备信息";
+	private String mAllPhoneInfo = "无设备信息";
 
 	@Override
 	protected void onCreate(Bundle arg0) {
@@ -87,80 +87,87 @@ public class FeedBackActivity extends BaseActivity {
 				return true;
 			case R.id.item_submit:
 				showProgress(true);
-				if (mUploadPhoneInfoCheckBox.isChecked()) {
-					mAllPhoneyInfo = PhoneInfoProvider.getInstance().getAllInfo(getApplicationContext());
-				}
-				String contactInfo = null;
-				String feedbackText = null;
-				try {
-					contactInfo = URLEncoder.encode(mContactInformationEditText.getText().toString(), "UTF-8");
-					feedbackText = URLEncoder.encode(mFeedBackEditText.getText().toString(), "UTF-8");
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-				}
-				SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
-				String userName = sharedPreferences.getString("USER_NAME", "");
-				if (!TextUtils.isEmpty(feedbackText)) {
-					RequestParams requestParams = null;
-					try {
-						requestParams = new RequestParams("http://sc.ftqq.com/SCU6693Tdfc142ce95a8a9fcfbbb14f587cbdf4258c9c7a088af6.send?text=" + (TextUtils.isEmpty(contactInfo) ? URLEncoder.encode("匿名", "UTF-8") : contactInfo) + URLEncoder.encode(", 真实信息: " + userName, "UTF-8") + "&desp=" + feedbackText + "\n" + URLEncoder.encode(mAllPhoneyInfo, "UTF-8"));
-					} catch (UnsupportedEncodingException e) {
-						e.printStackTrace();
+				synchronized (FeedBackActivity.class) {
+					if (mUploadPhoneInfoCheckBox.isChecked()) {
+						mAllPhoneInfo = PhoneInfoProvider.getInstance().getAllInfo(getApplicationContext());
 					}
-					x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
-						@Override
-						public void onSuccess(JSONObject result) {
-							int errno = 0;
-							Log.i(TAG, "onSuccess: result=" + result);
-							try {
-								errno = result.getInt("errno");
-							} catch (JSONException e) {
-								e.printStackTrace();
-							}
-							switch (errno) {
-								case 0:
-									Toast.makeText(FeedBackActivity.this, "反馈成功，谢谢", Toast.LENGTH_LONG).show();
-									break;
-								case 1024:
-									try {
-										Toast.makeText(FeedBackActivity.this, result.getString("errmsg"), Toast.LENGTH_LONG).show();
-									} catch (JSONException e) {
-										e.printStackTrace();
-									}
-									break;
-								default:
-									Toast.makeText(FeedBackActivity.this, "其他情况", Toast.LENGTH_LONG).show();
-							}
-						}
-
-						@Override
-						public void onError(Throwable ex, boolean isOnCallback) {
-							Toast.makeText(FeedBackActivity.this, "反馈出错，请稍候再试", Toast.LENGTH_LONG).show();
-							ex.printStackTrace();
-						}
-
-						@Override
-						public void onCancelled(CancelledException cex) {
-
-						}
-
-						@Override
-						public void onFinished() {
-							showProgress(false);
-						}
-					});
-				} else {
-					showProgress(false);
-					mFeedBackEditText.requestFocus();
-					mFeedBackEditText.setError("内容不能为空");
-					YoYo.with(Techniques.Tada)
-							.duration(700)
-							.repeat(1)
-							.playOn(mFeedBackEditText);
 				}
+				sendFeedBack();
 				return true;
 			default:
 				return false;
+		}
+	}
+
+	private void sendFeedBack() {
+		String encodedContactInfo = "";
+		String encodedFeedbackText = "";
+		try {
+			encodedContactInfo = URLEncoder.encode(mContactInformationEditText.getText().toString(), "UTF-8");
+			encodedFeedbackText = URLEncoder.encode(mFeedBackEditText.getText().toString() + "\n", "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
+		String userName = sharedPreferences.getString("USER_NAME", "");
+		if (!TextUtils.isEmpty(encodedFeedbackText)) {
+			RequestParams requestParams = null;
+			try {
+				String userInputContact = (TextUtils.isEmpty(encodedContactInfo) ? URLEncoder.encode("匿名", "UTF-8") : encodedContactInfo);
+				requestParams = new RequestParams("http://sc.ftqq.com/SCU6693Tdfc142ce95a8a9fcfbbb14f587cbdf4258c9c7a088af6.send?text=" + userInputContact + URLEncoder.encode(", 真实信息: " + userName, "UTF-8") + "&desp=" + encodedFeedbackText + URLEncoder.encode(mAllPhoneInfo, "UTF-8"));
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+			x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
+				@Override
+				public void onSuccess(JSONObject result) {
+					int errno = 0;
+					Log.i(TAG, "onSuccess: result=" + result);
+					try {
+						errno = result.getInt("errno");
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
+					switch (errno) {
+						case 0:
+							Toast.makeText(FeedBackActivity.this, "反馈成功，谢谢", Toast.LENGTH_LONG).show();
+							break;
+						case 1024:
+							try {
+								Toast.makeText(FeedBackActivity.this, result.getString("errmsg"), Toast.LENGTH_LONG).show();
+							} catch (JSONException e) {
+								e.printStackTrace();
+							}
+							break;
+						default:
+							Toast.makeText(FeedBackActivity.this, "其他情况", Toast.LENGTH_LONG).show();
+					}
+				}
+
+				@Override
+				public void onError(Throwable ex, boolean isOnCallback) {
+					Toast.makeText(FeedBackActivity.this, "反馈出错，请稍候再试", Toast.LENGTH_LONG).show();
+					ex.printStackTrace();
+				}
+
+				@Override
+				public void onCancelled(CancelledException cex) {
+
+				}
+
+				@Override
+				public void onFinished() {
+					showProgress(false);
+				}
+			});
+		} else {
+			showProgress(false);
+			mFeedBackEditText.requestFocus();
+			mFeedBackEditText.setError("内容不能为空");
+			YoYo.with(Techniques.Tada)
+					.duration(700)
+					.repeat(1)
+					.playOn(mFeedBackEditText);
 		}
 	}
 

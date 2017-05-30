@@ -16,8 +16,8 @@ android {
 		applicationId "cn.tellyouwhat.checkinsystem"
 		minSdkVersion 14
 		targetSdkVersion 25
-		versionCode 201705221
-		versionName "1.3.2"
+		versionCode 201705301
+		versionName "1.4.5"
 		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 		vectorDrawables.useSupportLibrary = true
 	}
@@ -73,12 +73,12 @@ dependencies {
 	compile 'com.afollestad.material-dialogs:core:0.9.4.3'
 	compile 'com.sunfusheng:marqueeview:1.2.0'
 	compile 'com.nineoldandroids:library:2.4.0'
-	compile 'com.xdandroid:hellodaemon:1.0.3'
+	compile 'com.xdandroid:hellodaemon:1.1.1'
 //	compile 'com.github.NightFarmer:Themer:1.0.0'
 	compile 'com.oasisfeng.condom:library:1.1.1'
 //	compile 'io.hypertrack:smart-scheduler:0.0.7'
 	compile 'cn.richinfo.agent.android:android-agent:1.1.7'
 	compile 'com.github.chrisbanes:PhotoView:2.0.0'
-//	compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
+	compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
 	compile 'com.stephentuso:welcome:1.4.1'
 }

@@ -7,11 +7,8 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.telephony.TelephonyManager;
@@ -50,7 +47,6 @@ import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
-import cn.tellyouwhat.checkinsystem.utils.SPUtil;
 import de.hdodenhof.circleimageview.CircleImageView;
 
 /**
@@ -65,7 +61,6 @@ public class LoginActivity extends BaseActivity {
 	private View mProgressView;
 	private SharedPreferences mSharedPreferences;
 	//只有特定版本才可以把这个bool设为true，用来告诉app需要显示引导页
-	private boolean mNeedToShowTabbedActivity = true;
 	private View mloginBG;
 	private Button mNumberSignInButton;
 	private Button mforgetPasswordButton;
@@ -128,7 +123,6 @@ public class LoginActivity extends BaseActivity {
 			@Override
 			public void onFocusChange(View v, boolean hasFocus) {
 				if (!hasFocus) {
-					//TODO 等待api
 					String number = mNumberView.getText().toString().trim();
 					RequestParams requestParams = new RequestParams("https://api.checkin.tellyouwhat.cn/User/getHeadImage?username=" + number);
 					x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
@@ -358,7 +352,11 @@ public class LoginActivity extends BaseActivity {
 							.playOn(findViewById(R.id.card_view_password));
 					findViewById(R.id.card_view_password).setAlpha(0.5f);
 				} else if (loginResponseCode == -1) {
-					Toast.makeText(LoginActivity.this, "发生了可怕的错误，代码：001，我们正在抢修", Toast.LENGTH_SHORT).show();
+					try {
+						Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
 					runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
@@ -402,47 +400,8 @@ public class LoginActivity extends BaseActivity {
 
 			@Override
 			public void onFinished() {
-				Log.w(TAG, "onFinished: ");
-				//TODO delete this after server complete
-/*				token = "askdjgaoidfiaovlfhivalifgvaipgfvpioauwgfpia";
-				if (!TextUtils.isEmpty(token)) {
-					editor.putString(ConstantValues.TOKEN, EncryptUtil.encryptBase64withSalt(token, ConstantValues.SALT));
-				}
-				editor.putString("USER_NAME", number);
-				editor.apply();
-
-				initGuidancePages();
-				LoginActivity.this.finish();*/
 			}
 		});
-	}
-
-	private int getLocalVersionCode() {
-		PackageInfo packageInfo;
-		PackageManager packageManager = getPackageManager();
-		try {
-			packageInfo = packageManager.getPackageInfo(getPackageName(), 0);
-		} catch (PackageManager.NameNotFoundException e) {
-			e.printStackTrace();
-			return 0;
-		}
-		return packageInfo.versionCode;
-	}
-
-	private void initGuidancePages() {
-		storeUserInfo();
-		int localVersionCode = getLocalVersionCode();
-		SPUtil spUtil = new SPUtil(this);
-		//isFirstTimeAfterUpgrade用来表示是否是当前版本安卓上的第一次运行
-		boolean isFirstTimeAfterUpgrade = spUtil.getBoolean(ConstantValues.FIRST_TIME_AFTER_UPGRADE + localVersionCode, true);
-		Intent intent;
-		if (isFirstTimeAfterUpgrade && mNeedToShowTabbedActivity) {
-			intent = new Intent(this, IntroActivity.class);
-		} else {
-			intent = new Intent(this, MainActivity.class);
-		}
-		startActivity(intent);
-		finish();
 	}
 
 	private void storeUserInfo() {
@@ -545,7 +504,8 @@ public class LoginActivity extends BaseActivity {
 									break;
 								}
 							}
-							initGuidancePages();
+							storeUserInfo();
+							enterMain();
 							break;
 						case 0:
 							ReLoginUtil reLoginUtil = new ReLoginUtil(LoginActivity.this);
@@ -588,6 +548,17 @@ public class LoginActivity extends BaseActivity {
 			ReLoginUtil reLoginUtil = new ReLoginUtil(LoginActivity.this);
 			reLoginUtil.reLoginWithAlertDialog();
 		}
+	}
+
+	private void enterMain() {
+		Intent intent = new Intent(this, MainActivity.class);
+		startActivity(intent);
+		finish();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
 	}
 }
 

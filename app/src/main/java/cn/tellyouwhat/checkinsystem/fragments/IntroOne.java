@@ -18,7 +18,7 @@ import cn.tellyouwhat.checkinsystem.R;
  * 第一个介绍界面
  */
 
-public class IntroOne extends Fragment implements ISlideBackgroundColorHolder {
+public class IntroOne extends Fragment {
 
 	private View intro1;
 
@@ -36,15 +36,4 @@ public class IntroOne extends Fragment implements ISlideBackgroundColorHolder {
 		return fragment;
 	}
 
-	@Override
-	public int getDefaultBackgroundColor() {
-		return ContextCompat.getColor(getContext(), R.color.intro_fragment_one);
-	}
-
-	@Override
-	public void setBackgroundColor(@ColorInt int backgroundColor) {
-		if (intro1 != null) {
-			intro1.setBackgroundColor(backgroundColor);
-		}
-	}
 }

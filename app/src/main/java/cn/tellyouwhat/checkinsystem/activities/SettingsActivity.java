@@ -37,6 +37,8 @@ import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.fragments.CheckInFragment;
 import cn.tellyouwhat.checkinsystem.utils.NotifyUtil;
 
+import static com.xdandroid.hellodaemon.IntentWrapper.whiteListMatters;
+
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
  * handset devices, settings are presented as a single list. On tablets,
@@ -179,6 +181,15 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 		if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
 			StatusBarUtil.setColor(SettingsActivity.this, getResources().getColor(R.color.colorPrimary), 0);
 		}
+
+		Preference requestThirdPartPermission = findPreference("request_third_part_permission");
+		requestThirdPartPermission.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+			@Override
+			public boolean onPreferenceClick(Preference preference) {
+				whiteListMatters(SettingsActivity.this, "由于系统限制，必须要开启一些权限，您才能正常签到。\n");
+				return true;
+			}
+		});
 	}
 
 	/**

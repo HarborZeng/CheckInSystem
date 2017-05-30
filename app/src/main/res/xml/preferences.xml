@@ -89,6 +89,15 @@
             android:title="使用沉浸式状态栏"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="permission"
+        android:title="权限">
+        <Preference
+            android:key="request_third_part_permission"
+            android:summary="MIUI、Flyme、EMUI等国产ROM需要授权才能正常工作"
+            android:title="授予更多权限">
+        </Preference>
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="关于">
         <Preference
             android:title="查看应用信息">

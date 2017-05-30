@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -19,6 +20,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
@@ -72,7 +74,7 @@ public class AboutActivity extends BaseActivity {
 
 		ObservableListView listView = (ObservableListView) findViewById(R.id.list);
 
-		listView.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new String[]{"主要开发者", "合作开发者", "艺术设计", "联系我们", "给个赞", "使用的库文件", "版本更新", "功能介绍"}));
+		listView.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new String[]{"主要开发者", "合作开发者", "艺术设计", "联系我们", "去应用市场给个赞", "使用的库文件", "版本更新", "功能介绍"}));
 		listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -90,14 +92,7 @@ public class AboutActivity extends BaseActivity {
 						Snackbar.make(view, "QQ757772438\nWeChat: xiaoyao1682c", Snackbar.LENGTH_LONG).show();
 						break;
 					case 4:
-						Uri uri = Uri.parse("market://details?id=" + getPackageName());
-						Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
-						try {
-							startActivity(goToMarket);
-						} catch (ActivityNotFoundException e) {
-							e.printStackTrace();
-							Toast.makeText(AboutActivity.this, "您的手机并没有任何应用市场", Toast.LENGTH_LONG).show();
-						}
+						gotoCoolAPK();
 						break;
 					case 5:
 						new LicensesDialog.Builder(AboutActivity.this)
@@ -165,6 +160,22 @@ public class AboutActivity extends BaseActivity {
 				startActivity(new Intent(AboutActivity.this, FeedBackActivity.class));
 			}
 		});
+	}
+
+	private void gotoCoolAPK() {
+		Uri uri = Uri.parse("market://details?id=" + getPackageName());
+		Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri)
+				.setPackage("com.coolapk.market")  //指定应用市场
+				.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		try {
+			startActivity(goToMarket);
+		} catch (ActivityNotFoundException e) {
+			e.printStackTrace();
+			Toast.makeText(AboutActivity.this, "您的手机并没有安装酷安", Toast.LENGTH_LONG).show();
+			uri = Uri.parse("http://www.coolapk.com/apk/cn.tellyouwhat.checkinsystem");
+			Intent gotoWebsite = new Intent(Intent.ACTION_VIEW, uri);
+			startActivity(gotoWebsite);
+		}
 	}
 
 	@Override
@@ -407,12 +418,20 @@ public class AboutActivity extends BaseActivity {
 	}
 
 	private void installAPK(File result) {
-//		Log.i(TAG, "installAPK: 刚刚进入安装apk的方法");
+//    Log.i(TAG, "installAPK: 刚刚进入安装apk的方法");
 		Intent intent = new Intent(Intent.ACTION_VIEW);
 		intent.addCategory("android.intent.category.DEFAULT");
-		intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-		intent.setDataAndType(Uri.fromFile(result), "application/vnd.android.package-archive");
-//		Log.i(TAG, "installAPK: 准备好了数据，马上开启下一个activity");
+		Uri uri;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			intent.setFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+			intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+			uri = FileProvider.getUriForFile(AboutActivity.this, "cn.tellyouwhat.checkinsystem.provider", result);
+		} else {
+			uri = Uri.fromFile(result);
+		}
+		intent.setDataAndType(uri, "application/vnd.android.package-archive");
+//    Log.i(TAG, "installAPK: 准备好了数据，马上开启下一个activity");
 		startActivity(intent);
 	}
 }

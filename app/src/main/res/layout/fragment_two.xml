@@ -4,7 +4,6 @@
                 android:id="@+id/relative_layout_intro2"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/theme_yellow_primary_dark"
                 android:orientation="vertical">
 
     <ImageView
@@ -140,17 +139,4 @@
         android:layout_alignStart="@+id/imageView7"
         android:id="@+id/imageView15"/>
 
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="73dp"
-        android:lineSpacingExtra="8sp"
-        android:text="天气和建筑物遮挡可能导致\n信号被阻拦削弱"
-        android:textAlignment="center"
-        android:textColor="#fff"/>
 </RelativeLayout>

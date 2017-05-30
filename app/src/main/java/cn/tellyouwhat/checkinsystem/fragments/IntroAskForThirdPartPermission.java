@@ -20,7 +20,7 @@ import static com.xdandroid.hellodaemon.IntentWrapper.whiteListMatters;
  * Created by Harbor-Laptop on 2017/3/31.
  */
 
-public class IntroAskForThirdPartPermission extends Fragment implements ISlidePolicy, ISlideBackgroundColorHolder {
+public class IntroAskForThirdPartPermission extends Fragment {
 	private boolean mButtonClicked = false;
 	private View mRootView;
 
@@ -37,27 +37,4 @@ public class IntroAskForThirdPartPermission extends Fragment implements ISlidePo
 		return mRootView;
 	}
 
-	@Override
-	public boolean isPolicyRespected() {
-		return mButtonClicked;
-	}
-
-	@Override
-	public void onUserIllegallyRequestedNextPage() {
-		whiteListMatters(getActivity(), "需要权限才能正常运行");
-		mButtonClicked = true;
-	}
-
-	@Override
-	public int getDefaultBackgroundColor() {
-		return ContextCompat.getColor(getContext(), R.color.intro_fragment_privilege);
-	}
-
-	@Override
-	public void setBackgroundColor(@ColorInt int backgroundColor) {
-		if (mRootView == null) {
-			return;
-		}
-		mRootView.setBackgroundColor(backgroundColor);
-	}
 }
