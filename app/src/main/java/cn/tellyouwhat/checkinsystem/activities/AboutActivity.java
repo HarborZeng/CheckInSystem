@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.Animator;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -51,7 +52,9 @@ import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
 import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
 import de.psdev.licensesdialog.LicensesDialog;
+import moe.feng.alipay.zerosdk.AlipayZeroSdk;
 
+import static android.content.Intent.ACTION_VIEW;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 /**
@@ -66,56 +69,58 @@ public class AboutActivity extends BaseActivity {
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_about);
+		setUpActionBar();
 
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
-			StatusBarUtil.setColor(AboutActivity.this, getResources().getColor(R.color.colorPrimary), 0);
+			StatusBarUtil.setColor(AboutActivity.this,
+					ContextCompat.getColor(AboutActivity.this, R.color.colorPrimary),
+					0);
 		}
 
 		ObservableListView listView = (ObservableListView) findViewById(R.id.list);
 
-		listView.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new String[]{"主要开发者", "合作开发者", "艺术设计", "联系我们", "去应用市场给个赞", "使用的库文件", "版本更新", "功能介绍"}));
+		listView.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new String[]{"打赏开发者", "主要开发者", "合作开发者", "艺术设计", "联系我们", "去应用市场给5星", "使用的库文件", "版本更新", "功能介绍"}));
 		listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				switch (position) {
 					case 0:
-						Snackbar.make(view, "HarborZeng", Snackbar.LENGTH_LONG).show();
+						gotoAlipay();
 						break;
 					case 1:
-						Snackbar.make(view, "lsj", Snackbar.LENGTH_LONG).show();
+						Snackbar.make(view, "HarborZeng", Snackbar.LENGTH_LONG).show();
 						break;
 					case 2:
-						Snackbar.make(view, "Kekeemay、杜皓璠", Snackbar.LENGTH_LONG).show();
+						Snackbar.make(view, "lsj", Snackbar.LENGTH_LONG).show();
 						break;
 					case 3:
-						Snackbar.make(view, "QQ757772438\nWeChat: xiaoyao1682c", Snackbar.LENGTH_LONG).show();
+						Snackbar.make(view, "Kekeemay、杜皓璠", Snackbar.LENGTH_LONG).show();
 						break;
 					case 4:
-						gotoCoolAPK();
+						gotoQQ();
 						break;
 					case 5:
+						gotoCoolAPK();
+						break;
+					case 6:
 						new LicensesDialog.Builder(AboutActivity.this)
 								.setNotices(R.raw.notices)
 								.build()
 								.showAppCompat();
 						break;
-					case 6:
+					case 7:
 						checkUpdate();
 						break;
-					case 7:
+					case 8:
 						startActivity(new Intent(AboutActivity.this, IntroActivity.class));
 						break;
 					default:
-						Snackbar.make(view, "用户不可能看到这个, 否则开发者压实", Snackbar.LENGTH_LONG).show();
+						Snackbar.make(view, "用户不可能看到这个, 否则开发者吃屎", Snackbar.LENGTH_LONG).show();
 						break;
 				}
 			}
 		});
-		ActionBar supportActionBar = getSupportActionBar();
-		if (supportActionBar != null) {
-			supportActionBar.setDisplayHomeAsUpEnabled(true);
-		}
 
 		final View descriptionTextView = findViewById(R.id.text_view_description);
 		descriptionTextView.setVisibility(View.INVISIBLE);
@@ -160,6 +165,34 @@ public class AboutActivity extends BaseActivity {
 				startActivity(new Intent(AboutActivity.this, FeedBackActivity.class));
 			}
 		});
+	}
+
+	private void setUpActionBar() {
+		ActionBar supportActionBar = getSupportActionBar();
+		if (supportActionBar != null) {
+			supportActionBar.setDisplayHomeAsUpEnabled(true);
+		}
+	}
+
+	private void gotoAlipay() {
+		if (AlipayZeroSdk.hasInstalledAlipayClient(AboutActivity.this)) {
+			AlipayZeroSdk.startAlipayClient(AboutActivity.this, "FKX05902VD0KIKV6D6XTDA");
+		} else {
+			Toast.makeText(AboutActivity.this, "你没有安装支付宝", Toast.LENGTH_SHORT).show();
+			startActivity(new Intent(ACTION_VIEW,
+					Uri.parse("https://qr.alipay.com/fkx05902vd0kikv6d6xtda")));
+		}
+	}
+
+	private void gotoQQ() {
+		String url11 = "mqqwpa://im/chat?chat_type=group&uin=643381410&version=1";
+		try {
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url11)));
+		} catch (ActivityNotFoundException e) {
+			Toast.makeText(AboutActivity.this, "你好像没有安装QQ", Toast.LENGTH_SHORT).show();
+			startActivity(new Intent(ACTION_VIEW,
+					Uri.parse("http://qm.qq.com/cgi-bin/qm/qr?k=aObDAF8f_Dk3hg0ngjiKAkLGiG6yYs_5")));
+		}
 	}
 
 	private void gotoCoolAPK() {

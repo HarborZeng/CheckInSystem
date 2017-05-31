@@ -3,6 +3,7 @@ package cn.tellyouwhat.checkinsystem.activities;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.CardView;
 import android.text.TextUtils;
@@ -34,13 +35,12 @@ import cn.tellyouwhat.checkinsystem.utils.PhoneInfoProvider;
 
 /**
  * Created by Harbor-Laptop on 2017/4/9.
- *
+ * FeedBack Page based on fangtang <a href="http://sc.ftqq.com/3.version">Server酱</a>
+ * which will push a WeChat message about what users had inputted,
+ *  note that you must use {@link URLEncoder} to encode the text user inputted, otherwise
+ *  you will get the message partly, like space will be looked as an end signal.
+ *  user's message will terminally transformed like "E%89%E5%B8%82%E9%95%B"
  * @author HarborZeng
- *         FeedBack Page based on fangtang <a href="http://sc.ftqq.com/3.version">Server酱</a>
- *         which will push a WeChat message about what users had inputted,
- *         note that you must use {@link URLEncoder}to encode the text user inputted, otherwise
- *         you will get the message partly, like space will be looked as an end signal.
- *         user's message will terminally transformed like "E%89%E5%B8%82%E9%95%B"
  */
 
 public class FeedBackActivity extends BaseActivity {
@@ -61,7 +61,7 @@ public class FeedBackActivity extends BaseActivity {
 		setUpActionBar();
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
-			StatusBarUtil.setColor(FeedBackActivity.this, getResources().getColor(R.color.colorPrimary), 0);
+			StatusBarUtil.setColor(FeedBackActivity.this, ContextCompat.getColor(getApplicationContext(), R.color.colorPrimary));
 		}
 		mContactInformationEditText = (EditText) findViewById(R.id.contact_information_edit_text);
 		mFeedBackEditText = (EditText) findViewById(R.id.feedback_edit_text);

@@ -8,6 +8,8 @@ import android.content.SharedPreferences;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
+import com.xdandroid.hellodaemon.AbsWorkService;
+
 import java.util.ArrayList;
 
 import cn.tellyouwhat.checkinsystem.activities.LoginActivity;
@@ -86,7 +88,7 @@ public class ReLoginUtil {
 	}
 
 	private void stopService() {
-//		AbsWorkService.cancelJobAlarmSub();
+		AbsWorkService.cancelJobAlarmSub();
 	}
 
 	//

@@ -291,7 +291,6 @@ public class MainActivity extends BaseActivity {
 				mWelcomeHelper = new WelcomeHelper(this, IntroActivity.class);
 				mWelcomeHelper.show(mInstanceState);
 			}
-			SystemClock.sleep(800);
 			setTheme(R.style.AppTheme);
 			setContentView(R.layout.activity_main);
 			setTitle("签到");
@@ -315,7 +314,9 @@ public class MainActivity extends BaseActivity {
 
 			SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 			if (sharedPref.getBoolean("immersed_status_bar_enabled", true)) {
-				StatusBarUtil.setColor(MainActivity.this, getResources().getColor(R.color.colorPrimary), 0);
+				StatusBarUtil.setColor(MainActivity.this,
+						ContextCompat.getColor(MainActivity.this, R.color.colorPrimary),
+						0);
 			}
 
 			startServices(sharedPref);

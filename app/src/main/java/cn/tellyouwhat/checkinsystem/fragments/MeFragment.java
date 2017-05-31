@@ -130,23 +130,24 @@ public class MeFragment extends BaseFragment {
 	}
 
 	private void setUpUserInfo(View view) {
-		if (view != null) {
-			SharedPreferences sharedPreferences = getActivity().getSharedPreferences("userInfo", MODE_PRIVATE);
-			mName = sharedPreferences.getString("name", "");
-			mDepartmentName = sharedPreferences.getString("departmentName", "");
-			mPhoneNumber = sharedPreferences.getString("phoneNumber", "");
-			mEmployeeID = sharedPreferences.getString("employeeID", "");
-			mEmail = sharedPreferences.getString("email", "");
-			mHeadImage = sharedPreferences.getString("headImage", "");
-			TextView userNameTextView = (TextView) view.findViewById(R.id.user_name);
-			userNameTextView.setText(mName);
-			TextView jobNumberTextView = (TextView) view.findViewById(R.id.job_number);
-			jobNumberTextView.setText(mEmployeeID);
-			ImageView profileImageView = (ImageView) view.findViewById(R.id.profile_image);
-			byte[] decodedHeadImage = Base64.decode(mHeadImage, Base64.DEFAULT);
-			Bitmap bitmapHeadImage = BitmapFactory.decodeByteArray(decodedHeadImage, 0, decodedHeadImage.length);
-			profileImageView.setImageBitmap(bitmapHeadImage);
+		if (view == null) {
+			return;
 		}
+		SharedPreferences sharedPreferences = getActivity().getSharedPreferences("userInfo", MODE_PRIVATE);
+		mName = sharedPreferences.getString("name", "");
+		mDepartmentName = sharedPreferences.getString("departmentName", "");
+		mPhoneNumber = sharedPreferences.getString("phoneNumber", "");
+		mEmployeeID = sharedPreferences.getString("employeeID", "");
+		mEmail = sharedPreferences.getString("email", "");
+		mHeadImage = sharedPreferences.getString("headImage", "");
+		TextView userNameTextView = (TextView) view.findViewById(R.id.user_name);
+		userNameTextView.setText(mName);
+		TextView jobNumberTextView = (TextView) view.findViewById(R.id.job_number);
+		jobNumberTextView.setText(mEmployeeID);
+		ImageView profileImageView = (ImageView) view.findViewById(R.id.profile_image);
+		byte[] decodedHeadImage = Base64.decode(mHeadImage, Base64.DEFAULT);
+		Bitmap bitmapHeadImage = BitmapFactory.decodeByteArray(decodedHeadImage, 0, decodedHeadImage.length);
+		profileImageView.setImageBitmap(bitmapHeadImage);
 	}
 
 	@Override

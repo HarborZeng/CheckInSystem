@@ -29,9 +29,12 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.github.anzewei.parallaxbacklayout.ParallaxBackActivityHelper;
 import com.github.anzewei.parallaxbacklayout.ParallaxBackLayout;
 import com.jaeger.library.StatusBarUtil;
+import com.xdandroid.hellodaemon.IntentWrapper;
 
 import net.rdrei.android.dirchooser.DirectoryChooserConfig;
 import net.rdrei.android.dirchooser.DirectoryChooserFragment;
+
+import java.util.List;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.fragments.CheckInFragment;
@@ -186,7 +189,11 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
 		requestThirdPartPermission.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 			@Override
 			public boolean onPreferenceClick(Preference preference) {
-				whiteListMatters(SettingsActivity.this, "由于系统限制，必须要开启一些权限，您才能正常签到。\n");
+				List<IntentWrapper> intentWrappers = whiteListMatters(SettingsActivity.this, "由于系统限制，必须要开启一些权限，您才能正常签到。\n");
+				if (intentWrappers.isEmpty()) {
+					Toast.makeText(SettingsActivity.this, "所有权限已开放", Toast.LENGTH_SHORT).show();
+					preference.setSummary("所有权限已开放");
+				}
 				return true;
 			}
 		});
