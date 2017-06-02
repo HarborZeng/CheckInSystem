@@ -17,7 +17,7 @@
         android:layout_marginTop="5dp"
         android:orientation="horizontal">
 
-        <ProgressBar
+        <me.zhanghai.android.materialprogressbar.MaterialProgressBar
             android:id="@+id/progressBar_loading_phone"
             style="?android:attr/progressBarStyleSmall"
             android:layout_width="match_parent"

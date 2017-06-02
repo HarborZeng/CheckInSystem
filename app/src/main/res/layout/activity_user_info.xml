@@ -277,7 +277,7 @@
                     android:layout_gravity="center_vertical"
                     android:elevation="16dp">
 
-                    <ProgressBar
+                    <me.zhanghai.android.materialprogressbar.MaterialProgressBar
                         android:id="@+id/userinfo_summit_progress"
                         style="?android:attr/progressBarStyleLarge"
                         android:layout_width="wrap_content"

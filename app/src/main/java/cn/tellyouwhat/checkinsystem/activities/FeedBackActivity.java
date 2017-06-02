@@ -37,9 +37,10 @@ import cn.tellyouwhat.checkinsystem.utils.PhoneInfoProvider;
  * Created by Harbor-Laptop on 2017/4/9.
  * FeedBack Page based on fangtang <a href="http://sc.ftqq.com/3.version">Server酱</a>
  * which will push a WeChat message about what users had inputted,
- *  note that you must use {@link URLEncoder} to encode the text user inputted, otherwise
- *  you will get the message partly, like space will be looked as an end signal.
- *  user's message will terminally transformed like "E%89%E5%B8%82%E9%95%B"
+ * note that you must use {@link URLEncoder} to encode the text user inputted, otherwise
+ * you will get the message partly, like space will be looked as an end signal.
+ * user's message will terminally transformed like "E%89%E5%B8%82%E9%95%B"
+ *
  * @author HarborZeng
  */
 
@@ -102,17 +103,15 @@ public class FeedBackActivity extends BaseActivity {
 	private void sendFeedBack() {
 		String encodedContactInfo = "";
 		String encodedFeedbackText = "";
-		try {
-			encodedContactInfo = URLEncoder.encode(mContactInformationEditText.getText().toString(), "UTF-8");
-			encodedFeedbackText = URLEncoder.encode(mFeedBackEditText.getText().toString() + "\n", "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
+		String contactInfoText = mContactInformationEditText.getText().toString();
+		String feedBackText = mFeedBackEditText.getText().toString();
 		SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
 		String userName = sharedPreferences.getString("USER_NAME", "");
-		if (!TextUtils.isEmpty(encodedFeedbackText)) {
+		if (!TextUtils.isEmpty(feedBackText)) {
 			RequestParams requestParams = null;
 			try {
+				encodedContactInfo = URLEncoder.encode(contactInfoText, "UTF-8");
+				encodedFeedbackText = URLEncoder.encode(feedBackText + "\n", "UTF-8");
 				String userInputContact = (TextUtils.isEmpty(encodedContactInfo) ? URLEncoder.encode("匿名", "UTF-8") : encodedContactInfo);
 				requestParams = new RequestParams("http://sc.ftqq.com/SCU6693Tdfc142ce95a8a9fcfbbb14f587cbdf4258c9c7a088af6.send?text=" + userInputContact + URLEncoder.encode(", 真实信息: " + userName, "UTF-8") + "&desp=" + encodedFeedbackText + URLEncoder.encode(mAllPhoneInfo, "UTF-8"));
 			} catch (UnsupportedEncodingException e) {

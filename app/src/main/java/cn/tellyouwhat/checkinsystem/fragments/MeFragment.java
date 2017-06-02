@@ -111,9 +111,10 @@ public class MeFragment extends BaseFragment {
 		checkInGraphicCardView.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				getActivity().getSupportFragmentManager().beginTransaction()
+				Toast.makeText(getContext(), "尚未开放", Toast.LENGTH_SHORT).show();
+				/*getActivity().getSupportFragmentManager().beginTransaction()
 						.add(R.id.container_me_fragment, ChartFragment.newInstance())
-						.commit();
+						.commit();*/
 			}
 		});
 

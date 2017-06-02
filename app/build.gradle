@@ -1,5 +1,4 @@
 apply plugin: 'com.android.application'
-apply plugin: 'richapm'
 
 android {
 	configurations.all {
@@ -16,8 +15,8 @@ android {
 		applicationId "cn.tellyouwhat.checkinsystem"
 		minSdkVersion 14
 		targetSdkVersion 25
-		versionCode 201705311
-		versionName "1.5.0"
+		versionCode 201706011
+		versionName "1.6.0"
 		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 		vectorDrawables.useSupportLibrary = true
 	}
@@ -85,9 +84,10 @@ dependencies {
 //	compile 'com.github.NightFarmer:Themer:1.0.0'
 	compile 'com.oasisfeng.condom:library:1.1.1'
 //	compile 'io.hypertrack:smart-scheduler:0.0.7'
-	compile 'cn.richinfo.agent.android:android-agent:1.1.7'
+//	compile 'cn.richinfo.agent.android:android-agent:1.1.7'
 	compile 'com.github.chrisbanes:PhotoView:2.0.0'
-	compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
+//	compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
 	compile 'com.stephentuso:welcome:1.4.1'
 	compile 'moe.feng:AlipayZeroSdk:1.1'
+	compile 'me.zhanghai.android.materialprogressbar:library:1.4.1'
 }
