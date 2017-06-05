@@ -58,6 +58,7 @@ import cn.tellyouwhat.checkinsystem.fragments.MeFragment;
 import cn.tellyouwhat.checkinsystem.services.AutoCheckInService;
 import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 import cn.tellyouwhat.checkinsystem.services.UpdateTodayStatusService;
+import cn.tellyouwhat.checkinsystem.utils.AppManager;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
 import cn.tellyouwhat.checkinsystem.utils.ExceptionReporter;
@@ -204,6 +205,9 @@ public class MainActivity extends BaseActivity {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+        AppManager.getAppManager().addActivity(this);
+
 		mInstanceState = savedInstanceState;
 		setBackEnable(false);
 		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
@@ -234,13 +238,14 @@ public class MainActivity extends BaseActivity {
 						"\n3.基于GPS、基站和WiFi定位，需要定位的权限。")
 				.iconRes(R.drawable.ic_verified_user_black_24dp)
 				.negativeText("拒绝")
-				.negativeColor(Color.parseColor("#444444"))
-				.onNegative(new MaterialDialog.SingleButtonCallback() {
-					@Override
+                .negativeColor(Color.parseColor("#88222222"))
+                .onNegative(new MaterialDialog.SingleButtonCallback() {
+                    @Override
 					public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-						askForPermission();
-					}
-				})
+                        dialog.dismiss();
+                        Toast.makeText(MainActivity.this, "拒绝了合理请求的权限等同于不同意使用此软件", Toast.LENGTH_LONG).show();
+                    }
+                })
 				.positiveText("授权")
 				.positiveColor(Color.parseColor("#FF0000"))
 				.onPositive(new MaterialDialog.SingleButtonCallback() {
@@ -282,6 +287,15 @@ public class MainActivity extends BaseActivity {
 	}
 
 	private void AfterPermissionGranted() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                checkUpdate();
+            }
+        }).start();
+
+        SystemClock.sleep(1000);
+
 		SharedPreferences userInfo = getSharedPreferences("userInfo", MODE_PRIVATE);
 		String token = userInfo.getString(ConstantValues.TOKEN, "");
 		if (TextUtils.isEmpty(token)) {
@@ -323,13 +337,6 @@ public class MainActivity extends BaseActivity {
 
 			BottomNavigationView mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
 			mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					checkUpdate();
-				}
-			}).start();
 		}
 	}
 
@@ -365,8 +372,8 @@ public class MainActivity extends BaseActivity {
 	private void enterLogin() {
 		Intent intent = new Intent(this, LoginActivity.class);
 		startActivity(intent);
-		finish();
-	}
+//		finish();
+    }
 
 	private void startServices(SharedPreferences sharedPref) {
 		SharedPreferences userInfo = getSharedPreferences("userInfo", MODE_PRIVATE);
@@ -380,20 +387,16 @@ public class MainActivity extends BaseActivity {
 					startService(new Intent(this, LocationGettingService.class));
 				} catch (Exception ignored) {
 				}
-//       Intent intent = new Intent(getApplicationContext(), LocationGettingService.class);
-//       startService(intent);
 			}
-
-//    Intent intent = new Intent(getApplicationContext(), AutoCheckInService.class);
-//    startService(intent);
-			DaemonEnv.initialize(getApplicationContext(), AutoCheckInService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
-			try {
+            //开启自动签入签出的服务
+            DaemonEnv.initialize(getApplicationContext(), AutoCheckInService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
+            try {
 				startService(new Intent(this, AutoCheckInService.class));
 			} catch (Exception ignored) {
 			}
-
-			DaemonEnv.initialize(getApplicationContext(), UpdateTodayStatusService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
-			try {
+            //开启自动更新今日状态的服务
+            DaemonEnv.initialize(getApplicationContext(), UpdateTodayStatusService.class, DaemonEnv.DEFAULT_WAKE_UP_INTERVAL);
+            try {
 				startService(new Intent(this, UpdateTodayStatusService.class));
 			} catch (Exception ignored) {
 			}
@@ -404,7 +407,8 @@ public class MainActivity extends BaseActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		ReLoginUtil.removeAllDialog();
-	}
+        AppManager.getAppManager().finishAllActivity();
+    }
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {

@@ -1,5 +1,6 @@
 package cn.tellyouwhat.checkinsystem.activities;
 
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.KeyEvent;
 
@@ -10,8 +11,19 @@ import com.stephentuso.welcome.WelcomePage;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.fragments.IntroAskForThirdPartPermission;
+import cn.tellyouwhat.checkinsystem.utils.AppManager;
 
 public class IntroActivity extends WelcomeActivity {
+
+    public static String welcomeKey() {
+        return "201705295";
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        AppManager.getAppManager().addActivity(this);
+    }
 
 	@Override
 	protected WelcomeConfiguration configuration() {
@@ -45,10 +57,6 @@ public class IntroActivity extends WelcomeActivity {
 				.backButtonNavigatesPages(false)
 				.showNextButton(false)
 				.build();
-	}
-
-	public static String welcomeKey() {
-		return "201705295";
 	}
 
 	@Override

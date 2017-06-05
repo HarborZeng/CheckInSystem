@@ -4,7 +4,6 @@ import android.Manifest;
 import android.animation.Animator;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -37,7 +36,6 @@ import android.widget.Toast;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 import com.github.ksoichiro.android.observablescrollview.ObservableListView;
-import com.jaeger.library.StatusBarUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,13 +47,13 @@ import java.io.File;
 import java.math.RoundingMode;
 
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.utils.AppManager;
 import cn.tellyouwhat.checkinsystem.utils.DoubleUtil;
 import cn.tellyouwhat.checkinsystem.utils.NetTypeUtils;
 import de.psdev.licensesdialog.LicensesDialog;
 import moe.feng.alipay.zerosdk.AlipayZeroSdk;
 
 import static android.content.Intent.ACTION_VIEW;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 /**
  * Created by Harbor-Laptop on 2017/4/4.
@@ -69,16 +67,12 @@ public class AboutActivity extends BaseActivity {
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_about);
-		setUpActionBar();
 
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-		if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
-			StatusBarUtil.setColor(AboutActivity.this,
-					ContextCompat.getColor(AboutActivity.this, R.color.colorPrimary),
-					0);
-		}
+        AppManager.getAppManager().addActivity(this);
 
-		ObservableListView listView = (ObservableListView) findViewById(R.id.list);
+        setStatusBarColor();
+        setUpActionBar();
+        ObservableListView listView = (ObservableListView) findViewById(R.id.list);
 
 		listView.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new String[]{"打赏开发者", "主要开发者", "合作开发者", "艺术设计", "联系我们", "去应用市场给5星", "使用的库文件", "版本更新", "功能介绍"}));
 		listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {

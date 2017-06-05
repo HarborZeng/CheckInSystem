@@ -14,54 +14,60 @@ import org.xutils.x;
 import java.lang.reflect.Method;
 
 import cn.tellyouwhat.checkinsystem.BuildConfig;
+import cn.tellyouwhat.checkinsystem.handler.CrashHandler;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 
 public class BaseApplication extends Application {
-	public static IWXAPI api;
+    public static IWXAPI api;
 
-	@Override
-	public void onCreate() {
-		super.onCreate();
+    @Override
+    public void onCreate() {
+        super.onCreate();
 
-		CondomProcess.installExceptDefaultProcess(this);
+        CondomProcess.installExceptDefaultProcess(this);
 
-		registerToWeChat();
-		if (LeakCanary.isInAnalyzerProcess(this)) {
-			// This process is dedicated to LeakCanary for heap analysis.
-			// You should not init your app in this process.
-			return;
-		}
-		LeakCanary.install(this);
-		// Normal app init code...
+        registerToWeChat();
+        if (LeakCanary.isInAnalyzerProcess(this)) {
+            // This process is dedicated to LeakCanary for heap analysis.
+            // You should not init your app in this process.
+            return;
+        }
+        LeakCanary.install(this);
+        // Normal app init code...
 
-		x.Ext.init(this);
+        x.Ext.init(this);
 //		x.Ext.setDebug(true);
-//		Log.d("ChatApplication", "init");
-		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
-			//fix android leak fix which is caused by UserManager holding on to a activity ctx
-			try {
-				final Method m;
+        solveUserManagerMemoryLeakProblem();
 
-				m = UserManager.class.getMethod("get", Context.class);
+        CrashHandler.getInstance().init();
+    }
 
-				m.setAccessible(true);
-				m.invoke(null, this);
+    private void solveUserManagerMemoryLeakProblem() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            //fix android leak fix which is caused by UserManager holding on to a activity ctx
+            try {
+                final Method m;
 
-				//above is reflection for below...
-				//UserManager.get();
-			} catch (NoSuchMethodException e) {
-				e.printStackTrace();
-			} catch (Throwable e) {
-				if (BuildConfig.DEBUG) {
-					throw new RuntimeException(e);
-				}
-			}
-		}
-	}
+                m = UserManager.class.getMethod("get", Context.class);
 
-	private void registerToWeChat() {
-		api = WXAPIFactory.createWXAPI(super.getApplicationContext(), ConstantValues.WX_APP_ID, true);
-		api.registerApp(ConstantValues.WX_APP_ID);
-	}
+                m.setAccessible(true);
+                m.invoke(null, this);
+
+                //above is reflection for below...
+                //UserManager.get();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (Throwable e) {
+                if (BuildConfig.DEBUG) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+
+    private void registerToWeChat() {
+        api = WXAPIFactory.createWXAPI(super.getApplicationContext(), ConstantValues.WX_APP_ID, true);
+        api.registerApp(ConstantValues.WX_APP_ID);
+    }
 
 }

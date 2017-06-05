@@ -5,15 +5,18 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.github.anzewei.parallaxbacklayout.ParallaxActivityBase;
+import com.jaeger.library.StatusBarUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,6 +28,7 @@ import org.xutils.x;
 import java.net.HttpCookie;
 import java.util.List;
 
+import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
@@ -64,6 +68,14 @@ public class BaseActivity extends ParallaxActivityBase {
 		}
 	}
 
+	public void setStatusBarColor() {
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
+			StatusBarUtil.setColor(this,
+					ContextCompat.getColor(this, R.color.colorPrimary),
+					0);
+		}
+	}
 
 	/**
 	 * This method shows dialog with given title & message.
@@ -146,7 +158,11 @@ public class BaseActivity extends ParallaxActivityBase {
 							reLoginUtil.reLoginWithAlertDialog();
 							break;
 						case -1:
-							Toast.makeText(BaseActivity.this, "发生了不可描述的错误009", Toast.LENGTH_SHORT).show();
+							try {
+								Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+							} catch (JSONException e) {
+								e.printStackTrace();
+							}
 							break;
 						default:
 							break;

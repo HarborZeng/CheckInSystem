@@ -42,9 +42,9 @@ import static cn.tellyouwhat.checkinsystem.fragments.CheckInFragment.CHECK_STATU
  */
 
 public class UpdateTodayStatusService extends AbsWorkService {
-	SharedPreferences sharedPref;
 	public boolean mHasCheckOut;
 	public boolean mHasCheckIn;
+    SharedPreferences sharedPref;
 
 	@Override
 	public void onCreate() {
@@ -241,8 +241,8 @@ public class UpdateTodayStatusService extends AbsWorkService {
 
 	@Override
 	public Boolean isWorkRunning(Intent intent, int flags, int startId) {
-		return null;
-	}
+        return true;
+    }
 
 	@Nullable
 	@Override

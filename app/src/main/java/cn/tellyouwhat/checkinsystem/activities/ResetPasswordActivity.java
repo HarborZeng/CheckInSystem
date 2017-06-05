@@ -19,6 +19,7 @@ import com.jaeger.library.StatusBarUtil;
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.fragments.GetCheckCodeFragment;
 import cn.tellyouwhat.checkinsystem.fragments.UpdatePasswordFragment;
+import cn.tellyouwhat.checkinsystem.utils.AppManager;
 
 /**
  * Created by Harbor-Laptop on 2017/3/1.
@@ -69,6 +70,9 @@ public class ResetPasswordActivity extends AppIntro {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+        AppManager.getAppManager().addActivity(this);
+
 		mHelper = new ParallaxBackActivityHelper(this);
 		setBackEnable(true);
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);

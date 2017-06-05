@@ -3,8 +3,7 @@
     <item android:drawable="@android:color/white"/>
     <item>
         <bitmap
-            android:src="@drawable/boot_image"
-            android:gravity="center"/>
-
+            android:gravity="fill"
+            android:src="@drawable/boot_image"/>
     </item>
 </layer-list>

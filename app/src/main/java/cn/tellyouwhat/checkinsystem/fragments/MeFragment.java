@@ -16,7 +16,6 @@ import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.activities.PhoneCollectionActivity;
@@ -37,16 +36,22 @@ import static android.content.Context.MODE_PRIVATE;
 public class MeFragment extends BaseFragment {
 
 	private static final int OPEN_USER_INFO_ACTIVITY = 13;
-	private final String TAG = "MeFragment";
-	private String mName;
-	private String mEmployeeID;
+    private static final int OPEN_SHARE_ACTIVITY = 14;
+    private final String TAG = "MeFragment";
+    AlphaAnimation mAlphaAnimationOut = new AlphaAnimation(1f, 0f);
+    AlphaAnimation mAlphaAnimationIn = new AlphaAnimation(0f, 1f);
+    private String mName;
+    private String mEmployeeID;
 	private String mDepartmentName;
 	private String mPhoneNumber;
 	private String mEmail;
 	private String mHeadImage;
 
-	AlphaAnimation mAlphaAnimationOut = new AlphaAnimation(1f, 0f);
-	AlphaAnimation mAlphaAnimationIn = new AlphaAnimation(0f, 1f);
+    public static MeFragment newInstance() {
+        MeFragment fragment = new MeFragment();
+        fragment.setRetainInstance(true);
+        return fragment;
+    }
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -111,12 +116,11 @@ public class MeFragment extends BaseFragment {
 		checkInGraphicCardView.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Toast.makeText(getContext(), "尚未开放", Toast.LENGTH_SHORT).show();
-				/*getActivity().getSupportFragmentManager().beginTransaction()
-						.add(R.id.container_me_fragment, ChartFragment.newInstance())
-						.commit();*/
-			}
-		});
+//				Toast.makeText(getContext(), "尚未开放", Toast.LENGTH_SHORT).show();
+                startActivityForResult(new Intent(getContext(), null),
+                        OPEN_SHARE_ACTIVITY);
+            }
+        });
 
 		CardView phoneCollectionCardView = (CardView) view.findViewById(R.id.card_view_phone_collection);
 		phoneCollectionCardView.setOnClickListener(new View.OnClickListener() {
@@ -167,11 +171,5 @@ public class MeFragment extends BaseFragment {
 			default:
 				break;
 		}
-	}
-
-	public static MeFragment newInstance() {
-		MeFragment fragment = new MeFragment();
-		fragment.setRetainInstance(true);
-		return fragment;
 	}
 }

@@ -2,8 +2,6 @@ package cn.tellyouwhat.checkinsystem.activities;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.CardView;
 import android.text.TextUtils;
@@ -19,7 +17,6 @@ import android.widget.Toast;
 
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
-import com.jaeger.library.StatusBarUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,6 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 import cn.tellyouwhat.checkinsystem.R;
+import cn.tellyouwhat.checkinsystem.utils.AppManager;
 import cn.tellyouwhat.checkinsystem.utils.PhoneInfoProvider;
 
 /**
@@ -59,13 +57,13 @@ public class FeedBackActivity extends BaseActivity {
 	protected void onCreate(Bundle arg0) {
 		super.onCreate(arg0);
 		setContentView(R.layout.activity_feedback);
+
+        AppManager.getAppManager().addActivity(this);
+
 		setUpActionBar();
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-		if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
-			StatusBarUtil.setColor(FeedBackActivity.this, ContextCompat.getColor(getApplicationContext(), R.color.colorPrimary));
-		}
-		mContactInformationEditText = (EditText) findViewById(R.id.contact_information_edit_text);
-		mFeedBackEditText = (EditText) findViewById(R.id.feedback_edit_text);
+        setStatusBarColor();
+        mContactInformationEditText = (EditText) findViewById(R.id.contact_information_edit_text);
+        mFeedBackEditText = (EditText) findViewById(R.id.feedback_edit_text);
 		mFeedBackProgressBar = (ProgressBar) findViewById(R.id.feedback_summit_progress);
 		mFeedBackCardView = (CardView) findViewById(R.id.feedback_summit_bg);
 		mUploadPhoneInfoCheckBox = (CheckBox) findViewById(R.id.checkbox_upload_phone_info);

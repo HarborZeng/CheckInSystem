@@ -40,7 +40,6 @@ import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
-import com.baidu.location.Poi;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 import com.getbase.floatingactionbutton.FloatingActionButton;
@@ -54,6 +53,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.xutils.common.Callback;
+import org.xutils.ex.HttpException;
 import org.xutils.http.HttpMethod;
 import org.xutils.http.RequestParams;
 import org.xutils.x;
@@ -106,7 +106,6 @@ public class CheckInFragment extends BaseFragment {
 	private Snackbar snackbar;
 	private int locationIDs[];
 	private String locationNames[];
-	private View view;
 	private FloatingActionsMenu mMenuMultipleActions;
 	private boolean isCheckingIn = true;
 	private OnClickListener checkInListener = new OnClickListener() {
@@ -213,6 +212,12 @@ public class CheckInFragment extends BaseFragment {
 	private ToggleButton mEnableWiFiToggleButton;
 	private WifiManager mWifiManager;
 
+    public static CheckInFragment newInstance() {
+        CheckInFragment fragment = new CheckInFragment();
+        fragment.setRetainInstance(true);
+        return fragment;
+    }
+
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 //		Log.i(TAG, "onCreate: in CheckInFragment");
@@ -300,8 +305,13 @@ public class CheckInFragment extends BaseFragment {
 
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
-				Toast.makeText(x.app(), "获取今日状态出错", Toast.LENGTH_LONG).show();
-			}
+                if (ex instanceof HttpException) {
+                    HttpException httpException = (HttpException) ex;
+                    String exception = httpException.toString();
+                    Toast.makeText(x.app(), "获取今日状态出错\n" + exception, Toast.LENGTH_LONG).show();
+                }
+                ex.printStackTrace();
+            }
 
 			@Override
 			public void onCancelled(CancelledException cex) {
@@ -417,9 +427,13 @@ public class CheckInFragment extends BaseFragment {
 
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
-				Toast.makeText(x.app(), "获取公司位置出错", Toast.LENGTH_SHORT).show();
-				ex.printStackTrace();
-			}
+                if (ex instanceof HttpException) {
+                    HttpException httpException = (HttpException) ex;
+                    String exception = httpException.toString();
+                    Toast.makeText(x.app(), "获取公司位置出错\n" + exception, Toast.LENGTH_SHORT).show();
+                }
+                ex.printStackTrace();
+            }
 
 			@Override
 			public void onCancelled(CancelledException cex) {
@@ -778,8 +792,12 @@ public class CheckInFragment extends BaseFragment {
 
 			@Override
 			public void onError(Throwable ex, boolean isOnCallback) {
-				Toast.makeText(x.app(), "加载通知出错", Toast.LENGTH_SHORT).show();
-			}
+                if (ex instanceof HttpException) {
+                    HttpException httpException = (HttpException) ex;
+                    String exception = httpException.toString();
+                    Toast.makeText(x.app(), "加载通知出错\n" + exception, Toast.LENGTH_SHORT).show();
+                }
+            }
 
 			@Override
 			public void onCancelled(CancelledException cex) {
@@ -886,6 +904,221 @@ public class CheckInFragment extends BaseFragment {
 		//可选，默认false，设置是否需要过滤GPS仿真结果，默认需要
 		mGetLocationClient.setLocOption(option);
 	}
+
+    private void beginCheckingOut() {
+        CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/checkin/checkout");
+        x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
+            @Override
+            public void onSuccess(JSONObject result) {
+                Log.i(TAG, "onSuccess: 签出结果：" + result.toString());
+                try {
+                    int resultInt = result.getInt("result");
+                    switch (resultInt) {
+                        case 1:
+                            getTodayStatus();
+                            imageView_cover_finally_success.setVisibility(View.VISIBLE);
+                            succeed.setVisibility(View.VISIBLE);
+                            succeed.setText("签出成功");
+                            YoYo.with(Techniques.Tada)
+                                    .duration(700)
+                                    .repeat(1)
+                                    .onEnd(new YoYo.AnimatorCallback() {
+                                        @Override
+                                        public void call(Animator animator) {
+                                            enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
+                                            enough_accuracy_text_view.setVisibility(View.INVISIBLE);
+                                            in_range.setVisibility(View.INVISIBLE);
+                                            out_of_range.setVisibility(View.INVISIBLE);
+                                        }
+                                    })
+                                    .playOn(imageView_cover_finally_success);
+                            YoYo.with(Techniques.Tada)
+                                    .duration(700)
+                                    .repeat(1)
+                                    .playOn(succeed);
+                            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                            boolean showNotifications = sharedPref.getBoolean("show_notifications", true);
+                            boolean notificationsRingEnabled = sharedPref.getBoolean("notifications_ring_enabled", false);
+                            boolean notificationsVibrateEnabled = sharedPref.getBoolean("notifications_vibrate_enabled", true);
+                            if (showNotifications) {
+                                Intent intent = new Intent(getActivity(), MainActivity.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                PendingIntent pIntent = PendingIntent.getActivity(x.app(), 16, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                                String ticker = "您有一条新通知";
+                                String title = "签出成功";
+                                String content = "恭喜您，今日签出成功";
+                                NotifyUtil notificationSucceededCheckIn = new NotifyUtil(x.app(), 16);
+                                notificationSucceededCheckIn.setOnGoing(false);
+                                notificationSucceededCheckIn.notify_normal_singline(pIntent, R.drawable.ic_stat_name, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, false);
+                            }
+                            break;
+                        case 0:
+                            updateSession();
+                            break;
+                        case -1:
+                            Toast.makeText(x.app(), "发生了可怕的错误，代码：008，我们正在抢修", Toast.LENGTH_SHORT).show();
+                            break;
+                        case -2:
+                            imageView_cover_finally_success.setVisibility(View.VISIBLE);
+                            succeed.setText(result.getString("message"));
+                            succeed.setVisibility(View.VISIBLE);
+                            YoYo.with(Techniques.Tada)
+                                    .duration(700)
+                                    .repeat(1)
+                                    .onEnd(new YoYo.AnimatorCallback() {
+                                        @Override
+                                        public void call(Animator animator) {
+                                            enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
+                                            enough_accuracy_text_view.setVisibility(View.INVISIBLE);
+                                            in_range.setVisibility(View.INVISIBLE);
+                                            out_of_range.setVisibility(View.INVISIBLE);
+                                        }
+                                    })
+                                    .playOn(imageView_cover_finally_success);
+                            YoYo.with(Techniques.Tada)
+                                    .duration(700)
+                                    .repeat(1)
+                                    .playOn(succeed);
+                            break;
+                        default:
+                            break;
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(Throwable ex, boolean isOnCallback) {
+                if (ex instanceof HttpException) {
+                    HttpException httpException = (HttpException) ex;
+                    String exception = httpException.toString();
+                    View view = getView();
+                    if (view != null) {
+                        Snackbar.make(view, "网络开小差了~~" + exception, Snackbar.LENGTH_LONG).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(CancelledException cex) {
+
+            }
+
+            @Override
+            public void onFinished() {
+
+            }
+        });
+    }
+
+    private void beginCheckingIn() {
+        CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/checkin/checkin");
+        x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
+            @Override
+            public void onSuccess(JSONObject result) {
+//				Log.i(TAG, "onSuccess: 签到结果：" + result.toString());
+                try {
+                    getTodayStatus();
+                    int resultInt = result.getInt("result");
+                    switch (resultInt) {
+                        case 1:
+                            imageView_cover_finally_success.setVisibility(View.VISIBLE);
+                            succeed.setText("签到成功");
+                            succeed.setVisibility(View.VISIBLE);
+                            YoYo.with(Techniques.Tada)
+                                    .duration(700)
+                                    .repeat(1)
+                                    .onEnd(new YoYo.AnimatorCallback() {
+                                        @Override
+                                        public void call(Animator animator) {
+                                            enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
+                                            enough_accuracy_text_view.setVisibility(View.INVISIBLE);
+                                            in_range.setVisibility(View.INVISIBLE);
+                                            out_of_range.setVisibility(View.INVISIBLE);
+                                        }
+                                    })
+                                    .playOn(imageView_cover_finally_success);
+                            YoYo.with(Techniques.Tada)
+                                    .duration(700)
+                                    .repeat(1)
+                                    .playOn(succeed);
+                            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                            boolean showNotifications = sharedPref.getBoolean("show_notifications", true);
+                            boolean notificationsRingEnabled = sharedPref.getBoolean("notifications_ring_enabled", false);
+                            boolean notificationsVibrateEnabled = sharedPref.getBoolean("notifications_vibrate_enabled", true);
+                            if (showNotifications) {
+                                Intent intent = new Intent(getActivity(), MainActivity.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                PendingIntent pIntent = PendingIntent.getActivity(x.app(), 15, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                                String ticker = "您有一条新通知";
+                                String title = "签到成功";
+                                String content = "恭喜您，今日签到成功";
+                                NotifyUtil notificationSucceededCheckIn = new NotifyUtil(x.app(), 15);
+                                notificationSucceededCheckIn.setOnGoing(false);
+                                notificationSucceededCheckIn.notify_normal_singline(pIntent, R.drawable.ic_stat_name, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, true);
+                            }
+                            break;
+                        case 0:
+                            updateSession();
+                            break;
+                        case -1:
+                            Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
+                            break;
+                        case -2:
+                            imageView_cover_finally_success.setVisibility(View.VISIBLE);
+                            succeed.setText(result.getString("message"));
+                            succeed.setVisibility(View.VISIBLE);
+                            YoYo.with(Techniques.Tada)
+                                    .duration(700)
+                                    .repeat(1)
+                                    .onEnd(new YoYo.AnimatorCallback() {
+                                        @Override
+                                        public void call(Animator animator) {
+                                            enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
+                                            enough_accuracy_text_view.setVisibility(View.INVISIBLE);
+                                            in_range.setVisibility(View.INVISIBLE);
+                                            out_of_range.setVisibility(View.INVISIBLE);
+                                        }
+                                    })
+                                    .playOn(imageView_cover_finally_success);
+                            YoYo.with(Techniques.Tada)
+                                    .duration(700)
+                                    .repeat(1)
+                                    .playOn(succeed);
+                            break;
+                        default:
+                            break;
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(Throwable ex, boolean isOnCallback) {
+                ex.printStackTrace();
+                if (ex instanceof HttpException) {
+                    HttpException httpException = (HttpException) ex;
+                    String exception = httpException.toString();
+                    View view = getView();
+                    if (view != null) {
+                        Snackbar.make(view, "网络开小差了~~" + exception, Snackbar.LENGTH_LONG).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(CancelledException cex) {
+
+            }
+
+            @Override
+            public void onFinished() {
+
+            }
+        });
+    }
 
 	private class CheckInLocationListener implements BDLocationListener {
 		private int times = 0;
@@ -1271,218 +1504,5 @@ public class CheckInFragment extends BaseFragment {
 		public void onConnectHotSpotMessage(String s, int i) {
 //			Log.w("onConnectHotSpotMessage", "onConnectHotSpotMessage: s: " + s + ", i: " + i);
 		}
-	}
-
-	private void beginCheckingOut() {
-		CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/checkin/checkout");
-		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
-			@Override
-			public void onSuccess(JSONObject result) {
-				Log.i(TAG, "onSuccess: 签出结果：" + result.toString());
-				try {
-					int resultInt = result.getInt("result");
-					switch (resultInt) {
-						case 1:
-							getTodayStatus();
-							imageView_cover_finally_success.setVisibility(View.VISIBLE);
-							succeed.setVisibility(View.VISIBLE);
-							succeed.setText("签出成功");
-							YoYo.with(Techniques.Tada)
-									.duration(700)
-									.repeat(1)
-									.onEnd(new YoYo.AnimatorCallback() {
-										@Override
-										public void call(Animator animator) {
-											enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
-											enough_accuracy_text_view.setVisibility(View.INVISIBLE);
-											in_range.setVisibility(View.INVISIBLE);
-											out_of_range.setVisibility(View.INVISIBLE);
-										}
-									})
-									.playOn(imageView_cover_finally_success);
-							YoYo.with(Techniques.Tada)
-									.duration(700)
-									.repeat(1)
-									.playOn(succeed);
-							SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
-							boolean showNotifications = sharedPref.getBoolean("show_notifications", true);
-							boolean notificationsRingEnabled = sharedPref.getBoolean("notifications_ring_enabled", false);
-							boolean notificationsVibrateEnabled = sharedPref.getBoolean("notifications_vibrate_enabled", true);
-							if (showNotifications) {
-								Intent intent = new Intent(getActivity(), MainActivity.class);
-								intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-								PendingIntent pIntent = PendingIntent.getActivity(x.app(), 16, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-								String ticker = "您有一条新通知";
-								String title = "签出成功";
-								String content = "恭喜您，今日签出成功";
-								NotifyUtil notificationSucceededCheckIn = new NotifyUtil(x.app(), 16);
-								notificationSucceededCheckIn.setOnGoing(false);
-								notificationSucceededCheckIn.notify_normal_singline(pIntent, R.drawable.ic_stat_name, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, false);
-							}
-							break;
-						case 0:
-							updateSession();
-							break;
-						case -1:
-							Toast.makeText(x.app(), "发生了可怕的错误，代码：008，我们正在抢修", Toast.LENGTH_SHORT).show();
-							break;
-						case -2:
-							imageView_cover_finally_success.setVisibility(View.VISIBLE);
-							succeed.setText(result.getString("message"));
-							succeed.setVisibility(View.VISIBLE);
-							YoYo.with(Techniques.Tada)
-									.duration(700)
-									.repeat(1)
-									.onEnd(new YoYo.AnimatorCallback() {
-										@Override
-										public void call(Animator animator) {
-											enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
-											enough_accuracy_text_view.setVisibility(View.INVISIBLE);
-											in_range.setVisibility(View.INVISIBLE);
-											out_of_range.setVisibility(View.INVISIBLE);
-										}
-									})
-									.playOn(imageView_cover_finally_success);
-							YoYo.with(Techniques.Tada)
-									.duration(700)
-									.repeat(1)
-									.playOn(succeed);
-							break;
-						default:
-							break;
-					}
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-			}
-
-			@Override
-			public void onError(Throwable ex, boolean isOnCallback) {
-				view = getView();
-				if (view != null) {
-					Snackbar.make(view, "网络开小差了~~", Snackbar.LENGTH_LONG).show();
-				}
-			}
-
-			@Override
-			public void onCancelled(CancelledException cex) {
-
-			}
-
-			@Override
-			public void onFinished() {
-
-			}
-		});
-	}
-
-	private void beginCheckingIn() {
-		CookiedRequestParams requestParams = new CookiedRequestParams("https://api.checkin.tellyouwhat.cn/checkin/checkin");
-		x.http().get(requestParams, new Callback.CommonCallback<JSONObject>() {
-			@Override
-			public void onSuccess(JSONObject result) {
-//				Log.i(TAG, "onSuccess: 签到结果：" + result.toString());
-				try {
-					getTodayStatus();
-					int resultInt = result.getInt("result");
-					switch (resultInt) {
-						case 1:
-							imageView_cover_finally_success.setVisibility(View.VISIBLE);
-							succeed.setText("签到成功");
-							succeed.setVisibility(View.VISIBLE);
-							YoYo.with(Techniques.Tada)
-									.duration(700)
-									.repeat(1)
-									.onEnd(new YoYo.AnimatorCallback() {
-										@Override
-										public void call(Animator animator) {
-											enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
-											enough_accuracy_text_view.setVisibility(View.INVISIBLE);
-											in_range.setVisibility(View.INVISIBLE);
-											out_of_range.setVisibility(View.INVISIBLE);
-										}
-									})
-									.playOn(imageView_cover_finally_success);
-							YoYo.with(Techniques.Tada)
-									.duration(700)
-									.repeat(1)
-									.playOn(succeed);
-							SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
-							boolean showNotifications = sharedPref.getBoolean("show_notifications", true);
-							boolean notificationsRingEnabled = sharedPref.getBoolean("notifications_ring_enabled", false);
-							boolean notificationsVibrateEnabled = sharedPref.getBoolean("notifications_vibrate_enabled", true);
-							if (showNotifications) {
-								Intent intent = new Intent(getActivity(), MainActivity.class);
-								intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-								PendingIntent pIntent = PendingIntent.getActivity(x.app(), 15, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-								String ticker = "您有一条新通知";
-								String title = "签到成功";
-								String content = "恭喜您，今日签到成功";
-								NotifyUtil notificationSucceededCheckIn = new NotifyUtil(x.app(), 15);
-								notificationSucceededCheckIn.setOnGoing(false);
-								notificationSucceededCheckIn.notify_normal_singline(pIntent, R.drawable.ic_stat_name, ticker, title, content, notificationsRingEnabled, notificationsVibrateEnabled, true);
-							}
-							break;
-						case 0:
-							updateSession();
-							break;
-						case -1:
-							Toast.makeText(x.app(), result.getString("message"), Toast.LENGTH_SHORT).show();
-							break;
-						case -2:
-							imageView_cover_finally_success.setVisibility(View.VISIBLE);
-							succeed.setText(result.getString("message"));
-							succeed.setVisibility(View.VISIBLE);
-							YoYo.with(Techniques.Tada)
-									.duration(700)
-									.repeat(1)
-									.onEnd(new YoYo.AnimatorCallback() {
-										@Override
-										public void call(Animator animator) {
-											enable_wifi_gps_textView.setVisibility(View.INVISIBLE);
-											enough_accuracy_text_view.setVisibility(View.INVISIBLE);
-											in_range.setVisibility(View.INVISIBLE);
-											out_of_range.setVisibility(View.INVISIBLE);
-										}
-									})
-									.playOn(imageView_cover_finally_success);
-							YoYo.with(Techniques.Tada)
-									.duration(700)
-									.repeat(1)
-									.playOn(succeed);
-							break;
-						default:
-							break;
-					}
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-			}
-
-			@Override
-			public void onError(Throwable ex, boolean isOnCallback) {
-				ex.printStackTrace();
-				view = getView();
-				if (view != null) {
-					Snackbar.make(view, "网络开小差了~~", Snackbar.LENGTH_LONG).show();
-				}
-			}
-
-			@Override
-			public void onCancelled(CancelledException cex) {
-
-			}
-
-			@Override
-			public void onFinished() {
-
-			}
-		});
-	}
-
-	public static CheckInFragment newInstance() {
-		CheckInFragment fragment = new CheckInFragment();
-		fragment.setRetainInstance(true);
-		return fragment;
 	}
 }
