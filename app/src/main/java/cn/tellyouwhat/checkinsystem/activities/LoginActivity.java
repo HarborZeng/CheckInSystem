@@ -44,7 +44,6 @@ import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.services.AutoCheckInService;
 import cn.tellyouwhat.checkinsystem.services.LocationGettingService;
 import cn.tellyouwhat.checkinsystem.services.UpdateTodayStatusService;
-import cn.tellyouwhat.checkinsystem.utils.AppManager;
 import cn.tellyouwhat.checkinsystem.utils.ConstantValues;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 import cn.tellyouwhat.checkinsystem.utils.EncryptUtil;
@@ -86,7 +85,6 @@ public class LoginActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setBackEnable(false);
         setContentView(R.layout.activity_login);
-        AppManager.getAppManager().addActivity(this);
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancelAll();

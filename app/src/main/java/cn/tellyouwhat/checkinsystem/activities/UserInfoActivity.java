@@ -51,7 +51,6 @@ import java.util.Map;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.fragments.HeadImageFragment;
-import cn.tellyouwhat.checkinsystem.utils.AppManager;
 import cn.tellyouwhat.checkinsystem.utils.CookiedRequestParams;
 import cn.tellyouwhat.checkinsystem.utils.ReLoginUtil;
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -89,7 +88,9 @@ public class UserInfoActivity extends BaseActivity {
                             }
                         }
                     })
-                    .inputRange(2, 15, getResources().getColor(R.color.theme_red_primary))
+                    .inputRange(2, 15,
+                            ContextCompat.getColor(UserInfoActivity.this,
+                                    R.color.theme_red_primary))
                     .show();
         }
     };
@@ -107,7 +108,9 @@ public class UserInfoActivity extends BaseActivity {
                             }
                         }
                     })
-                    .inputRange(10, 10, getResources().getColor(R.color.theme_red_primary))
+                    .inputRange(10, 10,
+                            ContextCompat.getColor(UserInfoActivity.this,
+                                    R.color.theme_red_primary))
                     .show();
         }
     };
@@ -125,7 +128,9 @@ public class UserInfoActivity extends BaseActivity {
                             }
                         }
                     })
-                    .inputRange(11, 11, getResources().getColor(R.color.theme_red_primary))
+                    .inputRange(11, 11,
+                            ContextCompat.getColor(UserInfoActivity.this,
+                                    R.color.theme_red_primary))
                     .show();
         }
     };
@@ -143,7 +148,9 @@ public class UserInfoActivity extends BaseActivity {
                             }
                         }
                     })
-                    .inputRange(5, 30, getResources().getColor(R.color.theme_red_primary))
+                    .inputRange(5, 30,
+                            ContextCompat.getColor(UserInfoActivity.this,
+                                    R.color.theme_red_primary))
                     .show();
         }
     };
@@ -157,7 +164,6 @@ public class UserInfoActivity extends BaseActivity {
     protected void onCreate(Bundle arg0) {
         super.onCreate(arg0);
         setContentView(R.layout.activity_user_info);
-        AppManager.getAppManager().addActivity(this);
 
         setStatusBarColor();
         setUpActionBar();
@@ -346,7 +352,6 @@ public class UserInfoActivity extends BaseActivity {
             finish();
             return true;
         } else if (item.getItemId() == R.id.item_finish) {
-            Log.d(TAG, "onMenuItemClick: 点击了完成");
             showProgress(true);
             final String jobNumber = jobNumberEditPageTextView.getText().toString().trim();
 //			final String department = departmentEditPageTextView.getText().toString().trim();

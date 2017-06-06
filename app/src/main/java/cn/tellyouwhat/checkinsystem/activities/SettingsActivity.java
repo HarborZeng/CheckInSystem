@@ -39,7 +39,6 @@ import java.util.List;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.fragments.CheckInFragment;
-import cn.tellyouwhat.checkinsystem.utils.AppManager;
 import cn.tellyouwhat.checkinsystem.utils.NotifyUtil;
 
 import static com.xdandroid.hellodaemon.IntentWrapper.whiteListMatters;
@@ -184,8 +183,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        AppManager.getAppManager().addActivity(this);
 
         mHelper = new ParallaxBackActivityHelper(this);
         setBackEnable(true);
@@ -342,7 +339,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Sha
                 break;
             case "immersed_status_bar_enabled":
                 if (sharedPreferences.getBoolean("immersed_status_bar_enabled", true)) {
-                    StatusBarUtil.setColor(SettingsActivity.this, getResources().getColor(R.color.colorPrimary), 0);
+                    StatusBarUtil.setColor(SettingsActivity.this,
+                            ContextCompat.getColor(SettingsActivity.this, R.color.colorPrimary)
+                            , 0);
                 } else {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                         setImmersive(false);

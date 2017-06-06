@@ -24,7 +24,6 @@ import java.io.Serializable;
 
 import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.bean.Notice;
-import cn.tellyouwhat.checkinsystem.utils.AppManager;
 
 /**
  * Created by Harbor-Laptop on 2017/4/19.
@@ -42,8 +41,6 @@ public class BoardActivity extends BaseActivity implements ObservableScrollViewC
     protected void onCreate(Bundle arg0) {
         super.onCreate(arg0);
         setContentView(R.layout.activity_board);
-
-        AppManager.getAppManager().addActivity(this);
 
         setStatusBarColor();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_notice);

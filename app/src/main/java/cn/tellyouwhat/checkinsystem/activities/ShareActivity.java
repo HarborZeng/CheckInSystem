@@ -10,10 +10,10 @@ import android.support.v7.widget.Toolbar;
 import com.jaeger.library.StatusBarUtil;
 
 import cn.tellyouwhat.checkinsystem.R;
-import cn.tellyouwhat.checkinsystem.utils.AppManager;
 
 /**
  * Created by Harbor-Laptop on 2017/6/3.
+ * 此Activity用来做分享页
  */
 
 public class ShareActivity extends BaseActivity {
@@ -21,7 +21,6 @@ public class ShareActivity extends BaseActivity {
     protected void onCreate(Bundle arg0) {
         super.onCreate(arg0);
         setContentView(R.layout.activity_share);
-        AppManager.getAppManager().addActivity(this);
         setUpToolBar();
         setStatusBarColor();
 

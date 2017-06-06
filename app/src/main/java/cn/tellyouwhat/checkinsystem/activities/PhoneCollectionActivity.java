@@ -28,7 +28,6 @@ import cn.tellyouwhat.checkinsystem.R;
 import cn.tellyouwhat.checkinsystem.adpter.ExpandableItemAdapter;
 import cn.tellyouwhat.checkinsystem.bean.Department;
 import cn.tellyouwhat.checkinsystem.bean.PhoneItem;
-import cn.tellyouwhat.checkinsystem.utils.AppManager;
 
 /**
  * Created by Harbor-Laptop on 2017/4/16.
@@ -48,7 +47,6 @@ public class PhoneCollectionActivity extends BaseActivity implements ObservableS
     protected void onCreate(Bundle arg0) {
         super.onCreate(arg0);
         setContentView(R.layout.activity_phone_collection);
-        AppManager.getAppManager().addActivity(this);
 
         setUpActionBar();
         setStatusBarColor();
@@ -114,6 +112,7 @@ public class PhoneCollectionActivity extends BaseActivity implements ObservableS
                                         PhoneItem phoneItem = new PhoneItem();
                                         phoneItem.setPhone(telephoneNumber);
                                         phoneItem.setPosition(telephoneSubordination);
+                                        assert department != null;
                                         department.addSubItem(phoneItem);
                                     }
                                     adapter.setNewData(data);
