@@ -19,7 +19,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -291,8 +290,6 @@ public class MainActivity extends BaseActivity {
                 checkUpdate();
             }
         }).start();
-
-        SystemClock.sleep(1000);
 
         SharedPreferences userInfo = getSharedPreferences("userInfo", MODE_PRIVATE);
         String token = userInfo.getString(ConstantValues.TOKEN, "");
