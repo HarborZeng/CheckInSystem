@@ -78,51 +78,53 @@ public class MainActivity extends BaseActivity {
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            synchronized (MainActivity.class) {
+                FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
 
-            Fragment history = getSupportFragmentManager().findFragmentByTag("History");
-            Fragment me = getSupportFragmentManager().findFragmentByTag("Me");
-            Fragment checkIn = getSupportFragmentManager().findFragmentByTag("CheckIn");
+                Fragment history = getSupportFragmentManager().findFragmentByTag("History");
+                Fragment me = getSupportFragmentManager().findFragmentByTag("Me");
+                Fragment checkIn = getSupportFragmentManager().findFragmentByTag("CheckIn");
 
-            switch (item.getItemId()) {
-                case R.id.navigation_check_in:
-                    setTitle(item.getTitle());
-                    if (checkIn != null)
-                        fragmentTransaction.show(checkIn);
-                    if (history != null)
-                        fragmentTransaction.hide(history);
-                    if (me != null)
-                        fragmentTransaction.hide(me);
-                    fragmentTransaction.commitAllowingStateLoss();
-                    return true;
-                case R.id.navigation_history_record:
-                    setTitle(item.getTitle());
-                    if (checkIn != null)
-                        fragmentTransaction.hide(checkIn);
-                    if (history != null)
-                        fragmentTransaction.show(history);
-                    else
-                        fragmentTransaction.add(R.id.content, HistoryFragment.newInstance(), "History");
-                    if (me != null)
-                        fragmentTransaction.hide(me);
-                    fragmentTransaction.commitAllowingStateLoss();
-                    return true;
-                case R.id.navigation_me:
-                    setTitle(item.getTitle());
-                    if (checkIn != null)
-                        fragmentTransaction.hide(checkIn);
-                    if (history != null)
-                        fragmentTransaction.hide(history);
+                switch (item.getItemId()) {
+                    case R.id.navigation_check_in:
+                        setTitle(item.getTitle());
+                        if (checkIn != null)
+                            fragmentTransaction.show(checkIn);
+                        if (history != null)
+                            fragmentTransaction.hide(history);
+                        if (me != null)
+                            fragmentTransaction.hide(me);
+                        fragmentTransaction.commitAllowingStateLoss();
+                        return true;
+                    case R.id.navigation_history_record:
+                        setTitle(item.getTitle());
+                        if (checkIn != null)
+                            fragmentTransaction.hide(checkIn);
+                        if (history != null)
+                            fragmentTransaction.show(history);
+                        else
+                            fragmentTransaction.add(R.id.content, HistoryFragment.newInstance(), "History");
+                        if (me != null)
+                            fragmentTransaction.hide(me);
+                        fragmentTransaction.commitAllowingStateLoss();
+                        return true;
+                    case R.id.navigation_me:
+                        setTitle(item.getTitle());
+                        if (checkIn != null)
+                            fragmentTransaction.hide(checkIn);
+                        if (history != null)
+                            fragmentTransaction.hide(history);
 
-                    if (me != null)
-                        fragmentTransaction.show(me);
-                    else
-                        fragmentTransaction.add(R.id.content, MeFragment.newInstance(), "Me");
+                        if (me != null)
+                            fragmentTransaction.show(me);
+                        else
+                            fragmentTransaction.add(R.id.content, MeFragment.newInstance(), "Me");
 
-                    fragmentTransaction.commitAllowingStateLoss();
-                    return true;
+                        fragmentTransaction.commitAllowingStateLoss();
+                        return true;
+                }
+                return false;
             }
-            return false;
         }
 
     };
@@ -296,12 +298,21 @@ public class MainActivity extends BaseActivity {
         if (TextUtils.isEmpty(token)) {
             enterLogin();
         } else {
-            synchronized (MainActivity.class) {
-                mWelcomeHelper = new WelcomeHelper(this, IntroActivity.class);
-                mWelcomeHelper.show(mInstanceState);
-            }
+
+            mWelcomeHelper = new WelcomeHelper(this, IntroActivity.class);
+            mWelcomeHelper.show(mInstanceState);
+
             setTheme(R.style.AppTheme);
             setContentView(R.layout.activity_main);
+
+            BottomNavigationView mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
+            mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+
+            ActionBar supportActionBar = getSupportActionBar();
+            if (supportActionBar != null) {
+                supportActionBar.setDisplayHomeAsUpEnabled(false);
+            }
+
             setTitle("签到");
             Intent checkIntent = getIntent();
             boolean beginCheckIn = checkIntent.getBooleanExtra("BEGIN_CHECK_IN", false);
@@ -310,10 +321,6 @@ public class MainActivity extends BaseActivity {
             bundle.putBoolean("BEGIN_CHECK_IN", beginCheckIn);
             bundle.putBoolean("BEGIN_CHECK_OUT", beginCheckOut);
 
-            ActionBar supportActionBar = getSupportActionBar();
-            if (supportActionBar != null) {
-                supportActionBar.setDisplayHomeAsUpEnabled(false);
-            }
             CheckInFragment checkInFragment = CheckInFragment.newInstance();
             checkInFragment.setArguments(bundle);
             getSupportFragmentManager()
@@ -329,9 +336,6 @@ public class MainActivity extends BaseActivity {
             }
 
             startServices(sharedPref);
-
-            BottomNavigationView mNavigation = (BottomNavigationView) findViewById(R.id.navigation);
-            mNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         }
     }
 
@@ -609,7 +613,7 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onLoading(long total, long current, boolean isDownloading) {
                 StringBuffer stringBuffer = new StringBuffer();
-                stringBuffer.append(getString(R.string.please_wait_a_second)).append(DoubleUtil.formatDouble2(((double) current) / 1024 / 1024, RoundingMode.DOWN, 2)).append("/").append(DoubleUtil.formatDouble2(((double) total) / 1024 / 1024, RoundingMode.DOWN, 2)).append("M");
+                stringBuffer.append(getString(R.string.please_wait_a_second)).append(DoubleUtil.formatDouble2(((double) current) / 1024 / 1024, RoundingMode.UP, 2)).append("/").append(DoubleUtil.formatDouble2(((double) total) / 1024 / 1024, RoundingMode.DOWN, 2)).append("M");
                 builder.setMessage(stringBuffer);
             }
 

@@ -131,6 +131,7 @@ public class BaseApplication extends Application {
         CondomProcess.installExceptDefaultProcess(this);
 
         registerToWeChat();
+
         if (LeakCanary.isInAnalyzerProcess(this)) {
             // This process is dedicated to LeakCanary for heap analysis.
             // You should not init your app in this process.
@@ -140,7 +141,8 @@ public class BaseApplication extends Application {
         // Normal app init code...
 
         x.Ext.init(this);
-//		x.Ext.setDebug(true);
+        x.Ext.setDebug(false);
+
         solveUserManagerMemoryLeakProblem();
 
         CrashHandler.getInstance().init();

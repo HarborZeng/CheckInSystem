@@ -1,100 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:app="http://schemas.android.com/apk/res-auto"
-                android:id="@+id/calendar_layout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-    <android.support.v7.widget.CardView
-        android:id="@+id/card_view_calendar"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginLeft="6dp"
-        android:layout_marginRight="6dp"
-        android:layout_marginTop="12dp"
-        android:elevation="4dp"
-        android:fadingEdge="horizontal|vertical"
-        android:translationZ="1dp"
-        app:cardCornerRadius="6dp">
+        android:layout_height="match_parent">
 
-        <com.prolificinteractive.materialcalendarview.MaterialCalendarView
-            android:id="@+id/calendar_view"
+        <LinearLayout
+            android:id="@+id/calendar_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="2dp"
-            app:mcv_arrowColor="@color/colorPrimary"
-            app:mcv_firstDayOfWeek="monday"
-            app:mcv_selectionColor="@color/colorAccent"
-            app:mcv_showOtherDates="all"
-            app:mcv_tileSize="match_parent">
+            android:orientation="vertical">
 
-        </com.prolificinteractive.materialcalendarview.MaterialCalendarView>
+            <android.support.v7.widget.CardView
+                android:id="@+id/card_view_calendar"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginLeft="6dp"
+                android:layout_marginRight="6dp"
+                android:layout_marginTop="12dp"
+                android:elevation="4dp"
+                android:fadingEdge="horizontal|vertical"
+                android:translationZ="1dp"
+                app:cardCornerRadius="6dp">
 
-    </android.support.v7.widget.CardView>
+                <com.prolificinteractive.materialcalendarview.MaterialCalendarView
+                    android:id="@+id/calendar_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="2dp"
+                    app:mcv_arrowColor="@color/colorPrimary"
+                    app:mcv_firstDayOfWeek="monday"
+                    app:mcv_selectionColor="@color/colorAccent"
+                    app:mcv_showOtherDates="all"
+                    app:mcv_tileSize="match_parent">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_below="@+id/card_view_calendar"
-        android:layout_marginLeft="5dp"
-        android:layout_marginStart="5dp"
-        android:layout_marginTop="10dp"
-        android:orientation="vertical"
-        android:padding="5dp">
+                </com.prolificinteractive.materialcalendarview.MaterialCalendarView>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            </android.support.v7.widget.CardView>
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="10dp"
-                android:text="签到时间"
-                android:textColor="#000"
-                android:textSize="18sp"
-                android:textStyle="bold"/>
+                android:layout_alignParentBottom="true"
+                android:layout_below="@+id/card_view_calendar"
+                android:layout_marginLeft="5dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical"
+                android:padding="5dp">
 
-            <TextView
-                android:id="@+id/text_view_original_check_in_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:text="签到时间"
+                        android:textColor="#000"
+                        android:textSize="18sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/text_view_original_check_in_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/check_in_time_text_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:text="签出时间"
+                        android:textColor="#000"
+                        android:textSize="18sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/text_view_original_check_out_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/check_out_time_text_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"/>
+            </LinearLayout>
+
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/check_in_time_text_view"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="10dp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="10dp"
-                android:text="签出时间"
-                android:textColor="#000"
-                android:textSize="18sp"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:id="@+id/text_view_original_check_out_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/check_out_time_text_view"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="10dp"/>
-    </LinearLayout>
-
+    </ScrollView>
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -127,7 +139,7 @@
         android:layout_centerVertical="false"
         android:elevation="16dp">
 
-        <ProgressBar
+        <me.zhanghai.android.materialprogressbar.MaterialProgressBar
             android:id="@+id/get_month_record_progress"
             style="?android:attr/progressBarStyleLarge"
             android:layout_width="wrap_content"
