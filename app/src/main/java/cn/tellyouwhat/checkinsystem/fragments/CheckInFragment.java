@@ -1105,7 +1105,7 @@ public class CheckInFragment extends BaseFragment {
             final double latitude = location.getLatitude();
             final double longitude = location.getLongitude();
          /*
-		   以下内容属于测试代码
+           以下内容属于测试代码
           */
             //获取定位结果
 /*			final StringBuffer sb = new StringBuffer(256);
